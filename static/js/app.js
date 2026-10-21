@@ -1,97 +1,288 @@
-// SKW DealDesk — small progressive enhancements. Every action also works without JS.
+// SKW DealDesk — progressive enhancements. Every action also works without JS.
 (function () {
+  var root = document.documentElement;
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   function csrf() {
-    const m = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    var m = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : "";
   }
 
-  // Mobile navigation
+  // ---- Theme: light → dark → system, persisted per browser -----------------
+  function storedTheme() {
+    try { return localStorage.getItem("dd-theme") || "system"; } catch (e) { return "system"; }
+  }
+  function showThemeIcon(mode) {
+    document.querySelectorAll("[data-theme-icon]").forEach(function (el) {
+      el.hidden = el.getAttribute("data-theme-icon") !== mode;
+    });
+    var btn = document.querySelector("[data-theme-toggle]");
+    if (btn) btn.title = "Theme: " + mode + " (click to change)";
+  }
+  function applyTheme(mode) {
+    var commit = function () {
+      if (mode === "system") root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", mode);
+      try { localStorage.setItem("dd-theme", mode); } catch (e) {}
+      showThemeIcon(mode);
+    };
+    if (document.startViewTransition && !reduceMotion) {
+      root.classList.add("theme-switching");
+      var t = document.startViewTransition(commit);
+      t.finished.finally(function () { root.classList.remove("theme-switching"); });
+    } else {
+      commit();
+    }
+  }
+  showThemeIcon(storedTheme());
   document.addEventListener("click", function (e) {
-    const t = e.target.closest("[data-toggle-nav]");
-    if (t) { document.body.classList.toggle("nav-open"); return; }
+    if (!e.target.closest("[data-theme-toggle]")) return;
+    var order = ["light", "dark", "system"];
+    applyTheme(order[(order.indexOf(storedTheme()) + 1) % order.length]);
+  });
+
+  // ---- Mobile navigation ----------------------------------------------------
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-toggle-nav]")) { document.body.classList.toggle("nav-open"); return; }
     if (document.body.classList.contains("nav-open") && !e.target.closest(".sidebar")) {
       document.body.classList.remove("nav-open");
     }
   });
 
-  // Confirmation for irreversible or significant actions
+  // ---- Navigation progress bar ----------------------------------------------
+  var bar = document.querySelector(".nprogress");
+  function startProgress() { if (bar) { bar.classList.remove("on"); void bar.offsetWidth; bar.classList.add("on"); } }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest("a[href]");
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || a.target === "_blank" || a.hasAttribute("download")) return;
+    var href = a.getAttribute("href");
+    if (!href || href.charAt(0) === "#" || href.indexOf("mailto:") === 0 || /\/documents\/file\//.test(href) || /\.(ics|csv)(\?|$)/.test(href) || /export=csv/.test(href)) return;
+    startProgress();
+  });
+  window.addEventListener("pageshow", function () { if (bar) bar.classList.remove("on"); });
+
+  // ---- Forms: confirmation, progress ------------------------------------------
   document.addEventListener("submit", function (e) {
-    const msg = (e.submitter && e.submitter.getAttribute("data-confirm")) || e.target.getAttribute("data-confirm");
-    if (msg && !window.confirm(msg)) e.preventDefault();
+    var msg = (e.submitter && e.submitter.getAttribute("data-confirm")) || e.target.getAttribute("data-confirm");
+    if (msg && !window.confirm(msg)) { e.preventDefault(); return; }
+    if ((e.target.method || "").toLowerCase() === "post") startProgress();
   });
 
   // Column chooser: build ?cols= from checkboxes
   document.querySelectorAll("form[data-columns]").forEach(function (form) {
     form.addEventListener("submit", function () {
-      const keys = Array.from(form.querySelectorAll("input[name=col]:checked")).map(function (i) { return i.value; });
-      let hidden = form.querySelector("input[name=cols]");
+      var keys = Array.prototype.map.call(form.querySelectorAll("input[name=col]:checked"), function (i) { return i.value; });
+      var hidden = form.querySelector("input[name=cols]");
       if (!hidden) { hidden = document.createElement("input"); hidden.type = "hidden"; hidden.name = "cols"; form.appendChild(hidden); }
       hidden.value = keys.join(",");
       form.querySelectorAll("input[name=col]").forEach(function (i) { i.disabled = true; });
     });
   });
-
-  // Auto-submit filter selects
-  document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
-    el.addEventListener("change", function () { el.form.submit(); });
+  // Checkboxes for the column chooser live inside a dropdown but belong to another form.
+  document.querySelectorAll("input[name=col][form]").forEach(function (cb) {
+    var f = document.getElementById(cb.getAttribute("form"));
+    if (f && !f.hasAttribute("data-columns")) f.setAttribute("data-columns", "");
   });
 
-  // Deal board drag and drop (falls back to the stage form on each deal page)
-  const board = document.querySelector("[data-board]");
+  document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
+    el.addEventListener("change", function () { startProgress(); el.form.submit(); });
+  });
+
+  // Close open dropdowns on outside click / Escape
+  document.addEventListener("click", function (e) {
+    document.querySelectorAll("details.dropdown[open]").forEach(function (d) { if (!d.contains(e.target)) d.removeAttribute("open"); });
+  });
+
+  // ---- Clickable table rows (the first cell's link) ----------------------------
+  document.querySelectorAll("table.t tbody tr").forEach(function (tr) {
+    var first = tr.querySelector("td:first-child a[href]");
+    if (!first) return;
+    tr.setAttribute("data-href", first.getAttribute("href"));
+  });
+  document.addEventListener("click", function (e) {
+    var tr = e.target.closest("tr[data-href]");
+    if (!tr || e.target.closest("a, button, input, select, textarea, label, form, summary")) return;
+    if (window.getSelection && String(window.getSelection()).length) return;
+    var href = tr.getAttribute("data-href");
+    if (e.metaKey || e.ctrlKey) { window.open(href, "_blank"); return; }
+    startProgress();
+    window.location.href = href;
+  });
+
+  // ---- Auto-hide confirmations ------------------------------------------------
+  document.querySelectorAll(".notice[data-autohide]").forEach(function (n) {
+    setTimeout(function () {
+      n.classList.add("leaving");
+      setTimeout(function () { n.remove(); }, 400);
+    }, 5000);
+  });
+
+  // ---- Deal board drag and drop (stage form on each deal page is the fallback) -
+  var board = document.querySelector("[data-board]");
   if (board) {
-    let dragged = null;
+    var dragged = null;
     board.addEventListener("dragstart", function (e) {
       dragged = e.target.closest("[data-deal]");
+      if (!dragged) return;
       e.dataTransfer.effectAllowed = "move";
+      requestAnimationFrame(function () { dragged.classList.add("dragging"); });
     });
+    board.addEventListener("dragend", function () { if (dragged) dragged.classList.remove("dragging"); });
     board.querySelectorAll("[data-stage]").forEach(function (col) {
       col.addEventListener("dragover", function (e) { e.preventDefault(); col.classList.add("drop"); });
-      col.addEventListener("dragleave", function () { col.classList.remove("drop"); });
+      col.addEventListener("dragleave", function (e) { if (!col.contains(e.relatedTarget)) col.classList.remove("drop"); });
       col.addEventListener("drop", function (e) {
         e.preventDefault();
         col.classList.remove("drop");
         if (!dragged) return;
-        const stage = col.getAttribute("data-stage");
-        const needsReason = col.getAttribute("data-needs-reason") === "1";
-        let reason = "";
-        if (needsReason) {
+        var card = dragged;
+        var stage = col.getAttribute("data-stage");
+        var reason = "";
+        if (col.getAttribute("data-needs-reason") === "1") {
           reason = window.prompt("Reason for moving this deal to " + col.getAttribute("data-stage-name") + ":") || "";
           if (!reason) return;
         }
-        const body = new URLSearchParams({ stage: stage, reason: reason });
-        fetch(dragged.getAttribute("data-stage-url"), {
+        var from = card.parentNode, next = card.nextSibling;
+        var move = function () { col.appendChild(card); };
+        if (document.startViewTransition && !reduceMotion) {
+          card.style.viewTransitionName = "dragged-card";
+          document.startViewTransition(move).finished.finally(function () { card.style.viewTransitionName = ""; });
+        } else { move(); }
+        card.classList.remove("dragging");
+        card.classList.add("settle");
+        setTimeout(function () { card.classList.remove("settle"); }, 400);
+        fetch(card.getAttribute("data-stage-url"), {
           method: "POST",
           headers: { "X-CSRFToken": csrf(), "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "fetch" },
-          body: body.toString(),
+          body: new URLSearchParams({ stage: stage, reason: reason }).toString(),
         }).then(function (r) {
-          if (r.ok) { col.appendChild(dragged); return; }
+          if (r.ok) return;
+          from.insertBefore(card, next);  // revert
           return r.text().then(function (t) { window.alert(t || "Stage change was not allowed."); });
         });
       });
     });
   }
 
-  // Document viewer: jump to page and highlight supporting text
+  // ---- Document viewer: jump to page and highlight supporting text ------------
   document.querySelectorAll("[data-goto-page]").forEach(function (btn) {
     btn.addEventListener("click", function (e) {
       e.preventDefault();
-      const page = btn.getAttribute("data-goto-page");
-      const frame = document.querySelector("[data-viewer-frame]");
+      var page = btn.getAttribute("data-goto-page");
+      var frame = document.querySelector("[data-viewer-frame]");
       if (frame && frame.dataset.base) {
         // PDF viewers ignore a hash-only change; reload the frame at the new page.
         frame.src = "about:blank";
         setTimeout(function () { frame.src = frame.dataset.base + "#page=" + page; }, 30);
       }
-      const textUrl = btn.getAttribute("data-text-url");
-      const pane = document.querySelector("[data-page-text]");
+      var textUrl = btn.getAttribute("data-text-url");
+      var pane = document.querySelector("[data-page-text]");
       if (pane && textUrl) {
         fetch(textUrl).then(function (r) { return r.text(); }).then(function (html) {
           pane.innerHTML = html;
-          const m = pane.querySelector("mark");
-          if (m) m.scrollIntoView({ block: "center" });
+          var m = pane.querySelector("mark");
+          if (m) m.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
         });
       }
       document.querySelectorAll("[data-page-label]").forEach(function (el) { el.textContent = "Page " + page; });
     });
   });
+
+  // ---- Command palette (⌘K / Ctrl+K / "/") -----------------------------------
+  var palette = document.querySelector("[data-cmdk]");
+  if (palette) {
+    var input = palette.querySelector("[data-cmdk-input]");
+    var list = palette.querySelector("[data-cmdk-list]");
+    var icons = {};
+    var tpl = document.getElementById("cmdk-icons");
+    if (tpl) tpl.content.querySelectorAll("[data-i]").forEach(function (s) { icons[s.getAttribute("data-i")] = s.innerHTML; });
+    var searchUrl = JSON.parse(document.getElementById("cmdk-search-url").textContent);
+    var staticItems = [];
+    document.querySelectorAll(".sidebar .nav a").forEach(function (a) {
+      staticItems.push({ label: a.textContent.trim(), url: a.getAttribute("href"), group: "Navigate", svg: (a.querySelector("svg") || {}).outerHTML });
+    });
+    try { staticItems = staticItems.concat(JSON.parse(document.getElementById("cmdk-actions").textContent)); } catch (e) {}
+    var results = [], active = 0, remote = [], timer = null, seq = 0;
+
+    function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+    function score(item, q) {
+      var l = item.label.toLowerCase();
+      if (!q) return 1;
+      if (l.indexOf(q) === 0) return 3;
+      if (l.indexOf(q) > -1) return 2;
+      var i = 0;  // subsequence match ("ndl" → "New deal")
+      for (var c = 0; c < l.length && i < q.length; c++) if (l[c] === q[i]) i++;
+      return i === q.length ? 1 : 0;
+    }
+    function render() {
+      var q = input.value.trim().toLowerCase();
+      var local = staticItems.map(function (it) { return [score(it, q), it]; })
+        .filter(function (p) { return p[0] > 0; })
+        .sort(function (a, b) { return b[0] - a[0]; })
+        .map(function (p) { return p[1]; });
+      results = remote.concat(local);
+      if (q) results.push({ label: "Search everything for “" + input.value.trim() + "”", url: searchUrl + "?q=" + encodeURIComponent(input.value.trim()), group: "Search", icon: "search" });
+      if (active >= results.length) active = Math.max(0, results.length - 1);
+      var html = "", group = null;
+      results.forEach(function (it, i) {
+        if (it.group !== group) { group = it.group; html += '<div class="cmdk-group">' + esc(group) + "</div>"; }
+        var icon = it.svg || icons[it.icon] || icons.arrow || "";
+        html += '<div class="cmdk-item' + (i === active ? " active" : "") + '" role="option" data-i="' + i + '">' + icon +
+          "<span>" + esc(it.label) + "</span>" + (it.hint ? '<span class="hint">' + esc(it.hint) + "</span>" : "") + "</div>";
+      });
+      list.innerHTML = html || '<div class="empty">No matches</div>';
+      var el = list.querySelector(".cmdk-item.active");
+      if (el) el.scrollIntoView({ block: "nearest" });
+    }
+    function fetchRemote() {
+      var q = input.value.trim();
+      if (q.length < 2) { remote = []; render(); return; }
+      var mine = ++seq;
+      fetch(searchUrl + "quick/?q=" + encodeURIComponent(q), { headers: { "X-Requested-With": "fetch" } })
+        .then(function (r) { return r.ok ? r.json() : { results: [] }; })
+        .then(function (data) { if (mine === seq) { remote = data.results || []; render(); } });
+    }
+    function open() {
+      palette.hidden = false;
+      input.value = "";
+      remote = [];
+      active = 0;
+      render();
+      input.focus();
+    }
+    function close() { palette.hidden = true; }
+    function choose(i) {
+      var it = results[i];
+      if (!it) return;
+      close();
+      if (it.theme) { applyTheme(it.theme); return; }
+      startProgress();
+      window.location.href = it.url;
+    }
+    input.addEventListener("input", function () { active = 0; render(); clearTimeout(timer); timer = setTimeout(fetchRemote, 140); });
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") { e.preventDefault(); active = Math.min(active + 1, results.length - 1); render(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); active = Math.max(active - 1, 0); render(); }
+      else if (e.key === "Enter") { e.preventDefault(); choose(active); }
+      else if (e.key === "Escape") { close(); }
+    });
+    list.addEventListener("mousemove", function (e) {
+      var item = e.target.closest(".cmdk-item");
+      if (!item) return;
+      var i = +item.getAttribute("data-i");
+      if (i !== active) { active = i; list.querySelectorAll(".cmdk-item").forEach(function (n) { n.classList.toggle("active", +n.getAttribute("data-i") === i); }); }
+    });
+    list.addEventListener("click", function (e) { var item = e.target.closest(".cmdk-item"); if (item) choose(+item.getAttribute("data-i")); });
+    palette.addEventListener("click", function (e) { if (e.target === palette) close(); });
+    document.addEventListener("click", function (e) { if (e.target.closest("[data-cmdk-open]")) open(); });
+    document.addEventListener("keydown", function (e) {
+      var typing = /input|textarea|select/i.test((document.activeElement || {}).tagName || "") || (document.activeElement || {}).isContentEditable;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); palette.hidden ? open() : close(); }
+      else if (e.key === "/" && !typing && palette.hidden) { e.preventDefault(); open(); }
+      else if (e.key === "Escape") {
+        if (!palette.hidden) close();
+        document.querySelectorAll("details.dropdown[open]").forEach(function (d) { d.removeAttribute("open"); });
+      }
+    });
+  }
 })();

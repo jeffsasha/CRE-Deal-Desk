@@ -26,15 +26,15 @@
 </div>
 {% if unverified_count %}<div class="notice notice-warn">{% icon "alert" %}<div>{{ unverified_count }} recorded fact{{ unverified_count|pluralize }} {{ unverified_count|pluralize:"is,are" }} not verified. Unverified and marketing statements are labeled as such.</div></div>{% endif %}
 <nav class="tabs">
-  <a class="{% if tab == 'overview' %}on{% endif %}" href="?tab=overview">Overview</a>
-  <a class="{% if tab == 'facts' %}on{% endif %}" href="?tab=facts">Facts & verification<span class="count">{{ facts|length }}</span></a>
-  <a class="{% if tab == 'parcels' %}on{% endif %}" href="?tab=parcels">Parcels<span class="count">{{ parcels|length }}</span></a>
-  <a class="{% if tab == 'spaces' %}on{% endif %}" href="?tab=spaces">Spaces<span class="count">{{ spaces|length }}</span></a>
-  <a class="{% if tab == 'rent' %}on{% endif %}" href="?tab=rent">Tenants & rent roll<span class="count">{{ rent_roll|length }}</span></a>
-  <a class="{% if tab == 'pricing' %}on{% endif %}" href="?tab=pricing">Pricing & charges</a>
-  <a class="{% if tab == 'documents' %}on{% endif %}" href="?tab=documents">Documents<span class="count">{{ documents|length }}</span></a>
-  <a class="{% if tab == 'issues' %}on{% endif %}" href="?tab=issues">Issues<span class="count">{{ issues|length }}</span></a>
-  <a class="{% if tab == 'activity' %}on{% endif %}" href="?tab=activity">Activity</a>
+  <a class="{% if tab == 'overview' %}on{% endif %}" href="?tab=overview">{% if tab == 'overview' %}<span class="tab-ind"></span>{% endif %}Overview</a>
+  <a class="{% if tab == 'facts' %}on{% endif %}" href="?tab=facts">{% if tab == 'facts' %}<span class="tab-ind"></span>{% endif %}Facts & verification<span class="count">{{ facts|length }}</span></a>
+  <a class="{% if tab == 'parcels' %}on{% endif %}" href="?tab=parcels">{% if tab == 'parcels' %}<span class="tab-ind"></span>{% endif %}Parcels<span class="count">{{ parcels|length }}</span></a>
+  <a class="{% if tab == 'spaces' %}on{% endif %}" href="?tab=spaces">{% if tab == 'spaces' %}<span class="tab-ind"></span>{% endif %}Spaces<span class="count">{{ spaces|length }}</span></a>
+  <a class="{% if tab == 'rent' %}on{% endif %}" href="?tab=rent">{% if tab == 'rent' %}<span class="tab-ind"></span>{% endif %}Tenants & rent roll<span class="count">{{ rent_roll|length }}</span></a>
+  <a class="{% if tab == 'pricing' %}on{% endif %}" href="?tab=pricing">{% if tab == 'pricing' %}<span class="tab-ind"></span>{% endif %}Pricing & charges</a>
+  <a class="{% if tab == 'documents' %}on{% endif %}" href="?tab=documents">{% if tab == 'documents' %}<span class="tab-ind"></span>{% endif %}Documents<span class="count">{{ documents|length }}</span></a>
+  <a class="{% if tab == 'issues' %}on{% endif %}" href="?tab=issues">{% if tab == 'issues' %}<span class="tab-ind"></span>{% endif %}Issues<span class="count">{{ issues|length }}</span></a>
+  <a class="{% if tab == 'activity' %}on{% endif %}" href="?tab=activity">{% if tab == 'activity' %}<span class="tab-ind"></span>{% endif %}Activity</a>
 </nav>
 
 {% if tab == 'overview' %}

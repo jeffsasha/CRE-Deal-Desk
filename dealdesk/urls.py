@@ -17,6 +17,7 @@ urlpatterns = [
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("", core.dashboard, name="dashboard"),
     path("search/", core.search, name="search"),
+    path("search/quick/", core.quick_search, name="quick_search"),
     path("notifications/", core.notifications, name="notifications"),
     path("notifications/<int:pk>/read/", core.notification_read, name="notification_read"),
     path("views/save/", core.save_view, name="save_view"),

@@ -4,8 +4,19 @@
     {
       "name": "dealdesk-demo",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "DEALDESK_DEMO=1 .venv/bin/python manage.py runserver 127.0.0.1:8017 --noreload"],
+      "runtimeArgs": [
+        "-c",
+        "DEALDESK_DEMO=1 .venv/bin/python manage.py runserver 127.0.0.1:8017 --noreload"
+      ],
       "port": 8017
+    },
+    {
+      "name": "dealdesk-local",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "scripts/run_local.sh"
+      ],
+      "port": 8020
     }
   ]
 }

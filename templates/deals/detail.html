@@ -39,6 +39,6 @@
 {% for a in pending_amendments %}<div class="notice notice-warn">{% icon "alert" %}<div>Amendment pending — <a href="{{ a.get_absolute_url }}">{{ a.title }}</a>. Not effective; no terms or dates have changed.</div></div>{% endfor %}
 {% if requested_credits %}<div class="notice notice-info">{% icon "alert" %}<div>{% for i in requested_credits %}Requested credit {{ i.requested_credit_cents|money }} (<a href="{{ i.get_absolute_url }}">{{ i.title }}</a>) — {{ i.get_resolution_status_display|lower }}. {% endfor %}The executed contract price is unchanged.</div></div>{% endif %}
 
-<nav class="tabs">{% for key, label in tabs %}<a class="{% if tab == key %}on{% endif %}" href="?tab={{ key }}">{{ label }}{% if key == 'checklist' and open_item_count %}<span class="count">{{ open_item_count }}</span>{% elif key == 'issues' and open_issues %}<span class="count">{{ open_issues|length }}</span>{% elif key == 'documents' %}<span class="count">{{ documents|length }}</span>{% endif %}</a>{% endfor %}</nav>
+<nav class="tabs">{% for key, label in tabs %}<a class="{% if tab == key %}on{% endif %}" href="?tab={{ key }}">{% if tab == key %}<span class="tab-ind"></span>{% endif %}{{ label }}{% if key == 'checklist' and open_item_count %}<span class="count">{{ open_item_count }}</span>{% elif key == 'issues' and open_issues %}<span class="count">{{ open_issues|length }}</span>{% elif key == 'documents' %}<span class="count">{{ documents|length }}</span>{% endif %}</a>{% endfor %}</nav>
 {% include "deals/tabs/"|add:tab|add:".html" %}
 {% endblock %}
