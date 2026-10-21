@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Requirements checklist{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
+<div class="page-head"><div><h1>Requirements checklist</h1><div class="sub">Maintained in REQUIREMENTS.md in the repository so later stages do not silently disappear.</div></div></div>
+<div class="card"><div class="card-body"><pre style="white-space:pre-wrap;font-family:var(--font);font-size:13px;margin:0">{{ text }}</pre></div></div>
+{% endblock %}

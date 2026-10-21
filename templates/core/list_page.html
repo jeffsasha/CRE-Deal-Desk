@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ title }}</h1>{% if subtitle %}<div class="sub">{{ subtitle }}</div>{% endif %}</div>
+<div class="actions">{% for label, url in actions %}<a class="btn {% if forloop.last %}btn-primary{% endif %}" href="{{ url }}">{{ label }}</a>{% endfor %}</div></div>
+{% include "partials/listing.html" %}
+{% endblock %}

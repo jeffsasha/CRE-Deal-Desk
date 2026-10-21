@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Stages{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
+<div class="page-head"><div><h1>Deal stages</h1><div class="sub">Configurable. Each stage belongs to a category used by reports (Active, Closed, On hold, Terminated, Lost, Archived).</div></div>{% if can.settings_manage %}<a class="btn btn-primary" href="{% url 'stage_create' %}">New stage</a>{% endif %}</div>
+<div class="card"><div class="card-body flush"><table class="t">
+<thead><tr><th>Order</th><th>Stage</th><th>Category</th><th>Contract stage</th><th>Enabled</th></tr></thead>
+<tbody>{% for s in stages %}<tr><td>{{ s.order }}</td><td>{% if can.settings_manage %}<a href="{% url 'stage_edit' s.pk %}">{{ s.name }}</a>{% else %}{{ s.name }}{% endif %}</td><td>{{ s.get_category_display }}</td><td>{% if s.is_contract_stage %}Yes{% endif %}</td><td>{% if s.enabled %}Yes{% else %}No{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endblock %}

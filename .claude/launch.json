@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dealdesk-demo",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "DEALDESK_DEMO=1 .venv/bin/python manage.py runserver 127.0.0.1:8017 --noreload"],
+      "port": 8017
+    }
+  ]
+}

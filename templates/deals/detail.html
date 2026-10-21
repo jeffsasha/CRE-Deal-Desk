@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ deal.name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'deal_list' %}">Deals</a> / {{ deal.internal_id }}</div>
+<div class="deal-head">
+  <div>
+    <h1>{{ deal.name }}{% if deal.archived_at %} {% pill "archived" "Archived" %}{% endif %}</h1>
+    <div class="meta">
+      {% pill deal.stage.category deal.stage.name %}
+      <span>{{ deal.internal_id }}</span>·<span>{{ deal.get_transaction_type_display }}</span>
+      {% for r in deal.representations.all %}·<span>{% if r.is_skw %}SKW represents {{ r.get_side_display|lower }}{% else %}{{ r.get_side_display }}: {{ r.brokerage|default:r.broker_name|default:"other / unrepresented" }}{% endif %}</span>{% empty %}·<span class="muted">Representation not recorded</span>{% endfor %}
+      {% if deal.priority == 'high' or deal.priority == 'critical' %}{% pill deal.priority deal.get_priority_display %}{% endif %}
+      {% if deal.is_blocked %}{% pill "blocked" "Blocked" %}{% endif %}
+    </div>
+  </div>
+  <div class="actions">
+    {% if can.edit %}
+    <form method="post" action="{% url 'deal_stage' deal.pk %}" class="inline-form">{% csrf_token %}
+      <select name="stage" aria-label="Stage">{% for s in stage_form.fields.stage.queryset %}<option value="{{ s.key }}" {% if s == deal.stage %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+      <input name="reason" placeholder="Reason (required for Terminated/Lost)" style="width:230px">
+      <button class="btn">Change stage</button>
+    </form>
+    <a class="btn" href="{% url 'document_upload' %}?deal={{ deal.pk }}">{% icon "upload" %}Upload</a>
+    <a class="btn" href="{% url 'deal_edit' deal.pk %}">Edit</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="facts">
+  <div><div class="k">{% if deal.is_lease %}Lease consideration{% else %}Executed contract price{% endif %}</div><div class="v">{% if deal.is_lease %}{{ deal.lease_total_consideration_cents|money0 }}{% else %}{{ deal.executed_contract_price_cents|money:"Not approved" }}{% endif %}</div></div>
+  <div><div class="k">Effective date</div><div class="v">{% if deal.effective_date %}{{ deal.effective_date|d }}{% else %}<span class="muted" style="font-weight:500">Not confirmed</span>{% endif %}</div></div>
+  <div><div class="k">Contract closing date</div><div class="v">{% if deal.contractual_closing_date %}{{ deal.contractual_closing_date|d }}{% else %}<span class="muted" style="font-weight:500">—</span>{% endif %}</div></div>
+  <div><div class="k">Internal target</div><div class="v">{{ deal.target_closing_date|d }}</div></div>
+  <div><div class="k">{% if deal.is_closed %}Actual closing{% else %}Next action{% endif %}</div><div class="v" style="font-weight:{% if deal.is_closed %}600{% else %}500{% endif %}">{% if deal.is_closed %}{{ deal.actual_closing_date|d }}{% else %}{{ deal.next_action|default:"—"|truncatechars:48 }}{% if deal.next_action_owner %}<br><small class="muted">{{ deal.next_action_owner }}{% if deal.next_action_due %} · {{ deal.next_action_due|dshort }}{% endif %}</small>{% endif %}{% endif %}</div></div>
+  <div><div class="k">Responsible broker</div><div class="v" style="font-weight:500">{{ deal.responsible_broker|default:"—" }}</div></div>
+</div>
+
+{% if deal.is_blocked %}<div class="notice notice-error">{% icon "alert" %}<div><strong>Blocked by {{ deal.blocked_by }}.</strong> {{ deal.blocker_description }}</div></div>{% endif %}
+{% for a in pending_amendments %}<div class="notice notice-warn">{% icon "alert" %}<div>Amendment pending — <a href="{{ a.get_absolute_url }}">{{ a.title }}</a>. Not effective; no terms or dates have changed.</div></div>{% endfor %}
+{% if requested_credits %}<div class="notice notice-info">{% icon "alert" %}<div>{% for i in requested_credits %}Requested credit {{ i.requested_credit_cents|money }} (<a href="{{ i.get_absolute_url }}">{{ i.title }}</a>) — {{ i.get_resolution_status_display|lower }}. {% endfor %}The executed contract price is unchanged.</div></div>{% endif %}
+
+<nav class="tabs">{% for key, label in tabs %}<a class="{% if tab == key %}on{% endif %}" href="?tab={{ key }}">{{ label }}{% if key == 'checklist' and open_item_count %}<span class="count">{{ open_item_count }}</span>{% elif key == 'issues' and open_issues %}<span class="count">{{ open_issues|length }}</span>{% elif key == 'documents' %}<span class="count">{{ documents|length }}</span>{% endif %}</a>{% endfor %}</nav>
+{% include "deals/tabs/"|add:tab|add:".html" %}
+{% endblock %}

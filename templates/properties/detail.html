@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'property_list' %}">Properties</a> / {{ p.name }}</div>
+<div class="deal-head">
+  <div>
+    <h1>{{ p.name }}{% if p.archived_at %} {% pill "archived" "Archived" %}{% endif %}</h1>
+    <div class="meta">{{ p.address }} · {{ p.get_property_type_display }}{% if p.county %} · {{ p.county }} County{% endif %}</div>
+  </div>
+  <div class="actions">
+    {% if can.edit %}
+      <a class="btn" href="{% url 'deal_create' %}?property={{ p.pk }}">{% icon "plus" %}New deal on this property</a>
+      <a class="btn" href="{% url 'document_upload' %}?property={{ p.pk }}">{% icon "upload" %}Upload</a>
+      <a class="btn" href="{% url 'property_edit' p.pk %}">Edit</a>
+      {% if not p.archived_at %}<a class="btn btn-danger" href="{% url 'property_archive' p.pk %}">Archive</a>{% endif %}
+    {% endif %}
+  </div>
+</div>
+<div class="facts">
+  <div><div class="k">Building area</div><div class="v">{{ p.building_area_sf|sf }}</div></div>
+  <div><div class="k">Land area</div><div class="v">{% if p.land_area_sf %}{{ p.land_area_sf|sf }}{% elif p.land_area_acres %}{{ p.land_area_acres }} ac{% else %}—{% endif %}</div></div>
+  <div><div class="k">Available</div><div class="v">{{ p.available_area_sf|sf }}</div></div>
+  <div><div class="k">Owner / vesting</div><div class="v">{{ p.ownership_entity|default:p.owner|default:"—" }}</div></div>
+  <div><div class="k">Size source</div><div class="v" style="font-weight:500">{{ p.size_source|default:"Not recorded" }}{% if p.size_verified_on %}<br><small class="muted">verified {{ p.size_verified_on|d }}</small>{% endif %}</div></div>
+  <div><div class="k">Deals</div><div class="v">{{ deal_links|length }}</div></div>
+</div>
+{% if unverified_count %}<div class="notice notice-warn">{% icon "alert" %}<div>{{ unverified_count }} recorded fact{{ unverified_count|pluralize }} {{ unverified_count|pluralize:"is,are" }} not verified. Unverified and marketing statements are labeled as such.</div></div>{% endif %}
+<nav class="tabs">
+  <a class="{% if tab == 'overview' %}on{% endif %}" href="?tab=overview">Overview</a>
+  <a class="{% if tab == 'facts' %}on{% endif %}" href="?tab=facts">Facts & verification<span class="count">{{ facts|length }}</span></a>
+  <a class="{% if tab == 'parcels' %}on{% endif %}" href="?tab=parcels">Parcels<span class="count">{{ parcels|length }}</span></a>
+  <a class="{% if tab == 'spaces' %}on{% endif %}" href="?tab=spaces">Spaces<span class="count">{{ spaces|length }}</span></a>
+  <a class="{% if tab == 'rent' %}on{% endif %}" href="?tab=rent">Tenants & rent roll<span class="count">{{ rent_roll|length }}</span></a>
+  <a class="{% if tab == 'pricing' %}on{% endif %}" href="?tab=pricing">Pricing & charges</a>
+  <a class="{% if tab == 'documents' %}on{% endif %}" href="?tab=documents">Documents<span class="count">{{ documents|length }}</span></a>
+  <a class="{% if tab == 'issues' %}on{% endif %}" href="?tab=issues">Issues<span class="count">{{ issues|length }}</span></a>
+  <a class="{% if tab == 'activity' %}on{% endif %}" href="?tab=activity">Activity</a>
+</nav>
+
+{% if tab == 'overview' %}
+<div class="split">
+  <div class="card"><div class="card-head"><h2>Deal history</h2><small class="muted">All deals, including terminated, lost and closed</small></div>
+    <div class="card-body flush table-wrap"><table class="t">
+      <thead><tr><th>Deal</th><th>Type</th><th>Stage</th><th>Suite</th><th class="num">Closing</th><th class="num">Consideration</th></tr></thead>
+      <tbody>{% for l in deal_links %}<tr class="{% if l.deal.stage.category == 'terminated' or l.deal.stage.category == 'lost' %}row-muted{% endif %}">
+        <td><a href="{{ l.deal.get_absolute_url }}">{{ l.deal.internal_id }} {{ l.deal.name }}</a>{% if l.deal.termination_reason %}<br><small class="muted">{{ l.deal.termination_reason|truncatechars:90 }}</small>{% endif %}</td>
+        <td>{{ l.deal.get_transaction_type_display }}</td><td>{% pill l.deal.stage.category l.deal.stage.name %}</td><td>{{ l.space.suite|default:"—" }}</td>
+        <td class="num">{{ l.deal.actual_closing_date|d }}</td>
+        <td class="num">{% if l.deal.is_closed %}{{ l.deal.actual_closing_price_cents|money0 }}{% if l.allocated_price_cents is not None %}<br><small class="muted">allocated here {{ l.allocated_price_cents|money0 }}</small>{% endif %}{% else %}—{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="6"><div class="empty">No deals yet.</div></td></tr>{% endfor %}</tbody>
+    </table></div></div>
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Key details</h2></div><div class="card-body"><table class="kv">
+      <tr><th>Units</th><td>{{ p.units|default:"—" }}</td></tr>
+      <tr><th>Occupancy</th><td>{{ p.occupancy_percent|pct }}</td></tr>
+      <tr><th>Owner (company)</th><td>{% if p.owner %}<a href="{{ p.owner.get_absolute_url }}">{{ p.owner }}</a>{% else %}—{% endif %}</td></tr>
+      <tr><th>Legal description</th><td>{{ p.legal_description|default:"—"|linebreaksbr }}</td></tr>
+      <tr><th>Current asking</th><td>{% for a in asking|slice:":2" %}{{ a.get_kind_display }}: {{ a.amount|rate:a.unit }} <small class="muted">since {{ a.effective_date|d }}</small><br>{% empty %}—{% endfor %}</td></tr>
+    </table>{% if p.notes %}<hr><div class="text-2" style="white-space:pre-wrap">{{ p.notes }}</div>{% endif %}</div></div>
+    <div class="card"><div class="card-head"><h2>Open issues</h2></div><div class="card-body flush"><table class="t"><tbody>
+      {% for i in issues %}{% if i.is_open %}<tr><td><a href="{{ i.get_absolute_url }}">{{ i.title }}</a></td><td>{% pill i.severity i.get_severity_display %}</td></tr>{% endif %}{% empty %}<tr><td><div class="empty">None.</div></td></tr>{% endfor %}
+    </tbody></table></div></div>
+  </div>
+</div>
+
+{% elif tab == 'facts' %}
+<div class="actions" style="margin-bottom:10px">{% if can.edit %}<a class="btn btn-primary" href="{% url 'property_sub' p.pk 'fact' %}">Add fact</a>{% endif %}</div>
+{% for group, items in fact_groups.items %}
+<div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ group }}</h2></div><div class="card-body flush table-wrap"><table class="t">
+<thead><tr><th>Fact</th><th>Value</th><th>Verification</th><th>Source</th><th>Last verified</th><th></th></tr></thead>
+<tbody>{% for f in items %}<tr><td>{{ f.label }}{% if f.space %}<br><small class="muted">Suite {{ f.space.suite }}</small>{% endif %}</td>
+<td>{{ f.value }} {{ f.unit }}</td><td>{% pill f.verification f.get_verification_display %}</td>
+<td>{{ f.source|default:"—" }}{% if f.source_document %}<br><a href="{{ f.source_document.get_absolute_url }}"><small>{{ f.source_document }}</small></a>{% endif %}</td>
+<td class="nowrap">{% if f.verified_on %}{{ f.verified_on|d }}{% if f.verified_by %}<br><small class="muted">{{ f.verified_by }}</small>{% endif %}{% else %}—{% endif %}</td>
+<td>{% if can.edit %}<a class="btn btn-sm" href="{% url 'property_sub_edit' p.pk 'fact' f.pk %}">Edit</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% empty %}<div class="card"><div class="empty">No facts recorded. Add zoning/use, flood, industrial, or restaurant/retail facts with their sources.</div></div>{% endfor %}
+
+{% elif tab == 'parcels' %}
+{% include "properties/_simple_table.html" with kind="parcel" rows=parcels headers="Parcel / account,County,Land SF,Legal description" %}
+{% elif tab == 'spaces' %}
+{% include "properties/_simple_table.html" with kind="space" rows=spaces headers="Suite,Area,Status,Condition" %}
+{% elif tab == 'rent' %}
+{% include "properties/_simple_table.html" with kind="rentroll" rows=rent_roll headers="Tenant,Suite,Lease start,Expiration,Rent,As of / source" %}
+{% elif tab == 'pricing' %}
+<div class="grid grid-2">
+{% include "properties/_simple_table.html" with kind="asking" rows=asking headers="Type,Amount,Effective,Source" %}
+{% include "properties/_simple_table.html" with kind="charge" rows=charges headers="Charge,Amount,Estimate,Verification,Source" %}
+</div>
+{% elif tab == 'documents' %}
+<div class="card"><div class="card-head"><h2>Documents</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'document_upload' %}?property={{ p.pk }}">Upload</a>{% endif %}</div><div class="card-body flush"><table class="t">
+<thead><tr><th>Document</th><th>Category</th><th>Type</th><th>Updated</th></tr></thead>
+<tbody>{% for l in documents %}<tr><td><a href="{{ l.document.get_absolute_url }}">{{ l.document.title }}</a>{% if l.document.access_level == 'confidential' %} {% icon "lock" %}{% endif %}</td><td>{{ l.document.get_category_display }}</td><td>{{ l.document.get_doc_type_display }}</td><td>{{ l.document.updated_at|d }}</td></tr>
+{% empty %}<tr><td colspan="4"><div class="empty">No documents linked.</div></td></tr>{% endfor %}</tbody></table></div></div>
+{% elif tab == 'issues' %}
+<div class="card"><div class="card-head"><h2>Issues</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'issue_create' %}?property={{ p.pk }}">Record issue</a>{% endif %}</div><div class="card-body flush"><table class="t">
+<thead><tr><th>Issue</th><th>Deal</th><th>Severity</th><th>Status</th><th>Disclosure</th></tr></thead>
+<tbody>{% for i in issues %}<tr><td><a href="{{ i.get_absolute_url }}">{{ i.title }}</a></td><td>{{ i.deal.internal_id|default:"—" }}</td><td>{% pill i.severity i.get_severity_display %}</td><td>{{ i.get_status_display }}</td><td>{{ i.get_disclosure_finding_display }}</td></tr>
+{% empty %}<tr><td colspan="5"><div class="empty">No issues.</div></td></tr>{% endfor %}</tbody></table></div></div>
+{% elif tab == 'activity' %}
+<div class="card"><div class="card-body"><ul class="timeline">{% for a in activities %}<li><div class="when">{{ a.occurred_at|d }}</div><div><strong>{{ a.summary }}</strong>{% if a.deal %} <small class="muted">{{ a.deal.internal_id }}</small>{% endif %}{% if a.body %}<div class="body">{{ a.body }}</div>{% endif %}</div></li>{% empty %}<li><div class="empty">No activity.</div></li>{% endfor %}</ul></div></div>
+{% endif %}
+{% endblock %}

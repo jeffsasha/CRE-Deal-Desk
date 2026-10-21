@@ -1,0 +1,48 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}DealDesk{% endblock %} · SKW DealDesk</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231f4e8c'/><text x='16' y='21' font-size='13' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>DD</text></svg>">
+</head>
+<body>
+{% if DEMO_MODE %}<div class="demo-banner">DEMO MODE — fictional sample data in an isolated database. Nothing here is SKW transaction history.</div>{% endif %}
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">DD</div>
+      <div><div class="brand-name">SKW DealDesk</div><div class="brand-sub">{{ FIRM_NAME }}</div></div>
+    </div>
+    <nav class="nav">
+      {% for name, label in nav_items %}
+        {% url name as nav_url %}
+        <a href="{{ nav_url }}" class="{% if request.path == nav_url or nav_url != '/' and nav_url in request.path %}active{% endif %}">{% icon name %}{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-foot">
+      Signed in as <strong>{{ user.display_name }}</strong><br>{{ user.get_role_display }}
+      <form method="post" action="{% url 'logout' %}" style="margin-top:6px">{% csrf_token %}<button class="btn btn-sm">Sign out</button></form>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn btn-ghost menu-toggle" data-toggle-nav aria-label="Menu">{% icon "menu" %}</button>
+      <form class="search" action="{% url 'search' %}" method="get" role="search">
+        {% icon "search" %}<input type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search deals, properties, contacts, documents…" aria-label="Search">
+      </form>
+      <div class="spacer"></div>
+      <a class="icon-btn" href="{% url 'notifications' %}" aria-label="Notifications">{% icon "bell" %}{% if unread_notifications %}<span class="badge-dot">{{ unread_notifications }}</span>{% endif %}</a>
+      <span class="user-chip">{{ user.display_name }}</span>
+    </header>
+    <main class="content">
+      {% if messages %}<div class="messages">{% for m in messages %}<div class="notice notice-{% if m.tags == 'error' %}error{% elif m.tags == 'warning' %}warn{% elif m.tags == 'success' %}success{% else %}info{% endif %}">{{ m }}</div>{% endfor %}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

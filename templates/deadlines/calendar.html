@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ first|date:"F Y" }}</h1><div class="sub">Computed deadlines. Internal targets are labeled; contractual dates are not adjusted for weekends unless a rule says so.</div></div>
+<div class="actions"><a class="btn btn-sm" href="?y={{ prev.year }}&m={{ prev.month }}">←</a><a class="btn btn-sm" href="?">Today</a><a class="btn btn-sm" href="?y={{ next.year }}&m={{ next.month }}">→</a>
+<div class="segmented"><a href="{% url 'deadline_list' %}">List</a><a class="on" href="{% url 'deadline_calendar' %}">Month</a></div></div></div>
+<div class="card"><div class="cal">
+  <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+  {% for week in weeks %}{% for day in week %}
+    <div class="day {% if day.other %}other{% endif %} {% if day.date == today %}today{% endif %} {% if day.date.weekday >= 5 %}weekend{% endif %}">
+      <span class="n">{{ day.date.day }}</span>
+      {% for d in day.items %}<a class="ev pill-{% if d.state != 'open' %}gray{% elif d.is_overdue %}red{% elif not d.is_contractual %}violet{% else %}blue{% endif %}" href="{{ d.get_absolute_url }}" title="{{ d.name }} — {{ d.deal.name }}">{{ d.name }} · {{ d.deal.name }}</a>{% endfor %}
+    </div>
+  {% endfor %}{% endfor %}
+</div></div>
+{% if awaiting %}<div class="card" style="margin-top:14px"><div class="card-head"><h2>Not on the calendar — awaiting a trigger or needing review</h2></div><div class="card-body flush"><table class="t"><tbody>
+{% for d in awaiting %}<tr><td><a href="{{ d.get_absolute_url }}">{{ d.name }}</a></td><td>{{ d.deal.name }}</td><td>{% pill d.computation d.get_computation_display %}</td><td><small class="muted">{{ d.computation_note|truncatechars:120 }}</small></td></tr>{% endfor %}
+</tbody></table></div></div>{% endif %}
+{% endblock %}

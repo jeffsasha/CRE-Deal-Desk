@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Reminder delivery{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Reminder delivery</h1><div class="sub">Every scheduled, delivered, failed and cancelled reminder. Superseded reminders are kept as history.</div></div></div>
+{% if failed %}
+<div class="notice notice-error">{% icon "alert" %}<div><strong>{{ failed|length }} reminder{{ failed|length|pluralize }} failed to deliver.</strong> The underlying deadlines are unaffected. Retry after fixing the cause (for email, configure SMTP).
+  <div style="margin-top:6px">{% for r in failed %}<form method="post" class="inline-form" style="margin:2px 6px 2px 0">{% csrf_token %}<input type="hidden" name="reminder" value="{{ r.pk }}"><button class="btn btn-sm">Retry #{{ r.pk }} ({{ r.get_channel_display }})</button></form>{% endfor %}</div></div></div>
+{% endif %}
+{% include "partials/listing.html" %}
+{% endblock %}

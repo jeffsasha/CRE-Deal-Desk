@@ -1,0 +1,608 @@
+from datetime import timedelta
+
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.html import format_html
+from django.views.decorators.http import require_POST
+
+from checklists.models import CONDITIONS, ChecklistTemplate
+from checklists.services import apply_template, template_for
+from core.audit import audit, diff, snapshot
+from core.listing import Column, Filter, Listing
+from core.models import User
+from core.money import format_cents
+from core.permissions import has_perm, require, require_edit_on_post, require_perm
+from documents.models import DocumentLink
+
+from . import drafts as draft_templates
+from . import services
+from .catalog import TERM_CATALOG, TERM_CATEGORY_ORDER, event_label
+from .forms import (
+    ActivityForm,
+    CloseDealForm,
+    DealCreateForm,
+    DealForm,
+    DealLinkForm,
+    DepositForm,
+    DraftForm,
+    EventForm,
+    IssueForm,
+    IssueStatementForm,
+    ManualTermForm,
+    PartyForm,
+    PriceEventForm,
+    RepresentationForm,
+    StageChangeForm,
+)
+from .models import (
+    PRIORITIES,
+    TRANSACTION_TYPES,
+    CommunicationDraft,
+    Deal,
+    DealEvent,
+    DealLink,
+    DealParty,
+    Deposit,
+    Issue,
+    PriceEvent,
+    Representation,
+    Stage,
+    log_activity,
+)
+
+TRACKED = ["name", "transaction_type", "priority", "responsible_broker", "target_closing_date", "financing_status",
+           "is_blocked", "blocked_by", "next_action", "lease_total_consideration_cents"]
+
+
+def _deal_columns():
+    return [
+        Column("name", "Deal", lambda d: d.name, sort="name"),
+        Column("id", "ID", lambda d: d.internal_id, sort="internal_id"),
+        Column("type", "Type", lambda d: d.get_transaction_type_display(), sort="transaction_type"),
+        Column("stage", "Stage", lambda d: format_html('<span class="pill pill-{}">{}</span>',
+                                                       {"active": "blue", "closed": "green", "on_hold": "amber",
+                                                        "terminated": "red"}.get(d.stage.category, "gray"), d.stage.name),
+               sort="stage__order"),
+        Column("property", "Property", lambda d: d.primary_property or "—"),
+        Column("client", "Client", lambda d: d.client or "—", sort="client__name", default=False),
+        Column("broker", "Broker", lambda d: d.responsible_broker or "—", sort="responsible_broker__first_name"),
+        Column("priority", "Priority", lambda d: d.get_priority_display(), sort="priority", default=False),
+        Column("next", "Next action", lambda d: d.next_action or "—"),
+        Column("blocked", "Blocked by", lambda d: d.blocked_by if d.is_blocked else "", default=False),
+        Column("closing", "Closing", lambda d: _closing_label(d), sort="contractual_closing_date"),
+        Column("price", "Price / consideration", lambda d: _price_label(d), cls="num", default=False),
+        Column("updated", "Updated", lambda d: timezone.localtime(d.updated_at).strftime("%b %-d"), sort="updated_at", default=False),
+    ]
+
+
+def _closing_label(d):
+    if d.actual_closing_date:
+        return f"Closed {d.actual_closing_date:%b %-d, %Y}"
+    if d.contractual_closing_date:
+        return f"{d.contractual_closing_date:%b %-d, %Y} (contract)"
+    if d.target_closing_date:
+        return f"{d.target_closing_date:%b %-d, %Y} (target)"
+    return "—"
+
+
+def _price_label(d):
+    if d.is_lease:
+        return format_cents(d.lease_total_consideration_cents, unknown="—") + " lease"
+    if d.actual_closing_price_cents is not None:
+        return format_cents(d.actual_closing_price_cents, show_cents=False)
+    if d.executed_contract_price_cents is not None:
+        return format_cents(d.executed_contract_price_cents, show_cents=False) + " contract"
+    return "—"
+
+
+def _deal_filters():
+    stages = [(s.key, s.name) for s in Stage.objects.filter(enabled=True)]
+    brokers = [(str(u.pk), u.display_name) for u in User.objects.exclude(role="read_only")]
+    today = timezone.localdate()
+    return [
+        Filter("stage", "Stage", stages + [("_active", "All active"), ("_inactive", "All inactive")],
+               lambda qs, v: qs.filter(stage__category="active") if v == "_active" else (
+                   qs.exclude(stage__category="active") if v == "_inactive" else qs.filter(stage__key=v))),
+        Filter("type", "Type", TRANSACTION_TYPES, lambda qs, v: qs.filter(transaction_type=v)),
+        Filter("broker", "Broker", brokers, lambda qs, v: qs.filter(Q(responsible_broker_id=v) | Q(team__id=v))),
+        Filter("priority", "Priority", PRIORITIES, lambda qs, v: qs.filter(priority=v)),
+        Filter("blocked", "Blocked", [("1", "Blocked by another party")], lambda qs, v: qs.filter(is_blocked=True)),
+        Filter("closing", "Closing", [("30", "Closing within 30 days"), ("90", "Closing within 90 days")],
+               lambda qs, v: qs.filter(stage__category="active").filter(
+                   Q(contractual_closing_date__gte=today, contractual_closing_date__lte=today + timedelta(days=int(v)))
+                   | Q(contractual_closing_date__isnull=True, target_closing_date__gte=today,
+                       target_closing_date__lte=today + timedelta(days=int(v))))),
+    ]
+
+
+@require_perm("view")
+def deal_list(request):
+    qs = Deal.objects.active().select_related("stage", "client", "responsible_broker")
+    listing = Listing(request, qs, _deal_columns(), area="deals",
+                      search_fields=["name", "internal_id", "description", "deal_properties__property__name",
+                                     "deal_properties__property__street", "client__name"],
+                      filters=_deal_filters(), default_sort="-updated_at")
+    if request.GET.get("export") == "csv":
+        return listing.export_csv("deals")
+    return render(request, "deals/list.html", {"listing": listing, "view": "table"})
+
+
+@require_perm("view")
+def deal_board(request):
+    stages = list(Stage.objects.filter(enabled=True, category__in=["active", "on_hold", "terminated", "lost"]))
+    deals = Deal.objects.active().select_related("stage", "responsible_broker").filter(stage__in=stages)
+    q = request.GET.get("q", "")
+    if q:
+        deals = deals.filter(Q(name__icontains=q) | Q(internal_id__icontains=q))
+    by_stage = {s.pk: [] for s in stages}
+    for d in deals:
+        by_stage[d.stage_id].append(d)
+    columns = [{"stage": s, "deals": by_stage[s.pk]} for s in stages]
+    return render(request, "deals/board.html", {"columns": columns, "view": "board", "q": q})
+
+
+@require_perm("view")
+def deposit_list(request):
+    qs = Deposit.objects.filter(deal__archived_at__isnull=True).select_related("deal", "holder", "due_deadline")
+    listing = Listing(
+        request, qs, area="deposits",
+        columns=[
+            Column("deal", "Deal", lambda d: d.deal.name, sort="deal__name"),
+            Column("kind", "Deposit", lambda d: d.get_kind_display(), sort="kind"),
+            Column("amount", "Amount", lambda d: format_cents(d.amount_cents), cls="num", sort="amount_cents"),
+            Column("holder", "Held by", lambda d: d.holder or "—"),
+            Column("due", "Due", lambda d: (d.due_deadline.current_date.strftime("%b %-d, %Y") if d.due_deadline and d.due_deadline.current_date
+                                             else (d.due_deadline.get_computation_display() if d.due_deadline else "No deadline linked"))),
+            Column("status", "Status", lambda d: d.status),
+            Column("refund", "Refundability", lambda d: d.get_refundability_display(), default=False),
+        ],
+        filters=[Filter("awaiting", "Status", [("1", "Awaiting receipt confirmation")],
+                        lambda qs, v: qs.filter(receipt_confirmed_on__isnull=True, released_on__isnull=True))],
+        row_url=lambda d: f"{d.deal.get_absolute_url()}?tab=contract",
+        row_class=lambda d: "row-warn" if d.awaiting else "",
+    )
+    if not request.GET:
+        listing = Listing(request, qs.filter(receipt_confirmed_on__isnull=True, released_on__isnull=True,
+                                             deal__stage__category="active"),
+                          listing.columns, area="deposits", filters=listing.filters, row_url=listing.row_url,
+                          row_class=listing.row_class)
+    if request.GET.get("export") == "csv":
+        return listing.export_csv("deposits")
+    return render(request, "core/list_page.html", {"listing": listing, "title": "Earnest money & deposits",
+                                                   "subtitle": "Deposits on active deals not yet confirmed received by the holder. Refundability is never inferred from a feasibility date."})
+
+
+@require_edit_on_post
+def deal_create(request):
+    require(request.user, "edit")
+    initial = {}
+    if request.GET.get("property"):
+        initial["properties"] = [request.GET["property"]]
+    initial["responsible_broker"] = request.user if request.user.role in {"admin", "broker"} else None
+    form = DealCreateForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        deal = form.save(commit=False)
+        deal.stage = data["stage"]
+        deal.save()
+        form.save_m2m()
+        for i, prop in enumerate(data["properties"]):
+            space = data["space"] if data["space"] and data["space"].property_id == prop.pk else None
+            deal.deal_properties.create(property=prop, space=space, is_primary=(i == 0))
+        audit(request.user, "deal.created", deal, {"stage": deal.stage.name, "type": deal.get_transaction_type_display()})
+        log_activity(deal, "Deal created", actor=request.user)
+        messages.success(request, f"Deal {deal.internal_id} created.")
+        return redirect(deal)
+    return render(request, "form.html", {"form": form, "title": "New deal", "back_url": reverse("deal_list"),
+                                         "subtitle": "One property may have many deals over time; a deal may involve several properties."})
+
+
+@require_edit_on_post
+def deal_edit(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    require(request.user, "edit")
+    before = snapshot(deal, TRACKED)
+    form = DealForm(request.POST or None, instance=deal)
+    if request.method == "POST" and form.is_valid():
+        deal = form.save()
+        changes = diff(deal, before, TRACKED)
+        if changes:
+            audit(request.user, "deal.updated", deal, changes)
+            log_activity(deal, "Deal details updated: " + ", ".join(changes), actor=request.user)
+        return redirect(deal)
+    return render(request, "form.html", {"form": form, "title": f"Edit {deal.name}", "back_url": deal.get_absolute_url()})
+
+
+TABS = [("overview", "Overview"), ("parties", "Parties"), ("contract", "Contract & Dates"), ("checklist", "Checklist"),
+        ("documents", "Documents"), ("issues", "Issues"), ("activity", "Activity"), ("commissions", "Commissions"),
+        ("closing", "Closing")]
+
+
+@require_perm("view")
+def deal_detail(request, pk):
+    deal = get_object_or_404(Deal.objects.select_related("stage", "client", "responsible_broker"), pk=pk)
+    tab = request.GET.get("tab", "overview")
+    tabs = [t for t in TABS if t[0] != "commissions" or has_perm(request.user, "commission.view")]
+    if tab not in dict(tabs):
+        tab = "overview"
+    today = timezone.localdate()
+    deadlines = deal.deadlines.exclude(state__in=["superseded", "cancelled"]).select_related("responsible_user")
+    open_items = deal.checklist_items.filter(status__in=["not_started", "requested", "in_progress", "received", "under_review", "blocked"])
+    docs = DocumentLink.objects.filter(deal=deal, document__archived_at__isnull=True).select_related("document")
+    if not has_perm(request.user, "document.confidential"):
+        docs = docs.exclude(document__access_level="confidential")
+    ctx = {
+        "deal": deal, "tab": tab, "tabs": tabs, "today": today,
+        "properties": deal.deal_properties.select_related("property", "space"),
+        "deadlines": deadlines,
+        "next_deadlines": [d for d in deadlines if d.state == "open"][:6],
+        "open_issues": deal.issues.filter(status__in=["open", "monitoring"]),
+        "open_item_count": open_items.count(),
+        "blocked_items": open_items.filter(status="blocked"),
+        "deposits": deal.deposits.select_related("holder", "due_deadline"),
+        "links_out": deal.links_out.select_related("to_deal__stage"),
+        "links_in": deal.links_in.select_related("from_deal__stage"),
+        "requested_credits": deal.issues.filter(requested_credit_cents__isnull=False).exclude(resolution_status="executed"),
+        "documents": docs,
+        "stage_form": StageChangeForm(initial={"stage": deal.stage}),
+        "pending_amendments": deal.amendments.filter(status="proposed").select_related("version"),
+    }
+    if tab == "parties":
+        ctx["parties"] = deal.parties.select_related("organization", "contact")
+        ctx["representations"] = deal.representations.select_related("brokerage", "broker_user", "agreement_document")
+        ctx["show_client_details"] = has_perm(request.user, "client.details")
+    elif tab == "contract":
+        terms = deal.terms.select_related("source_version__document", "approved_by", "amendment")
+        active = [t for t in terms if t.status == "active"]
+        grouped = {}
+        for t in active:
+            cat = TERM_CATALOG.get(t.key, ("", "", "Other", ""))[2]
+            grouped.setdefault(cat, []).append(t)
+        ctx["term_groups"] = [(c, grouped[c]) for c in TERM_CATEGORY_ORDER + ["Other"] if c in grouped]
+        ctx["superseded_terms"] = [t for t in terms if t.status == "superseded"]
+        ctx["events"] = deal.events.select_related("evidence_document", "recorded_by")
+        recorded = set(deal.events.values_list("key", flat=True))
+        needed = set()
+        for d in deadlines:
+            for k in d.trigger_keys or []:
+                if not k.startswith("deadline:"):
+                    needed.add(k)
+        ctx["missing_events"] = [(k, event_label(k)) for k in sorted(needed - recorded)]
+        ctx["price_events"] = deal.price_events.select_related("document", "issue")
+        ctx["amendments"] = deal.amendments.select_related("version__document")
+    elif tab == "checklist":
+        items = deal.checklist_items.select_related("owner", "outside_party", "deadline").prefetch_related("evidence")
+        groups = {}
+        for it in items:
+            groups.setdefault(it.category, []).append(it)
+        ctx["checklist_groups"] = groups
+        ctx["template"] = template_for(deal)
+        ctx["templates"] = ChecklistTemplate.objects.filter(enabled=True)
+        ctx["conditions"] = CONDITIONS
+        ctx["status_filter"] = request.GET.get("status", "")
+    elif tab == "documents":
+        ctx["doc_rows"] = [(l, l.document.current_version) for l in docs]
+    elif tab == "issues":
+        ctx["issues"] = deal.issues.prefetch_related("statements")
+    elif tab == "activity":
+        ctx["activities"] = deal.activities.select_related("created_by", "document")[:300]
+        ctx["drafts"] = deal.drafts.all()
+        ctx["draft_templates"] = [(k, v[0]) for k, v in draft_templates.TEMPLATES.items()]
+    elif tab == "commissions":
+        require(request.user, "commission.view")
+        from commissions.ledger import summarize
+
+        ctx["agreements"] = [(a, summarize(a)) for a in deal.commission_agreements.active()]
+    elif tab == "closing":
+        ctx["close_form"] = CloseDealForm(deal=deal, initial={
+            "actual_closing_date": deal.actual_closing_date,
+            "total": deal.actual_closing_price_cents if not deal.is_lease else deal.lease_total_consideration_cents})
+        ctx["closing_items"] = deal.checklist_items.filter(category__in=["Closing", "Post-closing"])
+        ctx["open_deadlines"] = deadlines.filter(state="open")
+    return render(request, "deals/detail.html", ctx)
+
+
+@require_POST
+@require_perm("edit")
+def deal_stage(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    form = StageChangeForm(request.POST)
+    stage = Stage.objects.filter(key=request.POST.get("stage")).first() or (
+        form.cleaned_data["stage"] if form.is_valid() else None)
+    if stage is None:
+        return HttpResponseBadRequest("Unknown stage.")
+    try:
+        services.change_stage(deal, stage, request.user, request.POST.get("reason", "").strip())
+    except ValidationError as exc:
+        if request.headers.get("X-Requested-With") == "fetch":
+            return HttpResponseBadRequest(" ".join(exc.messages))
+        messages.error(request, " ".join(exc.messages))
+        return redirect(deal)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return HttpResponse("ok")
+    messages.success(request, f"Stage changed to {stage.name}.")
+    return redirect(deal)
+
+
+@require_edit_on_post
+def deal_close(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    require(request.user, "edit")
+    form = CloseDealForm(request.POST or None, deal=deal)
+    if request.method == "POST" and form.is_valid():
+        try:
+            services.close_deal(deal, request.user, actual_closing_date=form.cleaned_data["actual_closing_date"],
+                                total_cents=form.cleaned_data["total"], allocations=form.allocations(),
+                                note=form.cleaned_data["note"])
+            messages.success(request, "Deal closed.")
+            return redirect(f"{deal.get_absolute_url()}?tab=closing")
+        except ValidationError as exc:
+            form.add_error(None, " ".join(exc.messages))
+    return render(request, "form.html", {"form": form, "title": f"Close {deal.name}",
+                                         "back_url": f"{deal.get_absolute_url()}?tab=closing",
+                                         "notice": "Closing records the actual date and deal-level consideration. A proposed or scheduled closing is not a closed transaction.",
+                                         "submit_label": "Close deal"})
+
+
+@require_edit_on_post
+def deal_archive(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    require(request.user, "edit")
+    if request.method == "POST":
+        deal.archived_at = timezone.now()
+        deal.archived_by = request.user
+        deal.save()
+        audit(request.user, "deal.archived", deal, note=request.POST.get("reason", ""))
+        messages.success(request, "Deal archived. It can be restored from Settings → Archived records.")
+        return redirect("deal_list")
+    return render(request, "confirm.html", {"title": f"Archive {deal}", "back_url": deal.get_absolute_url(),
+                                            "message": "Archived deals are hidden from lists and excluded from reports. Nothing is deleted; you can restore it.",
+                                            "reason_required": True, "submit_label": "Archive deal", "danger": True})
+
+
+# --- Sub-record forms --------------------------------------------------------
+
+SUBRECORDS = {
+    "party": (DealParty, PartyForm, "parties", "Party", False),
+    "representation": (Representation, RepresentationForm, "parties", "Representation", True),
+    "price": (PriceEvent, PriceEventForm, "contract", "Price event", True),
+    "deposit": (Deposit, DepositForm, "contract", "Deposit", True),
+    "link": (DealLink, DealLinkForm, "overview", "Linked deal", True),
+    "activity": (None, ActivityForm, "activity", "Activity", True),
+}
+AUDITED = {"price", "deposit", "representation"}
+
+
+@require_edit_on_post
+def deal_subrecord(request, pk, kind, item=None):
+    require(request.user, "edit")
+    deal = get_object_or_404(Deal, pk=pk)
+    model, form_cls, tab, label, takes_deal = SUBRECORDS[kind]
+    from .models import Activity
+
+    model = model or Activity
+    fk = "from_deal" if kind == "link" else "deal"
+    instance = get_object_or_404(model, pk=item, **{fk: deal}) if item else None
+    kwargs = {"deal": deal} if takes_deal else {}
+    initial = {"occurred_at": timezone.localtime().strftime("%Y-%m-%dT%H:%M")} if kind == "activity" and not instance else None
+    form = form_cls(request.POST or None, instance=instance, initial=initial, **kwargs)
+    back = f"{deal.get_absolute_url()}?tab={tab}"
+    if request.method == "POST":
+        if request.POST.get("delete") and instance:
+            if kind in {"price", "activity"}:
+                raise PermissionDenied("History records cannot be deleted.")
+            audit(request.user, f"deal.{kind}_removed", deal, {label: str(instance)})
+            log_activity(deal, f"{label} removed: {instance}", actor=request.user)
+            instance.delete()
+            return redirect(back)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            setattr(obj, fk, deal)
+            if kind == "price":
+                obj.created_by = request.user
+            if kind == "activity":
+                obj.created_by = request.user
+            obj.save()
+            if hasattr(form, "save_m2m"):
+                form.save_m2m()
+            if kind in AUDITED:
+                audit(request.user, f"deal.{kind}_saved", deal, {label: str(obj)})
+            if kind != "activity":
+                log_activity(deal, f"{label} {'updated' if instance else 'added'}: {obj}", actor=request.user)
+            return redirect(back)
+    return render(request, "form.html", {"form": form, "title": f"{'Edit' if instance else 'Add'} {label.lower()} — {deal.name}",
+                                         "back_url": back, "delete_allowed": bool(instance) and kind not in {"price", "activity"}})
+
+
+@require_edit_on_post
+def deal_event(request, pk):
+    require(request.user, "edit")
+    deal = get_object_or_404(Deal, pk=pk)
+    key = request.GET.get("key") or request.POST.get("key")
+    instance = DealEvent.objects.filter(deal=deal, key=key).first() if key else None
+    form = EventForm(request.POST or None, instance=instance, deal=deal, initial={"key": key} if key else None)
+    back = f"{deal.get_absolute_url()}?tab=contract"
+    if request.method == "POST":
+        if request.POST.get("clear") and instance:
+            services.clear_event(deal, instance.key, request.user, request.POST.get("evidence_note") or "Cleared by user")
+            return redirect(back)
+        if form.is_valid():
+            d = form.cleaned_data
+            services.record_event(deal, d["key"], d["occurred_on"], request.user, status=d["status"],
+                                  evidence_document=d["evidence_document"], evidence_note=d["evidence_note"],
+                                  occurred_time=d["occurred_time"])
+            messages.success(request, f"{event_label(d['key'])} recorded. Dependent deadlines were recomputed.")
+            return redirect(back)
+    return render(request, "form.html", {"form": form, "title": f"Record event — {deal.name}", "back_url": back,
+                                         "notice": "Deadlines that depend on this event are computed from the date you enter here. Never substitute the date a file was uploaded."})
+
+
+@require_edit_on_post
+def deal_term(request, pk):
+    require(request.user, "edit")
+    deal = get_object_or_404(Deal, pk=pk)
+    form = ManualTermForm(request.POST or None, deal=deal, initial={"key": request.GET.get("key")})
+    back = f"{deal.get_absolute_url()}?tab=contract"
+    if request.method == "POST" and form.is_valid():
+        d = form.cleaned_data
+        src = d.get("source_document")
+        services.set_term(deal, d["key"], d["typed"], request.user, source_version=src, page=d.get("page"),
+                          section=d.get("section", ""), quote=d.get("quote", ""), note=d.get("note") or "Entered manually")
+        messages.success(request, "Contract term approved. Dependent deadlines were recomputed.")
+        return redirect(back)
+    return render(request, "form.html", {"form": form, "title": f"Enter contract term — {deal.name}", "back_url": back,
+                                         "notice": "Manual entry is always available. Enter only values stated in an executed agreement; superseded values are kept in history.",
+                                         "submit_label": "Approve term"})
+
+
+@require_POST
+@require_perm("edit")
+def deal_generate_deadlines(request, pk):
+    from deadlines.services import generate_standard_deadlines
+
+    deal = get_object_or_404(Deal, pk=pk)
+    created, skipped = generate_standard_deadlines(deal, actor=request.user)
+    if created:
+        messages.success(request, f"Created {len(created)} deadline(s) from approved terms. Confirm each rule against the contract.")
+    for s in skipped:
+        messages.info(request, s)
+    return redirect(f"{deal.get_absolute_url()}?tab=contract")
+
+
+@require_POST
+@require_perm("edit")
+def deal_apply_checklist(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    tpl = get_object_or_404(ChecklistTemplate, pk=request.POST.get("template"))
+    conditions = {key: bool(request.POST.get(f"cond_{key}")) for key, _ in CONDITIONS}
+    n = apply_template(deal, tpl, conditions, request.user)
+    messages.success(request, f"Added {n} checklist items. Items whose condition was not met are Not Applicable with a reason and can be reopened.")
+    return redirect(f"{deal.get_absolute_url()}?tab=checklist")
+
+
+@require_POST
+@require_perm("edit")
+def deal_draft(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    key = request.POST.get("template")
+    if key not in draft_templates.TEMPLATES:
+        return HttpResponseBadRequest("Unknown template")
+    data = draft_templates.TEMPLATES[key][1](deal)
+    draft = CommunicationDraft.objects.create(deal=deal, generated_from=key, created_by=request.user, **data)
+    return redirect("draft_edit", pk=draft.pk)
+
+
+@require_edit_on_post
+def draft_edit(request, pk):
+    require(request.user, "edit")
+    draft = get_object_or_404(CommunicationDraft, pk=pk)
+    form = DraftForm(request.POST or None, instance=draft)
+    back = f"{draft.deal.get_absolute_url()}?tab=activity"
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+        if form.is_valid():
+            draft = form.save()
+        if action == "mark_sent":
+            draft.status = "marked_sent"
+            draft.marked_sent_by = request.user
+            draft.marked_sent_at = timezone.now()
+            draft.save()
+            from .models import Activity
+
+            Activity.objects.create(deal=draft.deal, kind="email", direction="outbound", summary=draft.subject,
+                                    body=f"To: {draft.to}\n\n{draft.body}", created_by=request.user,
+                                    counterparties=draft.to)
+            messages.success(request, "Recorded as sent by you. DealDesk did not send anything.")
+            return redirect(back)
+        if action == "discard":
+            draft.status = "discarded"
+            draft.save()
+            return redirect(back)
+        messages.success(request, "Draft saved.")
+    return render(request, "deals/draft.html", {"form": form, "draft": draft, "back_url": back})
+
+
+# --- Issues -------------------------------------------------------------------
+
+@require_edit_on_post
+def issue_form(request, pk=None):
+    require(request.user, "edit")
+    issue = get_object_or_404(Issue, pk=pk) if pk else None
+    deal = issue.deal if issue else (Deal.objects.filter(pk=request.GET.get("deal")).first())
+    from properties.models import Property
+
+    prop = issue.property if issue else Property.objects.filter(pk=request.GET.get("property")).first()
+    before = snapshot(issue, ["status", "resolution_status", "requested_credit_cents", "severity"]) if issue else {}
+    form = IssueForm(request.POST or None, instance=issue, deal=deal)
+    if request.method == "POST" and form.is_valid():
+        obj = form.save(commit=False)
+        obj.deal = deal
+        obj.property = prop
+        obj.save()
+        changes = diff(obj, before, ["status", "resolution_status", "requested_credit_cents", "severity"]) if issue else {"created": obj.title}
+        if changes:
+            audit(request.user, "issue.saved", obj, changes)
+        if deal:
+            log_activity(deal, f"Issue {'updated' if issue else 'recorded'}: {obj.title}", actor=request.user)
+            if obj.requested_credit_cents and (not issue or before.get("requested_credit_cents") != obj.requested_credit_cents):
+                PriceEvent.objects.create(deal=deal, kind="requested_credit", amount_cents=obj.requested_credit_cents,
+                                          event_date=timezone.localdate(), issue=obj, created_by=request.user,
+                                          notes="Requested credit — not an approved price change.")
+        return redirect(obj)
+    back = issue.get_absolute_url() if issue else (f"{deal.get_absolute_url()}?tab=issues" if deal else (prop.get_absolute_url() if prop else "/"))
+    return render(request, "form.html", {"form": form, "title": "Edit issue" if issue else "Record issue", "back_url": back})
+
+
+@require_perm("view")
+def issue_detail(request, pk):
+    issue = get_object_or_404(Issue.objects.select_related("deal", "property", "responsible", "resolution_document"), pk=pk)
+    return render(request, "deals/issue.html", {"issue": issue, "statements": issue.statements.select_related("document"),
+                                                "documents": issue.document_links.select_related("document"),
+                                                "statement_form": IssueStatementForm()})
+
+
+@require_POST
+@require_perm("edit")
+def issue_statement(request, pk):
+    issue = get_object_or_404(Issue, pk=pk)
+    form = IssueStatementForm(request.POST)
+    if form.is_valid():
+        st = form.save(commit=False)
+        st.issue = issue
+        st.recorded_by = request.user
+        st.save()
+        if issue.deal:
+            log_activity(issue.deal, f"Statement recorded on issue '{issue.title}' from {st.party}", actor=request.user)
+    else:
+        messages.error(request, "Statement not saved: " + "; ".join(f"{k}: {v[0]}" for k, v in form.errors.items()))
+    return redirect(issue)
+
+
+@require_perm("view")
+def issue_list(request):
+    qs = Issue.objects.select_related("deal", "property", "responsible")
+    listing = Listing(
+        request, qs, area="issues",
+        columns=[
+            Column("title", "Issue", lambda i: i.title, sort="title"),
+            Column("deal", "Deal / property", lambda i: i.deal or i.property or "—"),
+            Column("category", "Category", lambda i: i.get_category_display(), sort="category"),
+            Column("severity", "Severity", lambda i: i.get_severity_display(), sort="severity"),
+            Column("status", "Status", lambda i: i.get_status_display(), sort="status"),
+            Column("resolution", "Resolution", lambda i: i.get_resolution_status_display()),
+            Column("credit", "Requested credit", lambda i: format_cents(i.requested_credit_cents, unknown="—"), cls="num"),
+            Column("disclosure", "Disclosure finding", lambda i: i.get_disclosure_finding_display(), default=False),
+        ],
+        search_fields=["title", "description", "deal__name", "property__name"],
+        filters=[Filter("status", "Status", Issue.STATUSES, lambda qs, v: qs.filter(status=v)),
+                 Filter("category", "Category", Issue.CATEGORIES, lambda qs, v: qs.filter(category=v))],
+        default_sort="-created_at",
+    )
+    if request.GET.get("export") == "csv":
+        return listing.export_csv("issues")
+    return render(request, "core/list_page.html", {"listing": listing, "title": "Issues"})

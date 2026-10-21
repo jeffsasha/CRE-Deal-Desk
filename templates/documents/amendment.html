@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ a.title }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ a.deal.get_absolute_url }}?tab=contract">{{ a.deal }}</a> / Amendment</div>
+<div class="page-head"><div><h1>{{ a.title }}</h1><div class="sub">Compared with the deal's currently approved terms.</div></div>{% pill a.status a.get_status_display %}</div>
+
+{% if a.status == 'proposed' %}
+  {% if version.execution_status != 'confirmed_executed' %}
+  <div class="notice notice-warn">{% icon "alert" %}<div><strong>Not effective.</strong> Execution of this document is “{{ version.get_execution_status_display }}”. Until full execution is confirmed, the active terms, deadlines and reminders stay exactly as they are.</div></div>
+  {% else %}
+  <div class="notice notice-info">Execution confirmed by {{ version.execution_confirmed_by }} on {{ version.execution_confirmed_at|d }} — {{ version.execution_evidence }}</div>
+  {% endif %}
+{% elif a.status == 'applied' %}
+  <div class="notice notice-success">Applied by {{ a.applied_by }} on {{ a.applied_at|d }}. Superseded terms, dates and reminders are preserved in history.</div>
+{% endif %}
+
+<div class="split">
+<div class="stack">
+  <div class="card"><div class="card-head"><h2>Proposed changes to terms</h2></div><div class="card-body flush table-wrap"><table class="t">
+    <thead><tr><th>Term</th><th>Current</th><th>Proposed</th><th>Source</th></tr></thead>
+    <tbody>{% for c in a.changes %}<tr class="{% if c.unchanged %}row-muted{% endif %}"><td>{{ c.label }}</td><td>{% if c.old %}<span class="{% if not c.unchanged %}diff-old{% endif %}">{{ c.old }}</span>{% else %}<span class="muted">not set</span>{% endif %}</td><td><span class="{% if not c.unchanged %}diff-new{% endif %}">{{ c.new }}</span>{% if c.unchanged %} <small>(no change)</small>{% endif %}</td><td><small>p. {{ c.page|default:"?" }} — “{{ c.quote|truncatechars:120 }}”</small></td></tr>{% endfor %}</tbody>
+  </table></div></div>
+
+  <div class="card"><div class="card-head"><h2>{% if a.status == 'applied' %}Deadlines changed{% else %}Preview of affected deadlines{% endif %}</h2>{% if a.status == 'proposed' %}<a class="btn btn-sm" href="?refresh=1">Refresh preview</a>{% endif %}</div>
+  <div class="card-body flush table-wrap"><table class="t">
+    {% if a.status == 'applied' %}
+      <thead><tr><th>Deadline</th><th>Previous</th><th>New</th><th>Explanation</th></tr></thead>
+      <tbody>{% for r in revisions %}<tr><td><a href="{{ r.deadline.get_absolute_url }}">{{ r.deadline.name }}</a></td><td class="diff-old">{{ r.previous_date|d }}</td><td class="diff-new">{{ r.new_date|d }}</td><td><small>{{ r.explanation }}</small></td></tr>{% empty %}<tr><td colspan="4"><div class="empty">No deadline dates changed.</div></td></tr>{% endfor %}</tbody>
+    {% else %}
+      <thead><tr><th>Deadline</th><th>Current</th><th>If applied</th><th>Explanation</th></tr></thead>
+      <tbody>{% for p in a.preview %}<tr class="{% if p.changed %}row-warn{% else %}row-muted{% endif %}"><td>{{ p.name }}</td><td>{{ p.current_date|default:p.current_status }}</td><td>{% if p.changed %}<strong>{{ p.new_date|default:p.new_status }}</strong>{% else %}unchanged{% endif %}</td><td><small>{{ p.explanation }}</small></td></tr>{% empty %}<tr><td colspan="4"><div class="empty">The deal has no open deadlines.</div></td></tr>{% endfor %}</tbody>
+    {% endif %}
+  </table></div></div>
+</div>
+<div class="stack">
+  {% if a.status == 'proposed' and can.edit %}
+  <div class="card"><div class="card-head"><h2>Execution</h2></div><div class="card-body">
+    <form method="post" action="{% url 'document_execution' version.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+      <div class="field"><label>Execution status</label>{{ execution_form.status }}</div>
+      <div class="field" style="margin-top:8px"><label>Evidence</label>{{ execution_form.evidence }}<div class="help">Required to confirm full execution.</div></div>
+      <div class="form-actions"><button class="btn btn-sm">Save</button></div></form></div></div>
+  <div class="card"><div class="card-head"><h2>Apply</h2></div><div class="card-body">
+    <form method="post" action="{% url 'amendment_apply' a.pk %}" data-confirm="Apply this amendment? Active terms and deadlines will be updated; superseded values are kept.">{% csrf_token %}
+      <button class="btn btn-primary" {% if version.execution_status != 'confirmed_executed' %}disabled title="Confirm execution first"{% endif %}>Apply amendment</button></form>
+    <form method="post" action="{% url 'amendment_reject' a.pk %}" style="margin-top:10px">{% csrf_token %}<input name="reason" placeholder="Reason" required> <button class="btn btn-sm btn-danger">Withdraw / reject</button></form>
+  </div></div>
+  {% endif %}
+  <div class="card"><div class="card-head"><h2>Source</h2></div><div class="card-body"><a href="{{ version.document.get_absolute_url }}">{{ version }}</a><br><small class="muted">{{ version.original_filename }}</small></div></div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Deal board{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Deals by stage</h1><div class="sub">{% if can.edit %}Drag a card to change its stage. Closing is done from the deal's Closing tab.{% else %}Read-only view.{% endif %}</div></div>
+<div class="actions"><form method="get"><input type="search" name="q" value="{{ q }}" placeholder="Filter…"></form><div class="segmented"><a href="{% url 'deal_list' %}">Table</a><a class="on" href="{% url 'deal_board' %}">Board</a><a href="{% url 'deadline_calendar' %}">Calendar</a></div></div></div>
+<div class="board" {% if can.edit %}data-board{% endif %}>
+{% for col in columns %}
+  <div class="board-col" data-stage="{{ col.stage.key }}" data-stage-name="{{ col.stage.name }}" data-needs-reason="{% if col.stage.category == 'terminated' or col.stage.category == 'lost' %}1{% else %}0{% endif %}">
+    <h3><span>{{ col.stage.name }}</span><span class="muted">{{ col.deals|length }}</span></h3>
+    {% for d in col.deals %}
+    <div class="board-card" {% if can.edit %}draggable="true"{% endif %} data-deal="{{ d.pk }}" data-stage-url="{% url 'deal_stage' d.pk %}">
+      <div class="t"><a href="{{ d.get_absolute_url }}">{{ d.name }}</a></div>
+      <div class="s">{{ d.internal_id }} · {{ d.get_transaction_type_display }}</div>
+      {% if d.contractual_closing_date %}<div class="s">Closing {{ d.contractual_closing_date|dshort }}</div>{% endif %}
+      {% if d.is_blocked %}<div class="s">{% pill "blocked" "Blocked" %} {{ d.blocked_by }}</div>{% endif %}
+      {% if d.next_action %}<div class="s">Next: {{ d.next_action|truncatechars:60 }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

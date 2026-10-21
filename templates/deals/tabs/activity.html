@@ -1,0 +1,19 @@
+<div class="split">
+  <div class="card"><div class="card-head"><h2>Activity log</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_sub' deal.pk 'activity' %}">Record email / call / note</a>{% endif %}</div>
+    <div class="card-body"><ul class="timeline">
+    {% for a in activities %}<li><div class="when">{{ a.occurred_at|d }}<br><span class="tag">{{ a.get_kind_display }}</span></div>
+      <div><strong>{{ a.summary }}</strong>{% if a.direction != 'internal' %} <small class="muted">({{ a.get_direction_display|lower }}{% if a.counterparties %} — {{ a.counterparties }}{% endif %})</small>{% endif %}
+      {% if a.body %}<div class="body">{{ a.body }}</div>{% endif %}
+      {% if a.document %}<div><a href="{{ a.document.get_absolute_url }}"><small>📎 {{ a.document }}</small></a></div>{% endif %}
+      <small class="muted">{{ a.created_by|default:"System" }}</small></div></li>
+    {% empty %}<li><div class="empty">No activity.</div></li>{% endfor %}
+    </ul></div></div>
+  <div class="stack">
+    {% if can.edit %}<div class="card"><div class="card-head"><h2>Draft a message</h2></div><div class="card-body">
+      <form method="post" action="{% url 'deal_draft' deal.pk %}" class="inline-form">{% csrf_token %}<select name="template">{% for k, label in draft_templates %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select><button class="btn btn-sm">Create draft</button></form>
+      <p class="muted" style="margin-top:8px"><small>Drafts are never sent by DealDesk. You send them yourself and record that you did.</small></p></div></div>{% endif %}
+    <div class="card"><div class="card-head"><h2>Drafts</h2></div><div class="card-body flush"><table class="t"><tbody>
+      {% for d in drafts %}<tr><td>{% if can.edit %}<a href="{% url 'draft_edit' d.pk %}">{{ d.subject }}</a>{% else %}{{ d.subject }}{% endif %}<br><small class="muted">{{ d.created_at|d }}</small></td><td>{% pill d.status d.get_status_display tone="gray" %}</td></tr>
+      {% empty %}<tr><td><div class="empty">No drafts.</div></td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+</div>

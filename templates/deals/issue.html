@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ issue.title }}{% endblock %}
+{% block content %}
+<div class="crumbs">{% if issue.deal %}<a href="{{ issue.deal.get_absolute_url }}?tab=issues">{{ issue.deal }}</a>{% elif issue.property %}<a href="{{ issue.property.get_absolute_url }}?tab=issues">{{ issue.property }}</a>{% endif %} / Issue</div>
+<div class="page-head"><div><h1>{{ issue.title }}</h1><div class="meta" style="margin-top:6px">{% pill issue.severity issue.get_severity_display %} {% pill issue.status issue.get_status_display tone="blue" %} <span class="muted">{{ issue.get_category_display }} · discovered {{ issue.discovered_on|d }}</span></div></div>
+{% if can.edit %}<div class="actions"><a class="btn" href="{% url 'document_upload' %}?issue={{ issue.pk }}{% if issue.deal %}&deal={{ issue.deal.pk }}{% endif %}">Attach source document</a><a class="btn btn-primary" href="{% url 'issue_edit' issue.pk %}">Edit</a></div>{% endif %}</div>
+{% if issue.requested_credit_cents and issue.resolution_status != 'executed' %}<div class="notice notice-warn">{% icon "alert" %}<div>A credit of <strong>{{ issue.requested_credit_cents|money }}</strong> has been requested. It is not an approved price reduction; the executed contract price ({{ issue.deal.executed_contract_price_cents|money }}) is unchanged unless an executed amendment is applied.</div></div>{% endif %}
+<div class="split">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Description</h2></div><div class="card-body"><div style="white-space:pre-wrap">{{ issue.description|default:"—" }}</div></div></div>
+    <div class="card"><div class="card-head"><h2>Statements by each party</h2></div><div class="card-body flush table-wrap"><table class="t">
+      <thead><tr><th>Party</th><th>Statement</th><th>Source</th><th>Document date</th><th>Delivered</th></tr></thead>
+      <tbody>{% for s in statements %}<tr><td><strong>{{ s.party }}</strong><br><small class="muted">{{ s.statement_date|d }}</small></td><td style="white-space:pre-wrap">{{ s.statement }}</td>
+      <td>{% if s.document %}<a href="{{ s.document.get_absolute_url }}">{{ s.document }}</a>{% if s.page %}, p. {{ s.page }}{% endif %}{% else %}—{% endif %}</td>
+      <td>{{ s.document_date|d }}</td><td>{% if s.delivered_on %}{{ s.delivered_on|d }}{% if s.receipt_evidence %}<br><small class="muted">{{ s.receipt_evidence }}</small>{% endif %}{% else %}<span class="muted">Not established</span>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="5"><div class="empty">No statements recorded.</div></td></tr>{% endfor %}</tbody></table>
+      <div style="padding:8px 12px"><small class="muted">A document's own date does not prove when it was delivered. Delivery is shown only where evidence is recorded.</small></div></div></div>
+    {% if can.edit %}<div class="card"><div class="card-head"><h2>Record a statement</h2></div><div class="card-body"><form method="post" action="{% url 'issue_statement' issue.pk %}">{% csrf_token %}{% with form=statement_form %}{% include "partials/form_fields.html" %}{% endwith %}<div class="form-actions"><button class="btn btn-primary">Add statement</button></div></form></div></div>{% endif %}
+  </div>
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Remedy & resolution</h2></div><div class="card-body"><table class="kv">
+      <tr><th>Requested remedy</th><td>{{ issue.requested_remedy|default:"—" }}</td></tr>
+      <tr><th>Requested credit</th><td>{{ issue.requested_credit_cents|money:"—" }}</td></tr>
+      <tr><th>Estimated impact</th><td>{{ issue.estimated_cost_cents|money:"—" }}</td></tr>
+      <tr><th>Counterparty response</th><td>{{ issue.counterparty_response|default:"—" }}</td></tr>
+      <tr><th>Resolution</th><td>{% pill issue.resolution_status issue.get_resolution_status_display tone="amber" %}{% if issue.resolution_document %}<br><a href="{{ issue.resolution_document.get_absolute_url }}">{{ issue.resolution_document }}</a>{% endif %}</td></tr>
+      <tr><th>Notes</th><td>{{ issue.resolution_notes|default:"—" }}</td></tr>
+      <tr><th>Responsible</th><td>{{ issue.responsible|default:"—" }}</td></tr>
+    </table></div></div>
+    <div class="card"><div class="card-head"><h2>Disclosure</h2></div><div class="card-body"><p><strong>{{ issue.get_disclosure_finding_display }}</strong></p><p class="text-2">{{ issue.disclosure_note }}</p><small class="muted">"Not found in reviewed materials" means only that our review did not find it.</small></div></div>
+    <div class="card"><div class="card-head"><h2>Source documents</h2></div><div class="card-body flush"><table class="t"><tbody>{% for l in documents %}<tr><td><a href="{{ l.document.get_absolute_url }}">{{ l.document }}</a></td></tr>{% empty %}<tr><td><div class="empty">None attached.</div></td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+</div>
+{% endblock %}

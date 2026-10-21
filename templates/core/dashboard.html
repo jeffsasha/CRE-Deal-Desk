@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Today</h1>
+    <div class="sub">{{ today|date:"l, F j, Y" }} · What needs attention, what could delay a deal, and what documents or money are still missing.</div>
+  </div>
+  <div class="actions">
+    {% if can.edit %}<a class="btn" href="{% url 'document_upload' %}">{% icon "upload" %}Upload document</a><a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}New deal</a>{% endif %}
+  </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:14px">
+  <a class="metric {% if deadlines.overdue.0 %}bad{% endif %}" href="{{ deadlines.overdue.1 }}"><div class="label">Overdue deadlines</div><div class="value">{{ deadlines.overdue.0 }}</div><div class="note">Contractual and internal, still open</div></a>
+  <a class="metric {% if deadlines.today.0 %}warn{% endif %}" href="{{ deadlines.today.1 }}"><div class="label">Due today</div><div class="value">{{ deadlines.today.0 }}</div><div class="note">America/Chicago unless the deal says otherwise</div></a>
+  <a class="metric" href="{{ deadlines.week.1 }}"><div class="label">Due in the next 7 days</div><div class="value">{{ deadlines.week.0 }}</div></a>
+  <a class="metric" href="{{ deadlines.next30.1 }}"><div class="label">Due in the next 30 days</div><div class="value">{{ deadlines.next30.0 }}</div></a>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:14px">
+  <a class="metric {% if deadlines.awaiting.0 %}warn{% endif %}" href="{{ deadlines.awaiting.1 }}"><div class="label">Deadlines awaiting a trigger</div><div class="value">{{ deadlines.awaiting.0 }}</div><div class="note">No date until the actual event is recorded</div></a>
+  <a class="metric {% if deadlines.needs_review.0 %}bad{% endif %}" href="{{ deadlines.needs_review.1 }}"><div class="label">Deadlines needing review</div><div class="value">{{ deadlines.needs_review.0 }}</div><div class="note">Missing or unconfirmed contract terms</div></a>
+  <a class="metric {% if overdue_items.0 %}bad{% endif %}" href="{{ overdue_items.1 }}"><div class="label">Overdue tasks & follow-ups</div><div class="value">{{ overdue_items.0 }}</div></a>
+  <a class="metric {% if review_runs.0 %}warn{% endif %}" href="{{ review_runs.1 }}"><div class="label">Extractions awaiting review</div><div class="value">{{ review_runs.0 }}</div>{% if failed_runs.0 %}<div class="note" style="color:var(--red-fg)">{{ failed_runs.0 }} failed — manual entry available</div>{% endif %}</a>
+</div>
+
+<div class="split">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Next 7 days</h2><a class="btn btn-sm" href="{% url 'deadline_calendar' %}">Calendar</a></div>
+      <div class="card-body flush table-wrap">
+        <table class="t">
+          <thead><tr><th>Due</th><th>Deadline</th><th>Deal</th><th class="hide-sm">Responsible</th><th>Basis</th></tr></thead>
+          <tbody>
+          {% for dl in upcoming %}
+            <tr class="{% if dl.is_overdue %}row-alert{% elif dl.days_until == 0 %}row-warn{% endif %}">
+              <td class="nowrap"><strong>{{ dl.current_date|dshort }}</strong><br><small>{{ dl.current_date|relday }}{% if dl.due_at %} · {{ dl.due_time|time:"g:i A" }}{% endif %}</small></td>
+              <td><a href="{{ dl.get_absolute_url }}">{{ dl.name }}</a>{% if not dl.is_contractual %} <span class="tag">Internal</span>{% endif %}</td>
+              <td><a href="{{ dl.deal.get_absolute_url }}">{{ dl.deal.name }}</a></td>
+              <td class="hide-sm">{{ dl.responsible_user|default:"—" }}</td>
+              <td>{% if dl.confirmation == "confirmed" %}{% pill "verified" "Rule confirmed" %}{% else %}{% pill "unverified" "Rule unconfirmed" %}{% endif %}</td>
+            </tr>
+          {% empty %}<tr><td colspan="5"><div class="empty">No computed deadlines in the next 7 days.</div></td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-head"><h2>Active deals by stage</h2><a class="btn btn-sm" href="{% url 'deal_board' %}">Board</a></div>
+        <div class="card-body flush"><table class="t"><tbody>
+          {% for s in stages %}<tr><td><a href="{% url 'deal_list' %}?stage={{ s.key }}">{{ s.name }}</a></td><td class="num"><a href="{% url 'deal_list' %}?stage={{ s.key }}">{{ s.n }}</a></td></tr>{% endfor %}
+        </tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Unresolved diligence items</h2></div>
+        <div class="card-body flush"><table class="t"><tbody>
+          {% for t in topics %}<tr><td><a href="{{ t.url }}">{{ t.label }}</a></td><td class="num"><a href="{{ t.url }}">{{ t.n }}</a></td></tr>{% endfor %}
+        </tbody></table>
+        <div style="padding:8px 10px" class="muted"><small>Open checklist items on active deals. "Received" items are still open until reviewed and approved.</small></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-head"><h2>Feasibility periods ending (14 days)</h2><a href="{{ feasibility.1 }}" class="btn btn-sm">{{ feasibility.0 }}</a></div>
+        <div class="card-body flush"><table class="t"><tbody>
+          {% for dl in feasibility_list %}<tr><td><a href="{{ dl.get_absolute_url }}">{{ dl.deal.name }}</a></td><td class="num">{{ dl.current_date|dshort }} <small class="muted">{{ dl.current_date|relday }}</small></td></tr>
+          {% empty %}<tr><td><div class="empty">None in the next 14 days.</div></td></tr>{% endfor %}
+        </tbody></table>
+        <div style="padding:8px 10px" class="muted"><small>Expiration dates do not by themselves determine earnest money refundability.</small></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Upcoming closings (30 days)</h2><a href="{{ closings.1 }}" class="btn btn-sm">{{ closings.0 }}</a></div>
+        <div class="card-body flush"><table class="t"><tbody>
+          {% for deal in closing_list %}<tr><td><a href="{{ deal.get_absolute_url }}">{{ deal.name }}</a></td><td class="num">{% if deal.contractual_closing_date %}{{ deal.contractual_closing_date|dshort }} <small class="muted">contract</small>{% else %}{{ deal.target_closing_date|dshort }} <small class="muted">internal target</small>{% endif %}</td></tr>
+          {% empty %}<tr><td><div class="empty">No closings in the next 30 days.</div></td></tr>{% endfor %}
+        </tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <a class="metric {% if deposits.0 %}warn{% endif %}" href="{{ deposits.1 }}"><div class="label">Deposits due or awaiting receipt confirmation</div><div class="value">{{ deposits.0 }}</div></a>
+    <a class="metric {% if blocked.0 %}bad{% endif %}" href="{{ blocked.1 }}"><div class="label">Deals blocked by another party</div><div class="value">{{ blocked.0 }}</div>
+      {% for b in blocked_list %}<div class="note">{{ b.name }} — {{ b.blocked_by|default:"party not named" }}</div>{% endfor %}</a>
+    {% if reminder_failures.0 %}<a class="metric bad" href="{{ reminder_failures.1 }}"><div class="label">Reminder delivery failures</div><div class="value">{{ reminder_failures.0 }}</div></a>{% endif %}
+
+    <div class="card">
+      <div class="card-head"><h2>Volume — {{ filters.label }}</h2>
+        <div class="segmented"><a class="{% if period == 'month' %}on{% endif %}" href="?period=month">Month</a><a class="{% if period == 'quarter' %}on{% endif %}" href="?period=quarter">Quarter</a><a class="{% if period == 'year' %}on{% endif %}" href="?period=year">Year</a></div>
+      </div>
+      <div class="card-body">
+        <table class="kv">
+          <tr><th>Closed sales volume<br><small>by actual closing date</small></th><td class="num"><a href="{% url 'report_detail' 'sales' %}?{{ filters.querystring }}">{{ sales.total|money0 }}</a><br><small class="muted">{{ sales.total.count }} deal{{ sales.total.count|pluralize }}</small></td></tr>
+          <tr><th>Executed leases<br><small>separate from sales volume</small></th><td class="num"><a href="{% url 'report_detail' 'leases' %}?{{ filters.querystring }}">{{ leases.count }} lease{{ leases.count|pluralize }}</a><br><small class="muted">{{ leases.consideration|money0 }} lease consideration</small></td></tr>
+        </table>
+      </div>
+    </div>
+
+    {% if fin %}
+    <div class="card">
+      <div class="card-head"><h2>Commissions — {{ filters.label }}</h2>{% icon "lock" %}</div>
+      <div class="card-body">
+        <table class="kv">
+          <tr><th>Expected on active deals</th><td class="num"><a href="{% url 'report_detail' 'expected' %}">{{ fin.expected.total|money0 }}</a></td></tr>
+          <tr><th>Earned (by earned date)</th><td class="num"><a href="{% url 'report_detail' 'earned' %}?{{ fin.qs }}">{{ fin.earned.total|money0 }}</a></td></tr>
+          <tr><th>Cash received by SKW</th><td class="num"><a href="{% url 'report_detail' 'receipts' %}?{{ fin.qs }}">{{ fin.receipts.total|money0 }}</a></td></tr>
+          <tr><th>Designated broker's actual receipts</th><td class="num"><a href="{% url 'report_detail' 'designated' %}?{{ fin.qs }}">{{ fin.designated.total|money0 }}</a></td></tr>
+          <tr><th>Unpaid receivables (today)</th><td class="num"><a href="{% url 'report_detail' 'outstanding' %}">{{ fin.outstanding.receivable|money0 }}</a></td></tr>
+          <tr><th>Unpaid distributions (today)</th><td class="num"><a href="{% url 'report_detail' 'outstanding' %}">{{ fin.outstanding.unpaid_distributions|money0 }}</a></td></tr>
+        </table>
+        <small class="muted">Totals are computed from the commission ledger. "+ N unknown" means records whose amount is not known; they are not counted as zero.</small>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+var/
+var-demo/
+bin/
+.env
+*.sqlite3
+.DS_Store

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Review queue{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'document_list' %}">Documents</a></div>
+<div class="page-head"><div><h1>Contract extractions awaiting review</h1><div class="sub">Proposed values with open review items, and extractions that failed (the files are stored; enter terms manually).</div></div>
+<div class="segmented"><a class="{% if not failed_only %}on{% endif %}" href="?">All</a><a class="{% if failed_only %}on{% endif %}" href="?failed=1">Failed</a></div></div>
+<div class="card"><div class="card-body flush table-wrap"><table class="t">
+<thead><tr><th>Document</th><th>Engine</th><th>Run</th><th>Status</th><th class="num">Awaiting review</th><th></th></tr></thead>
+<tbody>{% for r in runs %}<tr class="{% if r.status == 'failed' %}row-alert{% endif %}">
+<td><a href="{{ r.version.document.get_absolute_url }}">{{ r.version.document }}</a> <small class="muted">v{{ r.version.version }}</small></td><td>{{ r.get_engine_display }}</td><td>{{ r.created_at|d }}</td>
+<td>{{ r.get_status_display }}{% if r.error %}<br><small style="color:var(--red-fg)">{{ r.error|truncatechars:120 }}</small>{% endif %}</td><td class="num">{{ r.pending_count }}</td>
+<td class="num">{% if r.status == 'succeeded' %}<a class="btn btn-sm btn-primary" href="{% url 'extraction_review' r.pk %}">Review</a>{% elif can.edit %}<form method="post" action="{% url 'manual_start' r.version.pk %}">{% csrf_token %}<button class="btn btn-sm">Enter manually</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="6"><div class="empty">Nothing awaiting review.</div></td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

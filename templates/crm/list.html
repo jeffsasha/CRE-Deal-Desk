@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Contacts & Companies{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Contacts & Companies</h1><div class="sub">Title companies, escrow officers, surveyors, inspectors, lenders, attorneys, clients and counterparties.{% if not can.client_details %} Client contact details are restricted for your role.{% endif %}</div></div>
+<div class="actions">{% if can.edit %}<a class="btn" href="{% url 'organization_create' %}">New company</a><a class="btn btn-primary" href="{% url 'contact_create' %}">New contact</a>{% endif %}</div></div>
+<nav class="tabs"><a class="{% if tab != 'companies' %}on{% endif %}" href="?tab=people">People</a><a class="{% if tab == 'companies' %}on{% endif %}" href="?tab=companies">Companies</a></nav>
+{% include "partials/listing.html" with hide_export=can.client_details|yesno:",1" %}
+{% endblock %}

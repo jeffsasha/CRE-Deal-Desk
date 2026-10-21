@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="crumbs">{% if back_url %}<a href="{{ back_url }}">← {{ back_label|default:"Back" }}</a>{% endif %}</div>
+<div class="page-head"><div><h1>{{ title }}</h1>{% if subtitle %}<div class="sub">{{ subtitle }}</div>{% endif %}</div></div>
+{% if notice %}<div class="notice notice-{{ notice_tone|default:'info' }}">{{ notice }}</div>{% endif %}
+<div class="card" style="max-width:{{ max_width|default:'920px' }}"><div class="card-body">
+  <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} {% if confirm %}data-confirm="{{ confirm }}"{% endif %}>
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <div class="form-actions">
+      <button class="btn btn-primary">{{ submit_label|default:"Save" }}</button>
+      {% if back_url %}<a class="btn" href="{{ back_url }}">Cancel</a>{% endif %}
+      {% if delete_allowed %}<div style="flex:1"></div><button class="btn btn-danger" name="delete" value="1" formnovalidate data-confirm="Remove this record? The removal is recorded in the activity log.">Remove</button>{% endif %}
+    </div>
+  </form>
+</div></div>
+{% endblock %}

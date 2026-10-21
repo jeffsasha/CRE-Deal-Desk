@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Review — {{ doc.title }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ doc.get_absolute_url }}">← {{ doc.title }}</a></div>
+<div class="page-head">
+  <div><h1>Contract review</h1>
+    <div class="sub">{{ doc.title }} · v{{ version.version }} · {{ doc.get_doc_type_display }} · {{ run.get_engine_display }}{% if run.model_name %} ({{ run.model_name }}){% endif %} · {{ fields|length }} proposed value{{ fields|length|pluralize }}, {{ open_count }} awaiting review</div></div>
+  <div>{% pill version.execution_status version.get_execution_status_display %}</div>
+</div>
+<div class="notice notice-info">{% icon "alert" %}<div>These are proposals for your review, each tied to its page and supporting text. They are not legal determinations. Document content is treated as untrusted data; nothing in it is followed as an instruction.</div></div>
+{% if run.summary %}<div class="notice notice-info" style="white-space:pre-wrap">{{ run.summary }}</div>{% endif %}
+
+<div class="review">
+  <div class="card viewer">
+    <div class="viewer-bar"><strong data-page-label>Page {{ first_page }}</strong><div style="flex:1"></div>
+      <a class="btn btn-sm" href="{{ view_url }}" target="_blank" rel="noopener">Open original</a></div>
+    {% if version.is_pdf %}<iframe data-viewer-frame data-base="{{ view_url }}" src="{{ view_url }}#page={{ first_page }}" title="Document viewer" style="min-height:52%"></iframe>
+    {% elif version.is_image %}<img src="{{ view_url }}" alt="Uploaded image" style="max-height:52%">{% endif %}
+    <div class="page-text" data-page-text>{% if version.pages_text %}<span class="muted">Click “Show in document” on a value to see the page text with the supporting language highlighted.</span>{% else %}<span class="muted">No text available ({{ version.get_text_status_display }}). Use the original file and enter values manually.</span>{% endif %}</div>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:12px"><div class="card-head"><h2>Publish</h2></div><div class="card-body">
+      {% if not deals %}<div class="notice notice-warn">Link this document to a deal (on the document page) before publishing.</div>{% endif %}
+      {% if version.execution_status != 'confirmed_executed' %}
+        <div class="notice notice-warn">{% icon "alert" %}<div>Execution has not been confirmed. {% if is_amending %}An unsigned or partially signed amendment is a proposal and will not change any term or date.{% else %}Terms from an unconfirmed document cannot be published.{% endif %}</div></div>
+        {% if can.edit %}<form method="post" action="{% url 'document_execution' version.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+          <div class="form-grid"><div class="field"><label>Execution status</label>{{ execution_form.status }}</div><div class="field"><label>Evidence</label>{{ execution_form.evidence }}</div></div>
+          <div class="form-actions"><button class="btn btn-sm">Save execution status</button></div></form>{% endif %}
+      {% endif %}
+      {% if can.edit and deals %}
+      <form method="post" action="{% if is_amending %}{% url 'prepare_amendment' run.pk %}{% else %}{% url 'publish' run.pk %}{% endif %}" class="inline-form" style="margin-top:8px">{% csrf_token %}
+        <select name="deal">{% for d in deals %}<option value="{{ d.pk }}">{{ d }}</option>{% endfor %}</select>
+        {% if is_amending %}<button class="btn btn-primary">Compare with current terms…</button>
+        {% else %}<label style="font-weight:400"><input type="checkbox" name="replace" value="1"> Replace conflicting approved values</label><button class="btn btn-primary" {% if not approved %}disabled{% endif %}>Publish {{ approved }} approved value{{ approved|pluralize }}</button>{% endif %}
+      </form>
+      <p class="muted" style="margin-top:6px"><small>Only accepted or edited values are published. Values needing review stay here. Superseded values are kept in history.</small></p>
+      {% endif %}
+    </div></div>
+
+    {% for f in fields %}
+    <div class="field-card {% if f.review_status == 'needs_review' %}needs{% elif f.is_approved %}ok{% endif %}" id="f{{ f.pk }}">
+      <div class="fhead"><strong>{{ f.label }}</strong>
+        <span>{% if f.published_at %}{% pill "applied" "Published" %}{% else %}{% pill f.review_status f.get_review_status_display %}{% endif %}</span></div>
+      <div class="fval">{% if f.review_status == 'edited' %}<span class="diff-old">{{ f.proposed_value|default:"(none)" }}</span> → <span class="diff-new">{{ f.reviewed_value }}</span>{% else %}{{ f.proposed_value|default:"— no value proposed —" }}{% endif %}</div>
+      <div class="src">{% if f.page %}Page {{ f.page }}{% else %}Page unknown{% endif %}{% if f.section %} · {{ f.section }}{% endif %} · {{ f.get_confidence_display }} confidence · {{ f.get_basis_display }}{% if f.quote_verified %} · <span style="color:var(--green-fg)">quote found in document</span>{% endif %}
+        {% if f.page %} · <a href="#" data-goto-page="{{ f.page }}" data-text-url="{% url 'version_page_text' version.pk f.page %}?q={{ f.supporting_text|urlencode }}">Show in document</a>{% endif %}</div>
+      {% if f.supporting_text %}<blockquote>“{{ f.supporting_text }}”</blockquote>{% endif %}
+      {% if f.calculation_note %}<div class="src">Calculation: {{ f.calculation_note }}</div>{% endif %}
+      {% if f.flags %}<ul class="flags">{% for fl in f.flags %}<li>{{ fl }}</li>{% endfor %}</ul>{% endif %}
+      {% if f.reviewer %}<div class="src" style="margin-top:4px">Reviewed by {{ f.reviewer }} {{ f.reviewed_at|d }}{% if f.review_note %} — {{ f.review_note }}{% endif %}</div>{% endif %}
+      {% if can.edit and not f.published_at %}
+      <form method="post" action="{% url 'field_action' f.pk %}" class="inline-form" style="margin-top:8px">{% csrf_token %}
+        <input name="value" value="{% if f.review_status == 'edited' %}{{ f.reviewed_value }}{% else %}{{ f.proposed_value }}{% endif %}" style="flex:1;min-width:180px" aria-label="Value">
+        <button class="btn btn-sm btn-primary" name="action" value="accept">Accept</button>
+        <button class="btn btn-sm" name="action" value="edit">Save edit</button>
+        <button class="btn btn-sm btn-ghost" name="action" value="reject">Reject</button>
+      </form>{% endif %}
+    </div>
+    {% empty %}<div class="card"><div class="empty">No values were proposed. Enter values manually below.</div></div>{% endfor %}
+
+    {% if can.edit %}<div class="card" style="margin-top:12px"><div class="card-head"><h2>Add a value manually</h2></div><div class="card-body">
+      <form method="post" action="{% url 'manual_field' version.pk %}">{% csrf_token %}{% with form=manual_form %}{% include "partials/form_fields.html" %}{% endwith %}<div class="form-actions"><button class="btn btn-sm">Add and accept</button></div></form>
+    </div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

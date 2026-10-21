@@ -1,0 +1,38 @@
+{% if not checklist_groups %}
+<div class="card"><div class="card-head"><h2>Create checklist</h2></div><div class="card-body">
+  {% if can.edit %}
+  <form method="post" action="{% url 'deal_apply_checklist' deal.pk %}">{% csrf_token %}
+    <div class="form-grid">
+      <div class="field"><label>Template</label><select name="template">{% for t in templates %}<option value="{{ t.pk }}" {% if t == template %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+      <div class="field full"><label>Conditions that apply to this deal</label>
+        {% for key, label in conditions %}<label style="font-weight:400;display:flex;gap:8px;align-items:center"><input type="checkbox" name="cond_{{ key }}"> {{ label }}</label>{% endfor %}
+        <div class="help">Items tied to unchecked conditions are created as Not Applicable with the reason recorded, and can be reopened later.</div></div>
+    </div>
+    <div class="form-actions"><button class="btn btn-primary">Create checklist</button></div>
+  </form>
+  {% else %}<div class="empty">No checklist yet.</div>{% endif %}
+</div></div>
+{% else %}
+<div class="actions" style="margin-bottom:10px">
+  <div class="segmented"><a class="{% if not status_filter %}on{% endif %}" href="?tab=checklist">All</a><a class="{% if status_filter == 'open' %}on{% endif %}" href="?tab=checklist&status=open">Open</a><a class="{% if status_filter == 'blocked' %}on{% endif %}" href="?tab=checklist&status=blocked">Blocked</a></div>
+  {% if can.edit %}<a class="btn btn-sm" href="{% url 'checklist_item_create' deal.pk %}">Add item</a>{% endif %}
+</div>
+{% for category, items in checklist_groups.items %}
+<div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ category }}</h2></div><div class="card-body flush table-wrap"><table class="t">
+<thead><tr><th style="width:34%">Item</th><th>Status</th><th>Owner / outside party</th><th class="hide-sm">Requested</th><th class="hide-sm">Received</th><th class="hide-sm">Reviewed</th><th class="hide-sm">Approved</th><th>Due / follow-up</th></tr></thead>
+<tbody>
+{% for it in items %}{% if not status_filter or status_filter == 'open' and it.is_open or status_filter == it.status %}
+<tr class="{% if it.status == 'blocked' or it.is_overdue %}row-alert{% elif it.is_follow_up_due %}row-warn{% elif not it.is_open %}row-muted{% endif %}">
+  <td>{% if can.edit %}<a href="{% url 'checklist_item_edit' it.pk %}">{{ it.title }}</a>{% else %}{{ it.title }}{% endif %}
+    {% if it.status == 'not_applicable' %}<br><small class="muted">{{ it.not_applicable_reason }}</small>{% endif %}
+    {% if it.status == 'blocked' %}<br><small style="color:var(--red-fg)">{{ it.blocked_reason }}</small>{% endif %}
+    {% if it.unresolved_issues %}<br><small style="color:var(--amber-fg)">Unresolved: {{ it.unresolved_issues|truncatechars:90 }}</small>{% endif %}
+    {% for e in it.evidence.all %}<br><a href="{{ e.get_absolute_url }}"><small>📎 {{ e }}</small></a>{% endfor %}</td>
+  <td>{% pill it.status it.get_status_display %}</td>
+  <td>{{ it.owner|default:"—" }}{% if it.outside_party or it.outside_party_note %}<br><small class="muted">{{ it.outside_party|default:it.outside_party_note }}</small>{% endif %}</td>
+  <td class="hide-sm nowrap">{{ it.requested_on|dshort }}</td><td class="hide-sm nowrap">{{ it.received_on|dshort }}</td><td class="hide-sm nowrap">{{ it.reviewed_on|dshort }}</td><td class="hide-sm nowrap">{{ it.approved_on|dshort }}</td>
+  <td class="nowrap">{% if it.deadline %}<a href="{{ it.deadline.get_absolute_url }}">{{ it.deadline.current_date|dshort }}</a>{% else %}{{ it.due_date|dshort }}{% endif %}{% if it.follow_up_on %}<br><small class="muted">follow up {{ it.follow_up_on|dshort }}</small>{% endif %}</td>
+</tr>{% endif %}{% endfor %}
+</tbody></table></div></div>
+{% endfor %}
+{% endif %}

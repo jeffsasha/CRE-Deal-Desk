@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Not permitted{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Not permitted</h1></div>
+<div class="notice notice-error">{% icon "lock" %}<div>{{ exception|default:"Your role does not allow this action." }}</div></div>
+<a class="btn" href="javascript:history.back()">Go back</a>
+{% endblock %}

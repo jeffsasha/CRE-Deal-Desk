@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Reports</h1><div class="sub">Every total links to the records that produce it. Sales volume, lease consideration and business-asset consideration are always separate.</div></div></div>
+{% include "reports/_filters.html" %}
+<h2 style="margin:4px 0 10px">Transaction volume</h2>
+<div class="grid grid-4" style="margin-bottom:16px">
+  <a class="metric" href="{% url 'report_detail' 'sales' %}?{{ qs }}"><div class="label">Closed sales volume (actual closing date)</div><div class="value">{{ r.sales.total|money0 }}</div><div class="note">{{ r.sales.total.count }} closed sale{{ r.sales.total.count|pluralize }}; each counted once</div></a>
+  <a class="metric" href="{% url 'report_detail' 'leases' %}?{{ qs }}"><div class="label">Executed leases (lease consideration — not sales volume)</div><div class="value">{{ r.leases.count }}</div><div class="note">{{ r.leases.consideration|money0 }} · {{ r.leases.area_sf|floatformat:0 }} SF{% if r.leases.area_unknown %} + {{ r.leases.area_unknown }} unknown{% endif %}</div></a>
+  <a class="metric" href="{% url 'report_detail' 'business' %}?{{ qs }}"><div class="label">Business asset sales (separate)</div><div class="value">{{ r.business.total|money0 }}</div><div class="note">{{ r.business.total.count }} transaction{{ r.business.total.count|pluralize }}</div></a>
+  <a class="metric" href="{% url 'report_detail' 'pipeline' %}?{{ qs }}"><div class="label">Expected pipeline (active, not closed)</div><div class="value">{{ r.pipeline.sales_total|money0 }}</div><div class="note">plus {{ r.pipeline.lease_total|money0 }} lease consideration</div></a>
+</div>
+{% if r.unknown_commission.deals %}<div class="notice notice-warn">{% icon "alert" %}<div><a href="{% url 'report_detail' 'unknown_commission' %}?{{ qs }}">{{ r.unknown_commission.deals|length }} closed deal{{ r.unknown_commission.deals|length|pluralize }}</a> in this period have no commission agreement recorded; their commission is unknown (not $0).</div></div>{% endif %}
+{% if r.earned %}
+<h2 style="margin:16px 0 10px">Commissions {% icon "lock" %}</h2>
+<div class="grid grid-3" style="margin-bottom:12px">
+  <a class="metric" href="{% url 'report_detail' 'expected' %}?{{ qs }}"><div class="label">Expected on active deals</div><div class="value">{{ r.expected.total|money0 }}</div></a>
+  <a class="metric" href="{% url 'report_detail' 'earned' %}?{{ qs }}"><div class="label">Earned (by earned date)</div><div class="value">{{ r.earned.total|money0 }}</div></a>
+  <a class="metric" href="{% url 'report_detail' 'receipts' %}?{{ qs }}"><div class="label">Cash received by SKW (by receipt date)</div><div class="value">{{ r.receipts.total|money0 }}</div></a>
+  <a class="metric" href="{% url 'report_detail' 'designated' %}?{{ qs }}"><div class="label">Designated broker's actual receipts (by payment date)</div><div class="value">{{ r.designated.total|money0 }}</div></a>
+  <a class="metric" href="{% url 'report_detail' 'distributions' %}?{{ qs }}"><div class="label">All distributions paid</div><div class="value">{{ r.distributions.total|money0 }}</div></a>
+  <a class="metric" href="{% url 'report_detail' 'outstanding' %}?{{ qs }}"><div class="label">Outstanding today: receivables / unpaid distributions</div><div class="value sm">{{ r.outstanding.receivable|money0 }}</div><div class="note">{{ r.outstanding.unpaid_distributions|money0 }} unpaid distributions</div></a>
+</div>
+{% endif %}
+{% endblock %}

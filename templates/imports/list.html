@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Historical imports{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
+<div class="page-head"><div><h1>Historical imports</h1><div class="sub">Upload → map fields → validate and preview → commit. Batches can be reverted without touching unrelated work.</div></div></div>
+<div class="split">
+<div class="card"><div class="card-head"><h2>Import batches</h2></div><div class="card-body flush table-wrap"><table class="t">
+<thead><tr><th>#</th><th>File</th><th>Kind</th><th>Status</th><th>Rows</th><th>Created</th></tr></thead>
+<tbody>{% for b in batches %}<tr><td>{{ b.pk }}</td><td><a href="{{ b.get_absolute_url }}">{{ b.original_filename }}</a></td><td>{{ b.get_kind_display }}</td><td>{% pill b.status b.get_status_display tone="blue" %}</td><td class="num">{{ b.summary.rows }}</td><td>{{ b.created_at|d }}<br><small class="muted">{{ b.created_by }}</small></td></tr>
+{% empty %}<tr><td colspan="6"><div class="empty">No imports yet.</div></td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card"><div class="card-head"><h2>New import</h2></div><div class="card-body">
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{% include "partials/form_fields.html" %}<div class="form-actions"><button class="btn btn-primary">Upload and map</button></div></form>
+<hr><p class="muted"><small>Column templates: <a href="{% url 'import_template' 'deals' %}">deals</a> · <a href="{% url 'import_template' 'properties' %}">properties</a> · <a href="{% url 'import_template' 'contacts' %}">contacts</a>.<br>Blank amounts are imported as unknown, never as $0. A row is imported as closed only if its status says closed and it has an actual closing date in the past.</small></p>
+</div></div></div>
+{% endblock %}

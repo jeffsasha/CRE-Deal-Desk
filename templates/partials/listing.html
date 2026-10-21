@@ -1,0 +1,55 @@
+<div class="card">
+  <form class="toolbar" method="get">
+    <input type="search" name="q" value="{{ listing.q }}" placeholder="Search…">
+    {% for w in listing.filter_widgets %}
+      <select name="{{ w.f.name }}" data-autosubmit aria-label="{{ w.f.label }}">
+        <option value="">{{ w.f.label }}: all</option>
+        {% for val, lab in w.f.choices %}<option value="{{ val }}" {% if w.value == val|stringformat:"s" %}selected{% endif %}>{{ lab }}</option>{% endfor %}
+      </select>
+    {% endfor %}
+    {% if request.GET.cols %}<input type="hidden" name="cols" value="{{ request.GET.cols }}">{% endif %}
+    {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+    {% if request.GET.view %}<input type="hidden" name="view" value="{{ request.GET.view }}">{% endif %}
+    <button class="btn btn-sm">Apply</button>
+    {% if listing.q or listing.active_filters %}<a class="btn btn-sm btn-ghost" href="?">Clear</a>{% endif %}
+    <div class="grow"></div>
+    <span class="muted" style="font-size:12px">{{ listing.page.paginator.count }} record{{ listing.page.paginator.count|pluralize }}</span>
+    {% if listing.saved_views %}
+    <details class="dropdown"><summary class="btn btn-sm">Saved views</summary><div class="menu">
+      {% for v in listing.saved_views %}<div style="display:flex;justify-content:space-between;gap:8px"><a href="?{{ v.query_string }}">{{ v.name }}</a></div>{% endfor %}
+    </div></details>
+    {% endif %}
+    <details class="dropdown"><summary class="btn btn-sm">Columns</summary>
+      <div class="menu" style="max-height:340px;overflow:auto">
+        {% for c in listing.columns %}<label><input type="checkbox" name="col" value="{{ c.key }}" form="cols-{{ listing.area }}" {% if c.key in listing.visible_keys %}checked{% endif %}> {{ c.label }}</label>{% endfor %}
+        <button class="btn btn-sm btn-primary" form="cols-{{ listing.area }}">Show columns</button>
+      </div>
+    </details>
+    <details class="dropdown"><summary class="btn btn-sm">Save view</summary>
+      <div class="menu"><label style="flex-direction:column;align-items:stretch">Name<input form="save-{{ listing.area }}" name="name" required></label>
+      <button class="btn btn-sm btn-primary" form="save-{{ listing.area }}">Save current filters</button></div>
+    </details>
+    {% if not hide_export %}<a class="btn btn-sm" href="?{{ listing.querystring }}&export=csv">Export CSV</a>{% endif %}
+  </form>
+  <form id="cols-{{ listing.area }}" method="get" data-columns>{% for k, v in request.GET.items %}{% if k != 'cols' and k != 'page' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}{% endfor %}</form>
+  <form id="save-{{ listing.area }}" method="post" action="{% url 'save_view' %}">{% csrf_token %}<input type="hidden" name="area" value="{{ listing.area }}"><input type="hidden" name="query_string" value="{{ listing.querystring }}"><input type="hidden" name="next" value="{{ request.get_full_path }}"></form>
+  <div class="table-wrap">
+    <table class="t">
+      <thead><tr>{% for h in listing.header %}<th class="{{ h.col.cls }} {% if h.active %}sorted{% endif %}">{% if h.url %}<a href="{{ h.url }}">{{ h.col.label }}{% if h.active %} {% if h.desc %}↓{% else %}↑{% endif %}{% endif %}</a>{% else %}{{ h.col.label }}{% endif %}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for row in listing.rows %}
+          <tr class="{{ row.cls }}">{% for col, val in row.cells %}<td class="{{ col.cls }}">{% if forloop.first and row.url %}<a href="{{ row.url }}">{{ val }}</a>{% else %}{{ val }}{% endif %}</td>{% endfor %}</tr>
+        {% empty %}
+          <tr><td colspan="{{ listing.visible|length }}"><div class="empty">{{ empty_text|default:"No records match." }}</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if listing.page.has_other_pages %}
+  <div class="toolbar" style="border-top:1px solid var(--border);border-bottom:0">
+    {% if listing.page.has_previous %}<a class="btn btn-sm" href="{% url_with page=listing.page.previous_page_number %}">Previous</a>{% endif %}
+    <span class="muted">Page {{ listing.page.number }} of {{ listing.page.paginator.num_pages }}</span>
+    {% if listing.page.has_next %}<a class="btn btn-sm" href="{% url_with page=listing.page.next_page_number %}">Next</a>{% endif %}
+  </div>
+  {% endif %}
+</div>

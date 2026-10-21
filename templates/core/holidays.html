@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Holiday calendars{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
+<div class="page-head"><div><h1>Holiday calendars</h1><div class="sub">Used only by deadlines that count business days or whose contract establishes a weekend/holiday adjustment. Showing {{ year }}.</div></div>
+<div class="segmented"><a href="?year={{ year|add:-1 }}">{{ year|add:-1 }}</a><a class="on" href="?year={{ year }}">{{ year }}</a><a href="?year={{ year|add:1 }}">{{ year|add:1 }}</a></div></div>
+<div class="grid grid-2">
+{% for cal in calendars %}
+<div class="card"><div class="card-head"><h2>{{ cal.name }}</h2>{% if can.settings_manage %}<a class="btn btn-sm" href="{% url 'holiday_add' cal.pk %}">Add date</a>{% endif %}</div>
+<div class="card-body flush"><table class="t"><tbody>
+{% for h in cal.holidays.all %}{% if h.date.year == year %}<tr><td class="nowrap">{{ h.date|dshort }}, {{ h.date.year }}</td><td>{{ h.name }}</td></tr>{% endif %}{% empty %}<tr><td><div class="empty">Weekends only.</div></td></tr>{% endfor %}
+</tbody></table><div style="padding:8px 10px"><small class="muted">{{ cal.description }}</small></div></div></div>
+{% endfor %}
+</div>
+{% endblock %}

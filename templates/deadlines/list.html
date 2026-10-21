@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Calendar & Deadlines{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Calendar & Deadlines</h1><div class="sub">Computed by explicit rules from approved terms and recorded events. “Awaiting Trigger” means no date exists yet.</div></div>
+<div class="actions"><div class="segmented"><a class="on" href="{% url 'deadline_list' %}">List</a><a href="{% url 'deadline_calendar' %}">Month</a></div><a class="btn" href="{% url 'deadline_ics' %}">Export .ics</a></div></div>
+{% include "partials/listing.html" %}
+{% endblock %}
