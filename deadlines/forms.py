@@ -28,8 +28,7 @@ class DeadlineForm(StyledModelForm):
         model = Deadline
         fields = ["name", "category", "is_contractual", "rule_type", "fixed_date", "fixed_date_term_key", "triggers",
                   "offset_days", "offset_term_key", "day_basis", "include_trigger_day", "holiday_calendar",
-                  "weekend_rule", "weekend_rule_source", "due_time", "time_zone", "source_version", "source_page",
-                  "source_section", "source_clause", "responsible_user", "responsible_party", "confirmation",
+                  "weekend_rule", "weekend_rule_source", "due_time", "time_zone", "source_clause", "responsible_user", "responsible_party", "confirmation",
                   "reminder_days_text"]
         help_texts = {
             "weekend_rule": "Leave 'No adjustment' unless the contract establishes one. A Sunday deadline is not moved to Monday by default.",
@@ -47,10 +46,6 @@ class DeadlineForm(StyledModelForm):
                     events.append((key, key))
             others = self.deal.deadlines.exclude(pk=self.instance.pk or 0).exclude(state__in=["superseded", "cancelled"])
             events += [(f"deadline:{d.pk}", f"Deadline: {d.name}") for d in others]
-            from documents.models import DocumentVersion
-
-            self.fields["source_version"].queryset = DocumentVersion.objects.filter(document__links__deal=self.deal)
-            self.fields["source_version"].label_from_instance = lambda v: f"{v} — {v.get_execution_status_display()}"
         self.fields["triggers"].choices = events
         self.fields["triggers"].widget.attrs["size"] = 6
         self.fields["responsible_user"].queryset = User.objects.filter(is_active=True).exclude(role="read_only")

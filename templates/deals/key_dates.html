@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Key dates" %}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ deal.get_absolute_url }}">← {{ deal.name }}</a></div>
+<div class="page-head"><div><h1>{% translate "Key dates" %}</h1>
+  <div class="sub">{% translate "Enter the values from the executed contract. Deadlines are calculated in calendar days and the Effective Date itself is not counted." %}</div></div></div>
+<div class="card" style="max-width:640px"><div class="card-body">
+  <form method="post" class="keydates-form">{% csrf_token %}
+    {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <div class="form-grid">
+      {% for f in form.visible_fields %}
+      {% if f.name == "closing_mode" %}
+        <div class="field full"><label>{{ f.label|tr }}</label>
+          <div class="seg-radio">{% for r in f %}<label>{{ r.tag }}<span>{{ r.choice_label|tr }}</span></label>{% endfor %}</div></div>
+      {% else %}
+        <div class="field {% if f.field.widget.input_type == 'checkbox' %}check full{% endif %}" data-field="{{ f.name }}">
+          {% if f.field.widget.input_type == 'checkbox' %}{{ f }}<label for="{{ f.id_for_label }}">{{ f.label|tr }}</label>
+          {% else %}<label for="{{ f.id_for_label }}">{{ f.label|tr }}</label>{{ f }}{% endif %}
+          {% if f.help_text %}<div class="help">{{ f.help_text|tr }}</div>{% endif %}
+          {% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="form-actions"><button class="btn btn-primary">{% translate "Save key dates" %}</button><a class="btn" href="{{ deal.get_absolute_url }}">{% translate "Cancel" %}</a></div>
+  </form>
+</div></div>
+{% endblock %}
+{% block scripts %}<script>
+(function () {
+  var form = document.querySelector(".keydates-form");
+  if (!form) return;
+  function sync() {
+    var mode = form.querySelector('input[name="closing_mode"]:checked');
+    if (!mode) return;
+    var days = form.querySelector('[data-field="closing_days"]'), date = form.querySelector('[data-field="closing_date"]');
+    if (days) days.style.display = mode.value === "days" ? "" : "none";
+    if (date) date.style.display = mode.value === "date" ? "" : "none";
+  }
+  form.addEventListener("change", sync);
+  sync();
+})();
+</script>{% endblock %}

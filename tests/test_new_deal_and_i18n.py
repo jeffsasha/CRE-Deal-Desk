@@ -64,13 +64,13 @@ class GuidedNewDealTests(DeskTestCase):
 class LanguageTests(DeskTestCase):
     def test_switch_to_chinese_and_back(self):
         self.client.force_login(self.user("broker"))
-        self.assertContains(self.client.get(reverse("dashboard")), "Deal progress")
+        self.assertContains(self.client.get(reverse("dashboard")), "Due in 7 days")
         self.client.post(reverse("set_language"), {"language": "zh-hans", "next": "/"})
         resp = self.client.get(reverse("dashboard"))
-        self.assertContains(resp, "交易进度")
+        self.assertContains(resp, "7 天内到期")
         self.assertContains(resp, 'lang="zh-hans"')
         self.client.post(reverse("set_language"), {"language": "en", "next": "/"})
-        self.assertContains(self.client.get(reverse("dashboard")), "Deal progress")
+        self.assertContains(self.client.get(reverse("dashboard")), "Due in 7 days")
 
     def test_login_page_switch_available_anonymously(self):
         resp = self.client.post(reverse("set_language"), {"language": "zh-hans", "next": "/accounts/login/"})

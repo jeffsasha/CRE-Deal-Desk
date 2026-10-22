@@ -69,16 +69,13 @@ def property_detail(request, pk):
     prop = get_object_or_404(Property, pk=pk)
     tab = request.GET.get("tab", "overview")
     links = prop.deal_links.select_related("deal__stage", "space").order_by("-deal__created_at")
-    facts = prop.facts.select_related("verified_by", "source_document", "space")
-    docs = prop.document_links.select_related("document").filter(document__archived_at__isnull=True)
-    if not has_perm(request.user, "document.confidential"):
-        docs = docs.exclude(document__access_level="confidential")
+    facts = prop.facts.select_related("verified_by", "space")
     ctx = {
         "p": prop, "tab": tab, "deal_links": links, "facts": facts,
         "fact_groups": _group(facts),
         "parcels": prop.parcels.all(), "spaces": prop.spaces.all(), "rent_roll": prop.rent_roll.select_related("space"),
         "asking": prop.asking_history.select_related("space"), "charges": prop.charges.select_related("space"),
-        "documents": docs, "issues": Issue.objects.filter(property=prop) | Issue.objects.filter(deal__deal_properties__property=prop),
+        "issues": Issue.objects.filter(property=prop) | Issue.objects.filter(deal__deal_properties__property=prop),
         "activities": Activity.objects.filter(property=prop) | Activity.objects.filter(deal__deal_properties__property=prop, kind__in=["showing", "decision", "negotiation", "note"]),
         "unverified_count": facts.exclude(verification="verified").count(),
     }

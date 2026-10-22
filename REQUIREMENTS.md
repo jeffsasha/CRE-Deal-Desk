@@ -3,36 +3,44 @@
 Status: `[x]` done and covered by tests or the demo · `[~]` partial (see note) · `[ ]` not started.
 Keep this file current so later stages don't silently drop off. It is also shown in the app under Settings → Requirements checklist.
 
+
+## Simplified on 2026-10-22
+- [x] Key dates entered by hand: Effective Date, Feasibility Period (days), Closing Date (fixed date or days after the Effective Date), or Commencement Date for leases; deadlines still computed by the rule engine, changes keep history
+- [x] Dashboard: one timeline per open deal (Effective Date → Feasibility Period → Closing Date), next milestone, SKW Commission expected / received
+- [x] Commission shown only as SKW's expected and received amount per deal; payments recorded and reversed on the immutable ledger; broker splits hidden
+- [x] Harvard palette (Crimson on parchment; warm charcoal dark mode), never pure white or black
+- [x] Contract upload, OCR and AI extraction removed (no uploaded files existed in the real database)
+
 ## Stage 1 — Foundations
 - [x] Separate entities: Property, Space/Suite, Deal, Organization, Contact, Document (versioned), Deadline, Checklist item, Commission agreement / installment / allocation / ledger entry
 - [x] One property, many deals over time; one deal, many properties (with optional suites); multiple clients and parties
 - [x] Linked transactions (depends on, related, business asset linked to lease, successor)
-- [x] Navigation: Dashboard, Properties, Deals, Calendar & Deadlines, Tasks & Checklists, Documents, Contacts & Companies, Commissions, Reports, Settings
+- [x] Navigation (simplified 2026-10-22): Dashboard, Deals, Calendar & Deadlines, Commissions, Properties, Contacts & Companies, Settings
 - [x] Table, board (drag to change stage) and calendar views; search, filters, sorting, column choice, saved views, CSV export
 - [x] Property records: address/suite, type, county, parcels, legal description, areas, units, owner/vesting, rent roll, asking-price history, charges with explicit units, facts with source/verification/date (industrial, restaurant/retail, zoning/use, flood)
 - [x] Marketing statements are labeled as unverified
 - [x] Property history kept when deals end (terminated, lost, closed)
 - [x] Deal records: type, configurable stages, priority, team, responsible broker, parties and roles, representation per side, distinct price history, effective / contract / target / actual dates, deposits with confirmation and refundability, financing, next action and owner, blockers, termination reason, related deals
-- [x] Deal tabs: Overview, Parties, Contract & Dates, Checklist, Documents, Issues, Activity, Commissions, Closing
+- [x] Deal tabs (simplified 2026-10-22): Overview (key-date timeline + SKW Commission), Parties, Checklist, Activity, Closing
 - [x] Chronological activity log (system changes, calls, emails, notes, decisions)
-- [x] Document library: categories, tags, full-text search (including OCR text), OCR status, version history, preview, access level, links to many records, originals vs generated summaries
+- [—] ~~Document library: categories, tags, full-text search (including OCR text), OCR status, version history, preview, access level, links to many records, originals vs generated summaries~~ (removed 2026-10-22: no document upload)
 - [x] Historical import (CSV/XLSX): field mapping, preview, row validation, duplicate detection, property/organization matching, batches, error report, source references, review before commit, safe reversal
 - [x] Unknown stays unknown (no zero substitution); LOIs, counteroffers and proposals are never imported as closed
-- [x] Pasted historical notes stored as original documents
+- [—] ~~Pasted historical notes stored as original documents~~ (removed 2026-10-22: no document upload)
 
 ## Stage 2 — Contract review, deadlines, checklists, amendments
 - [x] Upload PDF, scanned PDF, images, DOCX; original preserved (SHA-256); file signature validation
-- [x] OCR: macOS Vision (offline) or Tesseract; graceful when unavailable
-- [x] Apparent document type and execution status detection; user-confirmed execution with evidence
+- [—] ~~OCR: macOS Vision (offline) or Tesseract; graceful when unavailable~~ (removed 2026-10-22: no document upload)
+- [—] ~~Apparent document type and execution status detection; user-confirmed execution with evidence~~ (removed 2026-10-22: no document upload)
 - [x] Side-by-side viewer and review panel; accept / edit / reject; manual entry always available
-- [x] Each value keeps document version, page, section, supporting text, confidence, explicit/calculated, review status, reviewer, timestamp
-- [x] Safeguards: no invented dates or default periods; signature date ≠ effective date; uploaded ≠ executed; proposed amendment ≠ effective; conflicts and missing values become "Needs Review"; quotes checked against page text
-- [x] Document content treated as untrusted data (system prompt, no tools, proposals only)
-- [~] Claude extraction implemented (structured output, PDF input, refusal fallback) — **not yet run against the live API** (no key configured here)
+- [—] ~~Each value keeps document version, page, section, supporting text, confidence, explicit/calculated, review status, reviewer, timestamp~~ (removed 2026-10-22: no document upload)
+- [—] ~~Safeguards: no invented dates or default periods; signature date ≠ effective date; uploaded ≠ executed; proposed amendment ≠ effective; conflicts and missing values become "Needs Review"; quotes checked against page text~~ (removed 2026-10-22: no document upload)
+- [—] ~~Document content treated as untrusted data (system prompt, no tools, proposals only)~~ (removed 2026-10-22: no document upload)
+- [—] ~~Claude extraction implemented (structured output, PDF input, refusal fallback) — **not yet run against the live API** (no key configured here)~~ (removed 2026-10-22: no document upload)
 - [x] Deadline engine: fixed / fixed-from-term / days after event / later-of / earlier-of; calendar or business days; trigger-day inclusion; holiday calendars; weekend rule only if established (with clause); time and time zone (DST-correct); source clause; dependencies (chaining); responsible person; confirmation; reminder schedule; original/current date; revision history
 - [x] Receipt-triggered deadlines require the actual event date (never the upload date); "Awaiting Trigger" otherwise
 - [x] Contractual deadlines separate from internal targets
-- [x] Amendments: compare with approved terms, preview affected deadlines, require confirmed execution, apply, keep superseded terms/dates/documents, replace pending reminders while keeping history
+- [—] ~~Amendments: compare with approved terms, preview affected deadlines, require confirmed execution, apply, keep superseded terms/dates/documents, replace pending reminders while keeping history~~ (removed 2026-10-22: no document upload)
 - [x] Editable checklist templates (acquisition, disposition, lease, land, business asset) with conditions → Not Applicable with reason
 - [x] Checklist item fields: owner, outside party, due date, deadline link, dependency, statuses (Not Started … Blocked), requested/received/reviewed/approved dates, evidence, follow-up, notes, unresolved issues; Received ≠ Reviewed ≠ Approved
 - [x] Title commitment, owner's policy, lender's policy and property insurance are separate items
@@ -54,13 +62,13 @@ Keep this file current so later stages don't silently drop off. It is also shown
 - [x] Roles: administrator, broker, coordinator, read-only — enforced on the server; commission and client details restricted
 - [x] Private storage, signed short-lived user-bound download links, audit log of key changes, recoverable archiving
 - [x] Backups (`manage.py backup`) and a documented restoration procedure
-- [x] Failed extraction never destroys the file or blocks manual entry
+- [—] ~~Failed extraction never destroys the file or blocks manual entry~~ (removed 2026-10-22: no document upload)
 - [x] Relational database (SQLite, local single-user; PostgreSQL also supported)
 - [x] Demo mode isolated in its own database, with fictional labeled data
 
 ## Open items / recommended next
 - [ ] Load real historical records (your spreadsheets and documents)
-- [ ] Configure `ANTHROPIC_API_KEY` and validate extraction on real contracts
+- [—] ~~Configure `ANTHROPIC_API_KEY` and validate extraction on real contracts~~ (removed 2026-10-22: no document upload)
 - [ ] Configure SMTP for email reminders
 - [x] Start DealDesk automatically at login (macOS LaunchAgent, `scripts/install_autostart.sh`)
 - [x] Daily automatic backup at 20:00 into `var/backups/`

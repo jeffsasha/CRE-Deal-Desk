@@ -1,0 +1,15 @@
+{% load i18n %}{# Key-date timeline: Effective Date → milestones. Expects `tl` from deals.keydates.timeline. #}
+<div class="tl{% if not tl.start %} tl-empty{% endif %}">
+  <div class="tl-track">
+    {% if tl.today_pos is not None %}<span class="tl-fill" style="width:{{ tl.today_pos }}%"></span><span class="tl-today" style="left:{{ tl.today_pos }}%" title="{% translate "Today" %}"></span>{% endif %}
+    <span class="tl-dot tl-start {% if tl.start %}passed{% endif %}" style="left:0%"></span>
+    {% for p in tl.points %}{% if p.pos is not None %}<span class="tl-dot {% if p.passed %}passed{% elif tl.next == p %}next{% endif %}" style="left:{{ p.pos }}%" title="{% translate p.label %} · {{ p.date|d }}"></span>{% endif %}{% endfor %}
+  </div>
+  <div class="tl-labels">
+    <div class="tl-label"><span class="k">{% translate "Effective Date" %}</span><span class="v">{% if tl.start %}{{ tl.start|dshort }}{% else %}<span class="muted">{% translate "Not entered" %}</span>{% endif %}</span></div>
+    {% for p in tl.points %}<div class="tl-label {% if tl.next == p %}is-next{% endif %} {% if p.passed %}is-passed{% endif %}">
+      <span class="k">{% translate p.label %}</span>
+      <span class="v">{% if p.date %}{{ p.date|dshort }}{% if not p.passed %} <small>{{ p.date|relday }}</small>{% endif %}{% elif p.awaiting %}<span class="muted">{% translate "Needs Effective Date" %}</span>{% else %}<span class="muted">{% translate "Not entered" %}</span>{% endif %}</span>
+    </div>{% endfor %}
+  </div>
+</div>

@@ -56,19 +56,17 @@
 
 <div class="cmdk-backdrop" data-cmdk hidden>
   <div class="cmdk" role="dialog" aria-modal="true" aria-label="{% translate "Search and commands" %}" data-t-search="{% translate "Search everything for" %}" data-t-empty="{% translate "No matches" %}" data-t-nav="{% translate "Navigate" %}" data-t-sgroup="{% translate "Search" %}">
-    <div class="cmdk-input">{% icon "search" %}<input type="text" data-cmdk-input placeholder="{% translate "Search deals, properties, contacts, documents — or type a command" %}" autocomplete="off" spellcheck="false"><span class="kbd">esc</span></div>
+    <div class="cmdk-input">{% icon "search" %}<input type="text" data-cmdk-input placeholder="{% translate "Search deals, properties, contacts — or type a command" %}" autocomplete="off" spellcheck="false"><span class="kbd">esc</span></div>
     <div class="cmdk-list" data-cmdk-list role="listbox"></div>
     <div class="cmdk-foot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> {% translate "move" %}</span><span><span class="kbd">↵</span> {% translate "open" %}</span><span><span class="kbd">esc</span> {% translate "close" %}</span></div>
   </div>
 </div>
 <script type="application/json" id="cmdk-actions">[
   {% if can.edit %}{"label": "{% filter escapejs %}{% translate "New deal" %}{% endfilter %}", "url": "{% url 'deal_create' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},
-  {"label": "{% filter escapejs %}{% translate "Upload document" %}{% endfilter %}", "url": "{% url 'document_upload' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},
   {"label": "{% filter escapejs %}{% translate "New property" %}{% endfilter %}", "url": "{% url 'property_create' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},
   {"label": "{% filter escapejs %}{% translate "New contact" %}{% endfilter %}", "url": "{% url 'contact_create' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},{% endif %}
   {"label": "{% filter escapejs %}{% translate "Deal board" %}{% endfilter %}", "url": "{% url 'deal_board' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "deal_list"},
   {"label": "{% filter escapejs %}{% translate "Deadline calendar" %}{% endfilter %}", "url": "{% url 'deadline_calendar' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "deadline_list"},
-  {"label": "{% filter escapejs %}{% translate "Extractions awaiting review" %}{% endfilter %}", "url": "{% url 'review_queue' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "document_list"},
   {"label": "{% filter escapejs %}{% translate "Deposits awaiting confirmation" %}{% endfilter %}", "url": "{% url 'deposit_list' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "deal_list"},
   {"label": "{% filter escapejs %}{% translate "Issues" %}{% endfilter %}", "url": "{% url 'issue_list' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "alert"},
   {"label": "{% filter escapejs %}{% translate "Notifications" %}{% endfilter %}", "url": "{% url 'notifications' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "bell"},

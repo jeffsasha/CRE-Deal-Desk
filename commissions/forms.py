@@ -22,7 +22,7 @@ class AgreementForm(MoneyModelFormMixin, StyledModelForm):
 
     class Meta:
         model = CommissionAgreement
-        fields = ["deal", "title", "document", "status", "payer", "payer_name", "legal_payee", "represented_side",
+        fields = ["deal", "title", "status", "payer", "payer_name", "legal_payee", "represented_side",
                   "basis_type", "basis_description", "basis_amount", "rate_percent", "flat_amount", "tiers_text",
                   "stated_gross", "earning_conditions", "notes"]
         help_texts = {"rate_percent": "e.g. 3.0 for 3%."}
@@ -31,10 +31,6 @@ class AgreementForm(MoneyModelFormMixin, StyledModelForm):
         super().__init__(*args, **kwargs)
         self.fields["deal"].queryset = Deal.objects.active()
         self.fields["payer"].queryset = Organization.objects.active()
-        deal = self.initial.get("deal") or (self.instance.deal if self.instance.pk else None)
-        from documents.models import Document
-
-        self.fields["document"].queryset = Document.objects.filter(links__deal=deal) if deal else Document.objects.filter(category="commission_agreement")
         if self.instance.pk and self.instance.tiers:
             self.initial["tiers_text"] = json.dumps(self.instance.tiers)
 
@@ -116,7 +112,7 @@ class AdjustmentForm(MoneyModelFormMixin, StyledModelForm):
 
     class Meta:
         model = CommissionAdjustment
-        fields = ["amount", "reason", "document"]
+        fields = ["amount", "reason"]
 
 
 class EntryForm(LocalizedForm):
@@ -127,16 +123,12 @@ class EntryForm(LocalizedForm):
     allocation = forms.ModelChoiceField(queryset=CommissionAllocation.objects.none(), required=False,
                                         label="Recipient (for distributions / direct payments)")
     reference = forms.CharField(required=False)
-    proof_document = forms.ModelChoiceField(queryset=None, required=False)
     notes = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}))
 
     def __init__(self, *args, agreement=None, **kwargs):
         super().__init__(*args, **kwargs)
-        from documents.models import Document
-
         self.fields["installment"].queryset = agreement.installments.all()
         self.fields["allocation"].queryset = agreement.allocations.all()
-        self.fields["proof_document"].queryset = Document.objects.filter(links__deal=agreement.deal)
 
 
 class ReverseForm(LocalizedForm):

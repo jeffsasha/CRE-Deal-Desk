@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% translate "Search" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>{% translate "Search" %}</h1><div class="sub">{% if q %}{% translate "Results for “" %}{{ q }}{% translate "” — includes full text of documents" %}{% else %}{% translate "Enter a term in the search bar" %}{% endif %}</div></div></div>
+<div class="page-head"><div><h1>{% translate "Search" %}</h1><div class="sub">{% if q %}{% translate "Results for “" %}{{ q }}{% translate "”" %}{% else %}{% translate "Enter a term in the search bar" %}{% endif %}</div></div></div>
 {% for label, items in results.items %}
 <div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ label }}</h2><span class="muted">{{ items|length }}</span></div>
   <div class="card-body flush"><table class="t"><tbody>

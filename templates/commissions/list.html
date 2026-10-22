@@ -2,7 +2,24 @@
 {% load i18n %}
 {% block title %}{% translate "Commissions" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>{% translate "Commissions" %}</h1><div class="sub">{% translate "Status is derived from agreements, installments and ledger activity — never a checkbox. Unknown amounts stay unknown." %}</div></div>
-<div class="actions"><a class="btn" href="{% url 'ledger_list' %}">{% translate "Ledger entries" %}</a><a class="btn" href="{% url 'report_index' %}">{% translate "Reports" %}</a>{% if can.commission_edit %}<a class="btn btn-primary" href="{% url 'commission_create' %}">{% translate "New agreement" %}</a>{% endif %}</div></div>
-{% include "partials/listing.html" %}
+<div class="page-head"><div><h1>{% translate "Commissions" %}</h1><div class="sub">{% translate "What SKW Realty expects and has received on each deal. Enter amounts on the deal page." %}</div></div>
+  <div class="segmented"><a class="{% if show == 'open' %}on{% endif %}" href="?show=open">{% translate "Open deals" %}</a><a class="{% if show == 'closed' %}on{% endif %}" href="?show=closed">{% translate "Closed" %}</a><a class="{% if show == 'all' %}on{% endif %}" href="?show=all">{% translate "All" %}</a></div></div>
+
+<div class="summary-row">
+  <div class="metric"><div class="label">{% translate "Expected" %}</div><div class="value">{{ totals.expected|money0 }}</div>{% if totals.unknown %}<div class="note">{% blocktranslate count n=totals.unknown %}+ {{ n }} deal not entered{% plural %}+ {{ n }} deals not entered{% endblocktranslate %}</div>{% endif %}</div>
+  <div class="metric"><div class="label">{% translate "Received" %}</div><div class="value">{{ totals.received|money0 }}</div></div>
+  <div class="metric"><div class="label">{% translate "Outstanding" %}</div><div class="value">{{ totals.outstanding|money0 }}</div></div>
+</div>
+
+<div class="card"><div class="card-body flush table-wrap"><table class="t">
+  <thead><tr><th>{% translate "Deal" %}</th><th class="hide-sm">{% translate "Stage" %}</th><th class="num">{% translate "Expected" %}</th><th class="num">{% translate "Received" %}</th><th class="num hide-sm">{% translate "Outstanding" %}</th><th>{% translate "Status" %}</th></tr></thead>
+  <tbody>{% for deal, c in rows %}<tr>
+    <td><a href="{{ deal.get_absolute_url }}">{{ deal.name }}</a><br><small class="muted">{{ deal.get_transaction_type_display }}</small></td>
+    <td class="hide-sm">{% translate deal.stage.name as sn %}{% pill deal.stage.category sn %}</td>
+    <td class="num">{{ c.expected|money0:"—" }}</td>
+    <td class="num">{{ c.received|money0 }}</td>
+    <td class="num hide-sm">{{ c.outstanding|money0:"—" }}</td>
+    <td>{% pill c.status c.status_label c.tone %}</td></tr>
+  {% empty %}<tr><td colspan="6"><div class="empty">{% translate "No deals." %}</div></td></tr>{% endfor %}</tbody>
+</table></div></div>
 {% endblock %}

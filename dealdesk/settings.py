@@ -174,13 +174,6 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
 
 # --- Integrations ---------------------------------------------------------
-# Claude contract extraction. When no credential is configured the offline pattern
-# extractor runs instead and is labeled as such everywhere it appears.
-ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY")
-EXTRACTION_ENGINE = env("DEALDESK_EXTRACTION_ENGINE", "auto")  # auto | claude | pattern
-EXTRACTION_MODEL = env("DEALDESK_EXTRACTION_MODEL", "claude-opus-5-5")
-OCR_ENGINE = env("DEALDESK_OCR_ENGINE", "auto")  # auto | vision | tesseract | none
-
 # Email reminders are only sent when SMTP is configured.
 EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_PORT = int(env("EMAIL_PORT", "587"))

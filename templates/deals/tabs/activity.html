@@ -4,7 +4,6 @@
     {% for a in activities %}<li><div class="when">{{ a.occurred_at|d }}<br><span class="tag">{{ a.get_kind_display }}</span></div>
       <div><strong>{{ a.summary }}</strong>{% if a.direction != 'internal' %} <small class="muted">({{ a.get_direction_display|lower }}{% if a.counterparties %} — {{ a.counterparties }}{% endif %})</small>{% endif %}
       {% if a.body %}<div class="body">{{ a.body }}</div>{% endif %}
-      {% if a.document %}<div><a href="{{ a.document.get_absolute_url }}"><small>📎 {{ a.document }}</small></a></div>{% endif %}
       <small class="muted">{{ a.created_by|default:_("System") }}</small></div></li>
     {% empty %}<li><div class="empty">{% translate "No activity." %}</div></li>{% endfor %}
     </ul></div></div>

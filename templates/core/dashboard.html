@@ -5,53 +5,39 @@
 <div class="page-head">
   <div>
     <h1>{% translate "Today" %}</h1>
-    <div class="sub">{{ today|longdate }} · {% translate "What needs attention, what could delay a deal, and what documents or money are still missing." %}</div>
+    <div class="sub">{{ today|longdate }}</div>
   </div>
-  <div class="actions">
-    {% if can.edit %}<a class="btn" href="{% url 'document_upload' %}">{% icon "upload" %}{% translate "Upload document" %}</a><a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}
-  </div>
+  <div class="actions">{% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div>
 </div>
 
-<div class="alert-strip">
-  <a class="chip {% if deadlines.overdue.0 %}bad{% endif %}" href="{{ deadlines.overdue.1 }}"><span class="n">{{ deadlines.overdue.0 }}</span>{% translate "Overdue" %}</a>
-  <a class="chip {% if deadlines.today.0 %}warn{% endif %}" href="{{ deadlines.today.1 }}"><span class="n">{{ deadlines.today.0 }}</span>{% translate "Due today" %}</a>
-  <a class="chip" href="{{ deadlines.week.1 }}"><span class="n">{{ deadlines.week.0 }}</span>{% translate "Next 7 days" %}</a>
-  <a class="chip" href="{{ deadlines.next30.1 }}"><span class="n">{{ deadlines.next30.0 }}</span>{% translate "Next 30 days" %}</a>
-  <a class="chip {% if deadlines.awaiting.0 %}warn{% endif %}" href="{{ deadlines.awaiting.1 }}" title="{% translate "No date until the actual event is recorded" %}"><span class="n">{{ deadlines.awaiting.0 }}</span>{% translate "Awaiting trigger" %}</a>
-  <a class="chip {% if deadlines.needs_review.0 %}bad{% endif %}" href="{{ deadlines.needs_review.1 }}"><span class="n">{{ deadlines.needs_review.0 }}</span>{% translate "Needs review" %}</a>
-  <a class="chip {% if overdue_items.0 %}bad{% endif %}" href="{{ overdue_items.1 }}"><span class="n">{{ overdue_items.0 }}</span>{% translate "Overdue tasks" %}</a>
-  <a class="chip {% if review_runs.0 %}warn{% endif %}" href="{{ review_runs.1 }}"><span class="n">{{ review_runs.0 }}</span>{% translate "Extractions to review" %}</a>
+<div class="summary-row">
+  <a class="metric {% if deadlines.overdue.0 %}bad{% endif %}" href="{{ deadlines.overdue.1 }}"><div class="label">{% translate "Overdue" %}</div><div class="value">{{ deadlines.overdue.0 }}</div></a>
+  <a class="metric {% if deadlines.week.0 %}warn{% endif %}" href="{{ deadlines.week.1 }}"><div class="label">{% translate "Due in 7 days" %}</div><div class="value">{{ deadlines.week.0 }}</div></a>
+  <a class="metric" href="{% url 'deal_list' %}"><div class="label">{% translate "Open deals" %}</div><div class="value">{{ open_deals }}</div></a>
+  {% if fin %}
+  <a class="metric" href="{% url 'commission_list' %}"><div class="label">{% translate "SKW commission expected" %}</div><div class="value">{{ fin.expected|money0 }}</div>{% if fin.expected_unknown %}<div class="note">{% blocktranslate count n=fin.expected_unknown %}+ {{ n }} deal not entered{% plural %}+ {{ n }} deals not entered{% endblocktranslate %}</div>{% endif %}</a>
+  <a class="metric" href="{% url 'commission_list' %}"><div class="label">{% blocktranslate with y=fin.year %}Received in {{ y }}{% endblocktranslate %}</div><div class="value">{{ fin.received_year|money0 }}</div></a>
+  {% endif %}
 </div>
 
 <div class="card progress-card" style="margin-bottom:16px">
   <div class="card-head">
-    <div><h2>{% translate "Deal progress" %}</h2><div class="muted" style="font-size:12px;margin-top:2px">{% translate "Where every open deal stands on the path to closing" %}</div></div>
-    <div class="segmented">{% for key, label in progress.kinds %}<a class="{% if progress.kind == key %}on{% endif %}" href="?kind={{ key }}{% if period != 'year' %}&period={{ period }}{% endif %}">{{ label }}</a>{% endfor %}</div>
+    <div><h2>{% translate "Deals" %}</h2><div class="muted" style="font-size:12px;margin-top:2px">{% translate "Effective Date → Feasibility Period → Closing Date" %}</div></div>
+    <div class="segmented">{% for key, label in progress.kinds %}<a class="{% if progress.kind == key %}on{% endif %}" href="?kind={{ key }}">{{ label }}</a>{% endfor %}</div>
   </div>
-  {% if progress.rows %}<div class="progress-legend">{% for s in progress.path %}<span>{% translate s.name %}</span>{% endfor %}</div>{% endif %}
   <div class="progress-list">
   {% for r in progress.rows %}
-    <a class="deal-progress {% if r.on_hold %}is-hold{% endif %}" href="{{ r.deal.get_absolute_url }}" style="--pct:{{ r.pct }}%; --i:{{ forloop.counter0 }}">
-      <div class="dp-info">
-        <div class="dp-name">{{ r.deal.name }}</div>
-        <div class="dp-meta">{{ r.deal.internal_id }} · {{ r.deal.get_transaction_type_display }}{% if r.deal.responsible_broker %} · {{ r.deal.responsible_broker }}{% endif %}</div>
+    <a class="deal-row {% if r.on_hold %}is-hold{% endif %}" href="{{ r.deal.get_absolute_url }}" style="--i:{{ forloop.counter0 }}">
+      <div class="dr-info">
+        <div class="dr-name">{{ r.deal.name }}</div>
+        <div class="dr-meta">{% if r.on_hold %}<span class="pill pill-amber">{% translate "On hold" %}</span>{% else %}<span class="pill pill-blue">{% translate r.deal.stage.name %}</span>{% endif %} <span class="muted">{{ r.deal.get_transaction_type_display }}</span></div>
       </div>
-      <div class="dp-track-wrap">
-        <div class="dp-head">
-          <span class="dp-stage">{% if r.on_hold %}{% translate "On hold" %}{% else %}{% translate r.deal.stage.name %}{% endif %}{% if r.stage_no %} <span class="muted">· {% blocktranslate with n=r.stage_no total=r.stage_total %}step {{ n }} of {{ total }}{% endblocktranslate %}</span>{% endif %}</span>
-          <span class="dp-flags">
-            {% if r.deal.is_blocked %}<span class="pill pill-red" title="{{ r.deal.blocked_by }}">{% translate "Blocked" %}</span>{% endif %}
-            {% if r.awaiting %}<span class="pill pill-amber" title="{% translate "Some deadlines are awaiting a trigger or need review" %}">{% translate "Dates pending" %}</span>{% endif %}
-          </span>
-        </div>
-        <div class="dp-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ r.pct }}" aria-label="{{ r.deal.name }}">
-          {% for st in r.steps %}<span class="seg {{ st.state }}" title="{% translate st.name %}"></span>{% endfor %}
-        </div>
-      </div>
-      <div class="dp-side">
-        {% if r.next %}<div class="{% if r.next_overdue %}dp-overdue{% endif %}"><span class="muted">{% translate "Next:" %}</span> {{ r.next.name|truncatechars:30 }}</div><div class="dp-date {% if r.next_overdue %}dp-overdue{% endif %}">{{ r.next.current_date|dshort }} · {{ r.next.current_date|relday }}</div>
-        {% else %}<div class="muted">{% translate "No dated deadline" %}</div>{% endif %}
-        {% if r.checklist_pct is not None %}<div class="dp-check" title="{% translate "Checklist items approved, waived or not applicable" %}"><span class="dp-mini"><span style="width:{{ r.checklist_pct }}%"></span></span>{% blocktranslate with pct=r.checklist_pct %}{{ pct }}% checklist{% endblocktranslate %}</div>{% endif %}
+      <div class="dr-timeline">{% with tl=r.tl %}{% include "partials/timeline.html" %}{% endwith %}</div>
+      <div class="dr-side">
+        {% if r.next %}<div class="dr-next {% if r.next_soon %}soon{% endif %}"><span class="muted">{% translate "Next" %}</span> {% translate r.next.label %}<br><strong>{{ r.next.date|dshort }}</strong> <small>{{ r.next.date|relday }}</small></div>
+        {% elif not r.tl.start %}<div class="muted">{% translate "Key dates not entered" %}</div>
+        {% else %}<div class="muted">{% translate "All key dates passed" %}</div>{% endif %}
+        {% if r.skw %}<div class="dr-cm"><span class="muted">{% translate "SKW" %}</span> {{ r.skw.expected|money0:"—" }}{% if r.skw.received %} · <span class="muted">{% translate "received" %}</span> {{ r.skw.received|money0 }}{% endif %}</div>{% endif %}
       </div>
     </a>
   {% empty %}
@@ -60,88 +46,14 @@
   </div>
 </div>
 
-<div class="split">
-  <div class="stack">
-    <div class="card">
-      <div class="card-head"><h2>{% translate "Next 7 days" %}</h2><a class="btn btn-sm" href="{% url 'deadline_calendar' %}">{% translate "Calendar" %}</a></div>
-      <div class="card-body flush table-wrap">
-        <table class="t">
-          <thead><tr><th>{% translate "Due" %}</th><th>{% translate "Deadline" %}</th><th>{% translate "Deal" %}</th><th class="hide-sm">{% translate "Responsible" %}</th><th>{% translate "Basis" %}</th></tr></thead>
-          <tbody>
-          {% for dl in upcoming %}
-            <tr class="{% if dl.is_overdue %}row-alert{% elif dl.days_until == 0 %}row-warn{% endif %}">
-              <td class="nowrap"><strong>{{ dl.current_date|dshort }}</strong><br><small>{{ dl.current_date|relday }}{% if dl.due_at %} · {{ dl.due_time|time:"g:i A" }}{% endif %}</small></td>
-              <td><a href="{{ dl.get_absolute_url }}">{{ dl.name }}</a>{% if not dl.is_contractual %} <span class="tag">{% translate "Internal" %}</span>{% endif %}</td>
-              <td><a href="{{ dl.deal.get_absolute_url }}">{{ dl.deal.name }}</a></td>
-              <td class="hide-sm">{{ dl.responsible_user|default:"—" }}</td>
-              <td>{% if dl.confirmation == "confirmed" %}{% translate "Rule confirmed" as rc %}{% pill "verified" rc %}{% else %}{% translate "Rule unconfirmed" as ru %}{% pill "unverified" ru %}{% endif %}</td>
-            </tr>
-          {% empty %}<tr><td colspan="5"><div class="empty">{% translate "No computed deadlines in the next 7 days." %}</div></td></tr>{% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h2>{% translate "Unresolved diligence items" %}</h2><small class="muted">{% translate "“Received” stays open until reviewed and approved" %}</small></div>
-      <div class="card-body"><div class="topic-row">
-        {% for t in topics %}<a class="chip {% if t.n %}warn{% endif %}" href="{{ t.url }}"><span class="n">{{ t.n }}</span>{% translate t.label %}</a>{% endfor %}
-      </div></div>
-    </div>
-
-    <div class="grid grid-2">
-      <div class="card">
-        <div class="card-head"><h2>{% translate "Feasibility periods ending (14 days)" %}</h2><a href="{{ feasibility.1 }}" class="btn btn-sm">{{ feasibility.0 }}</a></div>
-        <div class="card-body flush"><table class="t"><tbody>
-          {% for dl in feasibility_list %}<tr><td><a href="{{ dl.get_absolute_url }}">{{ dl.deal.name }}</a></td><td class="num">{{ dl.current_date|dshort }} <small class="muted">{{ dl.current_date|relday }}</small></td></tr>
-          {% empty %}<tr><td><div class="empty">{% translate "None in the next 14 days." %}</div></td></tr>{% endfor %}
-        </tbody></table>
-        <div style="padding:8px 10px" class="muted"><small>{% translate "Expiration dates do not by themselves determine earnest money refundability." %}</small></div></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>{% translate "Upcoming closings (30 days)" %}</h2><a href="{{ closings.1 }}" class="btn btn-sm">{{ closings.0 }}</a></div>
-        <div class="card-body flush"><table class="t"><tbody>
-          {% for deal in closing_list %}<tr><td><a href="{{ deal.get_absolute_url }}">{{ deal.name }}</a></td><td class="num">{% if deal.contractual_closing_date %}{{ deal.contractual_closing_date|dshort }} <small class="muted">{% translate "contract" %}</small>{% else %}{{ deal.target_closing_date|dshort }} <small class="muted">{% translate "internal target" %}</small>{% endif %}</td></tr>
-          {% empty %}<tr><td><div class="empty">{% translate "No closings in the next 30 days." %}</div></td></tr>{% endfor %}
-        </tbody></table></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="stack">
-    <a class="metric {% if deposits.0 %}warn{% endif %}" href="{{ deposits.1 }}"><div class="label">{% translate "Deposits due or awaiting receipt confirmation" %}</div><div class="value">{{ deposits.0 }}</div></a>
-    <a class="metric {% if blocked.0 %}bad{% endif %}" href="{{ blocked.1 }}"><div class="label">{% translate "Deals blocked by another party" %}</div><div class="value">{{ blocked.0 }}</div>
-      {% for b in blocked_list %}<div class="note">{{ b.name }} — {{ b.blocked_by|default:"—" }}</div>{% endfor %}</a>
-    {% if reminder_failures.0 %}<a class="metric bad" href="{{ reminder_failures.1 }}"><div class="label">{% translate "Reminder delivery failures" %}</div><div class="value">{{ reminder_failures.0 }}</div></a>{% endif %}
-
-    <div class="card">
-      <div class="card-head"><h2>{% translate "Volume" %} — {{ filters.label }}</h2>
-        <div class="segmented"><a class="{% if period == 'month' %}on{% endif %}" href="?period=month">{% translate "Month" %}</a><a class="{% if period == 'quarter' %}on{% endif %}" href="?period=quarter">{% translate "Quarter" %}</a><a class="{% if period == 'year' %}on{% endif %}" href="?period=year">{% translate "Year" %}</a></div>
-      </div>
-      <div class="card-body">
-        <table class="kv">
-          <tr><th>{% translate "Closed sales volume" %}<br><small>{% translate "by actual closing date" %}</small></th><td class="num"><a href="{% url 'report_detail' 'sales' %}?{{ filters.querystring }}">{{ sales.total|money0 }}</a><br><small class="muted">{% blocktranslate count n=sales.total.count %}{{ n }} deal{% plural %}{{ n }} deals{% endblocktranslate %}</small></td></tr>
-          <tr><th>{% translate "Executed leases" %}<br><small>{% translate "separate from sales volume" %}</small></th><td class="num"><a href="{% url 'report_detail' 'leases' %}?{{ filters.querystring }}">{% blocktranslate count n=leases.count %}{{ n }} lease{% plural %}{{ n }} leases{% endblocktranslate %}</a><br><small class="muted">{{ leases.consideration|money0 }} {% translate "lease consideration" %}</small></td></tr>
-        </table>
-      </div>
-    </div>
-
-    {% if fin %}
-    <div class="card">
-      <div class="card-head"><h2>{% translate "Commissions" %} — {{ filters.label }}</h2>{% icon "lock" %}</div>
-      <div class="card-body">
-        <table class="kv">
-          <tr><th>{% translate "Expected on active deals" %}</th><td class="num"><a href="{% url 'report_detail' 'expected' %}">{{ fin.expected.total|money0 }}</a></td></tr>
-          <tr><th>{% translate "Earned (by earned date)" %}</th><td class="num"><a href="{% url 'report_detail' 'earned' %}?{{ fin.qs }}">{{ fin.earned.total|money0 }}</a></td></tr>
-          <tr><th>{% translate "Cash received by SKW" %}</th><td class="num"><a href="{% url 'report_detail' 'receipts' %}?{{ fin.qs }}">{{ fin.receipts.total|money0 }}</a></td></tr>
-          <tr><th>{% translate "Designated broker's actual receipts" %}</th><td class="num"><a href="{% url 'report_detail' 'designated' %}?{{ fin.qs }}">{{ fin.designated.total|money0 }}</a></td></tr>
-          <tr><th>{% translate "Unpaid receivables (today)" %}</th><td class="num"><a href="{% url 'report_detail' 'outstanding' %}">{{ fin.outstanding.receivable|money0 }}</a></td></tr>
-          <tr><th>{% translate "Unpaid distributions (today)" %}</th><td class="num"><a href="{% url 'report_detail' 'outstanding' %}">{{ fin.outstanding.unpaid_distributions|money0 }}</a></td></tr>
-        </table>
-        <small class="muted">{% translate "Totals are computed from the commission ledger. “+ N unknown” means records whose amount is not known; they are not counted as zero." %}</small>
-      </div>
-    </div>
-    {% endif %}
-  </div>
+<div class="card">
+  <div class="card-head"><h2>{% translate "Next 14 days" %}</h2><a class="btn btn-sm" href="{% url 'deadline_calendar' %}">{% translate "Calendar" %}</a></div>
+  <div class="card-body flush table-wrap"><table class="t"><tbody>
+    {% for dl in upcoming %}<tr class="{% if dl.days_until == 0 %}row-warn{% endif %}">
+      <td class="nowrap"><strong>{{ dl.current_date|dshort }}</strong> <small class="muted">{{ dl.current_date|relday }}</small></td>
+      <td><a href="{{ dl.get_absolute_url }}">{{ dl.name|tr }}</a></td>
+      <td><a href="{{ dl.deal.get_absolute_url }}">{{ dl.deal.name }}</a></td></tr>
+    {% empty %}<tr><td><div class="empty">{% translate "Nothing due in the next 14 days." %}</div></td></tr>{% endfor %}
+  </tbody></table></div>
 </div>
 {% endblock %}

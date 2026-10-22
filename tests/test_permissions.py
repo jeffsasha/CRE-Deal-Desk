@@ -1,7 +1,5 @@
 """Server-side permission enforcement: read-only users cannot edit or see financial
 data; coordinators cannot see commissions; client details are restricted."""
-from datetime import date
-from decimal import Decimal
 
 from django.urls import reverse
 
@@ -24,7 +22,7 @@ class ReadOnlyTests(DeskTestCase):
 
     def test_can_view_operational_pages(self):
         for url in [reverse("dashboard"), reverse("deal_list"), reverse("deal_detail", args=[self.d.pk]),
-                    reverse("deadline_list"), reverse("property_list"), reverse("document_list"), reverse("report_index")]:
+                    reverse("deadline_list"), reverse("property_list"), reverse("report_index")]:
             self.assertEqual(self.client.get(url).status_code, 200, url)
 
     def test_edits_forbidden(self):
@@ -36,7 +34,9 @@ class ReadOnlyTests(DeskTestCase):
             (reverse("deal_term", args=[self.d.pk]), {"key": "purchase_price", "value": "$1"}),
             (reverse("deal_event", args=[self.d.pk]), {"key": "effective_date", "occurred_on": "2026-01-01"}),
             (reverse("property_create"), {"name": "p"}),
-            (reverse("document_upload"), {}),
+            (reverse("deal_key_dates", args=[self.d.pk]), {"effective_date": "2026-01-01"}),
+            (reverse("deal_commission", args=[self.d.pk]), {"expected": "1"}),
+            (reverse("deal_receipt", args=[self.d.pk]), {"amount": "1", "entry_date": "2026-01-01"}),
             (reverse("issue_create") + f"?deal={self.d.pk}", {"title": "x"}),
             (reverse("deal_sub", args=[self.d.pk, "party"]), {"role": "buyer"}),
         ]
@@ -47,7 +47,7 @@ class ReadOnlyTests(DeskTestCase):
         self.assertNotEqual(self.d.stage.key, "lost")
 
     def test_get_create_forms_forbidden(self):
-        for url in [reverse("deal_create"), reverse("property_create"), reverse("document_upload")]:
+        for url in [reverse("deal_create"), reverse("property_create"), reverse("deal_key_dates", args=[self.d.pk])]:
             self.assertEqual(self.client.get(url).status_code, 403, url)
 
     def test_no_financial_access(self):
@@ -89,28 +89,3 @@ class ReadOnlyTests(DeskTestCase):
         resp = self.client.get(reverse("deal_list"))
         self.assertEqual(resp.status_code, 302)
         self.assertIn("/accounts/login/", resp["Location"])
-
-
-class ConfidentialDocumentTests(DeskTestCase):
-    def test_confidential_document_restricted(self):
-        from django.core.files.uploadedfile import SimpleUploadedFile
-
-        from demo import pdf
-        from documents import services as docs
-        from documents.storage import signed_url
-
-        broker = self.user("broker")
-        coord = self.user("coordinator")
-        deal = self.deal("Doc deal", actor=broker)
-        v, _ = docs.upload(SimpleUploadedFile("c.pdf", pdf.text_pdf([["COMMISSION AGREEMENT"]])), broker, title="Comm agmt",
-                           category="commission_agreement", access_level="confidential", deal=deal, process=False)
-        self.client.force_login(coord)
-        self.assertEqual(self.client.get(reverse("document_detail", args=[v.document.pk])).status_code, 403)
-        self.assertNotContains(self.client.get(reverse("document_list")), "Comm agmt")
-        # A signed link issued to the broker cannot be used by another user.
-        url = signed_url(v, broker)
-        self.assertEqual(self.client.get(url).status_code, 403)
-        self.client.force_login(broker)
-        resp = self.client.get(url)
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp["Cache-Control"], "private, no-store")

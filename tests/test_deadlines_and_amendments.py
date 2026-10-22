@@ -1,18 +1,16 @@
-"""Receipt-triggered deadlines, ambiguous effective dates, amendments (executed vs
-unsigned), revision history and reminder replacement."""
-from datetime import date, timedelta
+"""Receipt-triggered deadlines, key dates entered by hand (calendar days, weekend rule
+only when the contract provides it), changes with revision history and reminder
+replacement."""
+from datetime import date
 
 from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils import timezone
+from django.urls import reverse
 
 from deadlines.models import Reminder
 from deadlines.services import create_deadline, generate_standard_deadlines
+from deals import keydates
 from deals.models import DealEvent
 from deals.services import record_event, set_term
-from demo import pdf, samples
-from documents import services as docs
-from documents.processing import read_text, run_extraction
 
 from .base import DeskTestCase
 
@@ -38,14 +36,6 @@ class ReceiptTriggerTests(DeskTestCase):
         self.assertEqual(self.objection.computation, "computed")
         self.assertEqual(self.objection.current_date, date(2026, 3, 19))
 
-    def test_upload_date_is_not_a_receipt(self):
-        # Uploading a title commitment does not record the receipt event.
-        f = SimpleUploadedFile("commitment.pdf", pdf.text_pdf([["COMMITMENT FOR TITLE INSURANCE", "Schedule B"]]))
-        docs.upload(f, self.broker, title="Commitment", category="title", deal=self.deal, process=False)
-        self.assertFalse(DealEvent.objects.filter(deal=self.deal, key="title_commitment_received").exists())
-        self.objection.refresh_from_db()
-        self.assertEqual(self.objection.computation, "awaiting_trigger")
-
     def test_unconfirmed_receipt_needs_review(self):
         record_event(self.deal, "title_commitment_received", date(2026, 3, 4), self.broker, status="needs_review")
         record_event(self.deal, "survey_received", date(2026, 3, 9), self.broker, evidence_note="x")
@@ -69,130 +59,84 @@ class GenerateDeadlinesTests(DeskTestCase):
         self.assertEqual(created[0].computation, "awaiting_trigger")  # no effective date
 
 
-class AmendmentFlowTests(DeskTestCase):
-    """Uses the sample contract documents end to end (text-layer PDFs)."""
-
+class KeyDatesTests(DeskTestCase):
     def setUp(self):
-        self.today = timezone.localdate()
-        self.o = samples.offsets(self.today)
         self.broker = self.user("broker", email="b@example.invalid")
         self.deal = self.deal(name="Gessner", actor=self.broker, responsible_broker=self.broker)
-        v = self._upload(samples.executed_contract(self.o["d_effective"], self.o["d_closing"]), "contract.pdf", "contract")
-        run = self._extract(v)
-        docs.set_execution_status(v, "confirmed_executed", self.broker, "signed copy")
-        for f in run.fields.filter(review_status="pending"):
-            docs.review_field(f, self.broker, "accept")
-        docs.publish(run, self.deal, self.broker)
-        generate_standard_deadlines(self.deal, self.broker)
-        self.closing = self.deal.deadlines.get(template_key="closing_fixed")
-        self.feas = self.deal.deadlines.get(template_key="feasibility_expiration")
 
-    def _upload(self, pages, name, category):
-        f = SimpleUploadedFile(name, pdf.text_pdf(pages))
-        v, _ = docs.upload(f, self.broker, title=name, category=category, deal=self.deal, process=False)
-        return v
+    def save(self, **data):
+        return keydates.save(self.deal, data, self.broker)
 
-    def _extract(self, v):
-        read_text(v)
-        v.refresh_from_db()
-        run = run_extraction(v, actor_id=self.broker.pk)
-        self.assertEqual(run.status, "succeeded", run.error)
-        return run
+    def by_key(self):
+        return {d.template_key: d for d in keydates.key_deadlines(self.deal)}
 
-    def _prepare(self, pages, name):
-        v = self._upload(pages, name, "amendment")
-        run = self._extract(v)
-        self.assertIn(v.document.doc_type, {"amendment", "extension"})
-        for f in run.fields.filter(review_status="pending"):
-            docs.review_field(f, self.broker, "accept")
-        return v, docs.prepare_amendment(run, self.deal, self.broker)
-
-    def test_base_contract_published(self):
+    def test_days_after_effective_date(self):
+        # Mar 4, 2026 + 30 calendar days (the Effective Date is not counted) = Apr 3.
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="days", closing_days=60)
+        d = self.by_key()
+        self.assertEqual(d["feasibility_expiration"].current_date, date(2026, 4, 3))
+        self.assertEqual(d["closing_offset"].current_date, date(2026, 5, 3))
         self.deal.refresh_from_db()
-        self.assertEqual(self.deal.effective_date, self.o["d_effective"])
-        self.assertEqual(self.deal.contractual_closing_date, self.o["d_closing"])
-        self.assertEqual(self.deal.executed_contract_price_cents, 285000000)
-        self.assertEqual(self.feas.current_date, self.o["d_effective"] + timedelta(days=45))
+        self.assertEqual(self.deal.effective_date, date(2026, 3, 4))
+        self.assertEqual(self.deal.contractual_closing_date, date(2026, 5, 3))
 
-    def test_unsigned_extension_does_not_change_closing(self):
-        v, amendment = self._prepare(samples.unsigned_extension(self.o["d_unsigned_closing"]), "ext.pdf")
-        self.assertEqual(v.execution_status, "draft")
-        with self.assertRaises(ValidationError):
-            docs.apply_amendment(amendment, self.broker)
-        self.closing.refresh_from_db()
-        self.deal.refresh_from_db()
-        self.assertEqual(self.closing.current_date, self.o["d_closing"])
-        self.assertEqual(self.deal.contractual_closing_date, self.o["d_closing"])
-        self.assertEqual(amendment.status, "proposed")
-        # The preview shows the effect without applying it.
-        changed = [p for p in amendment.preview if p["changed"]]
-        self.assertTrue(any(p["new_date"] == self.o["d_unsigned_closing"].isoformat() for p in changed))
+    def test_weekend_not_moved_unless_contract_says_so(self):
+        # Mar 4 + 21 = Wed Mar 25; + 25 = Sun Mar 29.
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=25, closing_mode="days", closing_days=60)
+        self.assertEqual(self.by_key()["feasibility_expiration"].current_date, date(2026, 3, 29))
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=25, closing_mode="days", closing_days=60,
+                  next_business_day=True)
+        self.assertEqual(self.by_key()["feasibility_expiration"].current_date, date(2026, 3, 30))
 
-    def test_unsigned_base_contract_cannot_publish(self):
-        v = self._upload(samples.executed_contract(self.o["d_effective"], self.o["d_closing"]), "copy.pdf", "contract")
-        docs.set_execution_status(v, "draft", self.broker)
-        run = self._extract(v)
-        with self.assertRaises(ValidationError):
-            docs.publish(run, self.deal, self.broker)
+    def test_without_effective_date_nothing_is_invented(self):
+        self.save(feasibility_days=30, closing_mode="days", closing_days=60)
+        d = self.by_key()
+        self.assertEqual({x.computation for x in d.values()}, {"awaiting_trigger"})
+        self.assertFalse(any(x.current_date for x in d.values()))
+        tl = keydates.timeline(self.deal)
+        self.assertFalse(tl["complete"])
+        self.assertTrue(all(p["awaiting"] for p in tl["points"]))
 
-    def test_executed_amendment_updates_dates_and_preserves_history(self):
-        reminders_before = set(Reminder.objects.filter(deadline=self.closing, status="scheduled").values_list("pk", flat=True))
-        self.assertTrue(reminders_before)
-        v, amendment = self._prepare(samples.first_amendment(self.o["d_amended_closing"]), "amend.pdf")
-        docs.set_execution_status(v, "confirmed_executed", self.broker, "DocuSign completed")
-        docs.apply_amendment(amendment, self.broker)
-        self.closing.refresh_from_db()
-        self.feas.refresh_from_db()
-        self.assertEqual(self.closing.current_date, self.o["d_amended_closing"])
-        self.assertEqual(self.closing.original_date, self.o["d_closing"])
-        self.assertEqual(self.feas.current_date, self.o["d_effective"] + timedelta(days=60))
-        # Superseded terms are kept.
-        old = self.deal.terms.get(key="closing_date", status="superseded")
-        self.assertEqual(old.value_date, self.o["d_closing"])
-        new = self.deal.terms.get(key="closing_date", status="active")
-        self.assertEqual(new.amendment, amendment)
-        # Revision history records the change and the amendment.
-        rev = self.closing.revisions.first()
-        self.assertEqual((rev.previous_date, rev.new_date, rev.amendment), (self.o["d_closing"], self.o["d_amended_closing"], amendment))
-        # Old reminders are cancelled, not deleted; new ones scheduled for the new date.
-        old_reminders = Reminder.objects.filter(pk__in=reminders_before)
-        self.assertEqual(old_reminders.count(), len(reminders_before))
-        self.assertTrue(all(r.status == "cancelled" and "Superseded" in r.cancelled_reason for r in old_reminders))
-        self.assertTrue(Reminder.objects.filter(deadline=self.closing, status="scheduled", target_revision=self.closing.revision).exists())
+    def test_change_keeps_history_and_replaces_reminders(self):
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="date", closing_date=date(2026, 6, 1))
+        closing = self.by_key()["closing_fixed"]
+        before = set(Reminder.objects.filter(deadline=closing, status="scheduled").values_list("pk", flat=True))
+        self.assertTrue(before)
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="date", closing_date=date(2026, 6, 15))
+        closing.refresh_from_db()
+        self.assertEqual(closing.current_date, date(2026, 6, 15))
+        self.assertEqual(closing.original_date, date(2026, 6, 1))
+        rev = closing.revisions.first()
+        self.assertEqual((rev.previous_date, rev.new_date), (date(2026, 6, 1), date(2026, 6, 15)))
+        self.assertEqual(self.deal.terms.get(key="closing_date", status="superseded").value_date, date(2026, 6, 1))
+        old = Reminder.objects.filter(pk__in=before)
+        self.assertEqual(old.count(), len(before))  # cancelled, not deleted
+        self.assertTrue(all(r.status == "cancelled" for r in old))
 
+    def test_switching_closing_basis_cancels_the_other_deadline(self):
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="days", closing_days=60)
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="date", closing_date=date(2026, 7, 1))
+        self.assertEqual(self.deal.deadlines.get(template_key="closing_offset").state, "cancelled")
+        self.assertEqual(self.by_key()["closing_fixed"].current_date, date(2026, 7, 1))
+        self.assertFalse(self.deal.terms.filter(key="closing_days_after_effective", status="active").exists())
 
-class AmbiguousEffectiveDateTests(DeskTestCase):
-    def test_definition_by_event_leaves_effective_date_unresolved(self):
-        from documents.extraction import pattern, safeguards
+    def test_lease_commencement(self):
+        lease = DeskTestCase.deal(self, name="Lease", actor=self.broker, transaction_type="lease")
+        keydates.save(lease, {"effective_date": date(2026, 3, 4), "commencement_date": date(2026, 5, 1)}, self.broker)
+        tl = keydates.timeline(lease, today=date(2026, 4, 1))
+        self.assertEqual([(p["label"], p["date"]) for p in tl["points"]], [("Commencement Date", date(2026, 5, 1))])
+        self.assertEqual(tl["next"]["date"], date(2026, 5, 1))
 
-        o = samples.offsets(timezone.localdate())
-        pages = ["\n".join(p) for p in samples.ambiguous_contract(o["c_signed_seller"], o["c_signed_buyer"])]
-        out = pattern.extract(pages, "purchase_contract")
-        results = safeguards.apply(out.proposals, pages, "purchase_contract")
-        eff = [(p, st) for p, _v, st in results if p.key == "effective_date"]
-        self.assertEqual(len(eff), 1)
-        proposal, status = eff[0]
-        self.assertEqual(proposal.value, "")
-        self.assertEqual(status, "needs_review")
-        self.assertTrue(any("signature date is not automatically the effective date" in f for f in proposal.flags))
-
-    def test_review_cannot_accept_empty_effective_date(self):
-        broker = self.user("broker")
-        deal = self.deal(actor=broker)
-        o = samples.offsets(timezone.localdate())
-        f = SimpleUploadedFile("c.pdf", pdf.text_pdf(samples.ambiguous_contract(o["c_signed_seller"], o["c_signed_buyer"])))
-        v, _ = docs.upload(f, broker, title="c", category="contract", deal=deal, process=False)
-        read_text(v)
-        v.refresh_from_db()
-        run = run_extraction(v)
-        eff = run.fields.get(key="effective_date")
-        with self.assertRaises(ValidationError):
-            docs.review_field(eff, broker, "accept")
-        docs.set_execution_status(v, "confirmed_executed", broker, "signed")
-        for fld in run.fields.filter(review_status="pending"):
-            docs.review_field(fld, broker, "accept")
-        docs.publish(run, deal, broker)
-        self.assertFalse(DealEvent.objects.filter(deal=deal, key="effective_date").exists())
-        generate_standard_deadlines(deal, broker)
-        self.assertTrue(deal.deadlines.exists())
-        self.assertFalse(deal.deadlines.filter(current_date__isnull=False).exists())
+    def test_form_round_trip(self):
+        self.client.force_login(self.broker)
+        url = reverse("deal_key_dates", args=[self.deal.pk])
+        resp = self.client.post(url, {"effective_date": "2026-03-04", "feasibility_days": "30", "closing_mode": "date",
+                                      "closing_date": "2026-03-01"})
+        self.assertContains(resp, "before the Effective Date")
+        resp = self.client.post(url, {"effective_date": "2026-03-04", "feasibility_days": "30", "closing_mode": "days",
+                                      "closing_days": "45"})
+        self.assertRedirects(resp, self.deal.get_absolute_url())
+        self.assertEqual(self.by_key()["closing_offset"].current_date, date(2026, 4, 18))
+        self.assertTrue(DealEvent.objects.filter(deal=self.deal, key="effective_date").exists())
+        page = self.client.get(self.deal.get_absolute_url())
+        self.assertContains(page, "Feasibility Period ends")

@@ -30,13 +30,7 @@ def enqueue(kind, **payload):
     return Job.objects.create(kind=kind, payload=payload)
 
 
-def _load_handlers():
-    # Import modules that register handlers.
-    import documents.processing  # noqa: F401  (registers handlers)
-
-
 def run_job(job):
-    _load_handlers()
     fn = HANDLERS.get(job.kind)
     job.attempts += 1
     job.status = Job.STATUS_RUNNING

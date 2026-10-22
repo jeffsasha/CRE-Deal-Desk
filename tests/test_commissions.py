@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 
 from commissions.ledger import summarize, tiered_amount
-from commissions.models import CommissionAgreement, CommissionAllocation, CommissionInstallment
+from commissions.models import CommissionAgreement, CommissionAllocation, CommissionInstallment, LedgerEntry
 from commissions.services import record_entry, reverse_entry
 from core.money import parse_cents, percent_of
 
@@ -117,3 +117,65 @@ class LedgerTests(DeskTestCase):
         self.assertEqual(s.gross, 4590000)
         self.assertEqual(s.status, "Received to date — later installments pending")
         self.assertEqual(s.outstanding, 0)
+
+
+class SimpleCommissionTests(DeskTestCase):
+    """The per-deal view: SKW expected vs received, on the same immutable ledger."""
+
+    def setUp(self):
+        from django.urls import reverse
+
+        self.reverse = reverse
+        self.broker = self.user("broker")
+        self.d = self.deal(actor=self.broker)
+        self.client.force_login(self.broker)
+
+    def test_expected_received_and_reversal(self):
+        from commissions import simple
+
+        self.assertEqual(simple.for_deal(self.d).status, "unknown")
+        self.client.post(self.reverse("deal_commission", args=[self.d.pk]), {"expected": "90,000"})
+        c = simple.for_deal(self.d)
+        self.assertEqual((c.expected, c.received, c.status), (9_000_000, 0, "none"))
+        self.client.post(self.reverse("deal_receipt", args=[self.d.pk]),
+                         {"amount": "40,000", "entry_date": "2026-03-04", "reference": "Wire 1"})
+        c = simple.for_deal(self.d)
+        self.assertEqual((c.received, c.outstanding, c.status), (4_000_000, 5_000_000, "partial"))
+        entry = c.receipts[0]["entry"]
+        self.client.post(self.reverse("deal_receipt_reverse", args=[self.d.pk, entry.pk]))
+        c = simple.for_deal(self.d)
+        self.assertEqual((c.received, c.status), (0, "none"))
+        self.assertTrue(c.receipts[0]["reversed"])
+        self.assertEqual(LedgerEntry.objects.filter(agreement__deal=self.d).count(), 2)  # original kept + reversal
+        # Changing the expected amount updates the same agreement.
+        self.client.post(self.reverse("deal_commission", args=[self.d.pk]), {"expected": "95,000.50"})
+        self.assertEqual(simple.for_deal(self.d).expected, 9_500_050)
+        self.assertEqual(self.d.commission_agreements.count(), 1)
+
+    def test_blank_expected_is_unknown_not_zero(self):
+        from commissions import simple
+
+        self.client.post(self.reverse("deal_commission", args=[self.d.pk]), {"expected": ""})
+        c = simple.for_deal(self.d)
+        self.assertIsNone(c.expected)
+        self.assertIsNone(c.outstanding)
+
+    def test_detailed_agreement_is_not_overwritten(self):
+        from commissions import simple
+
+        a = CommissionAgreement.objects.create(deal=self.d, title="Detailed", represented_side="buyer",
+                                               basis_type="percentage", basis_amount_cents=100_000_000, rate_percent=Decimal("3"))
+        CommissionAllocation.objects.create(agreement=a, level="payer", recipient_type="skw", recipient_name="SKW",
+                                            method="percent_of_gross", percent=Decimal("100"))
+        self.assertFalse(simple.for_deal(self.d).editable)
+        self.assertEqual(simple.for_deal(self.d).expected, 3_000_000)
+        resp = self.client.post(self.reverse("deal_commission", args=[self.d.pk]), {"expected": "1"}, follow=True)
+        self.assertContains(resp, "detailed commission agreement")
+        a.refresh_from_db()
+        self.assertEqual(a.basis_amount_cents, 100_000_000)
+
+    def test_read_only_cannot_edit(self):
+        viewer = self.user("read_only")
+        self.client.force_login(viewer)
+        resp = self.client.post(self.reverse("deal_commission", args=[self.d.pk]), {"expected": "1"})
+        self.assertEqual(resp.status_code, 403)

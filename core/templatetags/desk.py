@@ -51,11 +51,11 @@ def money(cents, unknown="Unknown"):
 
 
 @register.filter
-def money0(cents):
+def money0(cents, unknown="Unknown"):
     if isinstance(cents, Total):
         text = format_cents(cents.known, show_cents=False)
         return text + (f" + {cents.unknown_count} unknown" if cents.unknown_count else "")
-    return format_cents(cents, show_cents=False)
+    return format_cents(cents, show_cents=False, unknown=unknown)
 
 
 @register.filter

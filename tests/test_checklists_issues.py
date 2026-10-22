@@ -68,7 +68,7 @@ class IssueTests(DeskTestCase):
         self.assertTrue(PriceEvent.objects.filter(deal=deal, kind="requested_credit", amount_cents=4500000).exists())
         self.assertFalse(PriceEvent.objects.filter(deal=deal, kind__in=["executed_contract", "amendment"]).exists())
 
-    def test_executed_resolution_requires_document(self):
+    def test_executed_resolution_requires_reference(self):
         broker = self.user("broker")
         deal = self.deal(actor=broker)
         self.client.force_login(broker)
@@ -76,7 +76,7 @@ class IssueTests(DeskTestCase):
             "title": "Roof", "category": "roof", "severity": "high", "status": "open", "resolution_status": "executed",
             "disclosure_finding": "not_assessed"})
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "An executed resolution needs the executed document")
+        self.assertContains(resp, "Identify the executed amendment or written agreement")
 
 
 class TermHistoryTests(DeskTestCase):

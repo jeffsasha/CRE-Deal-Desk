@@ -4,7 +4,7 @@
 {% block content %}
 <div class="crumbs">{% if issue.deal %}<a href="{{ issue.deal.get_absolute_url }}?tab=issues">{{ issue.deal }}</a>{% elif issue.property %}<a href="{{ issue.property.get_absolute_url }}?tab=issues">{{ issue.property }}</a>{% endif %} {% translate "/ Issue" %}</div>
 <div class="page-head"><div><h1>{{ issue.title }}</h1><div class="meta" style="margin-top:6px">{% pill issue.severity issue.get_severity_display %} {% pill issue.status issue.get_status_display tone="blue" %} <span class="muted">{{ issue.get_category_display }} · {% translate "discovered" %} {{ issue.discovered_on|d }}</span></div></div>
-{% if can.edit %}<div class="actions"><a class="btn" href="{% url 'document_upload' %}?issue={{ issue.pk }}{% if issue.deal %}&deal={{ issue.deal.pk }}{% endif %}">{% translate "Attach source document" %}</a><a class="btn btn-primary" href="{% url 'issue_edit' issue.pk %}">{% translate "Edit" %}</a></div>{% endif %}</div>
+{% if can.edit %}<div class="actions"><a class="btn btn-primary" href="{% url 'issue_edit' issue.pk %}">{% translate "Edit" %}</a></div>{% endif %}</div>
 {% if issue.requested_credit_cents and issue.resolution_status != 'executed' %}<div class="notice notice-warn">{% icon "alert" %}<div>{% translate "A credit of" %} <strong>{{ issue.requested_credit_cents|money }}</strong> {% translate "has been requested. It is not an approved price reduction; the executed contract price (" %}{{ issue.deal.executed_contract_price_cents|money }}{% translate ") is unchanged unless an executed amendment is applied." %}</div></div>{% endif %}
 <div class="split">
   <div class="stack">
@@ -29,7 +29,6 @@
       <tr><th>{% translate "Responsible" %}</th><td>{{ issue.responsible|default:"—" }}</td></tr>
     </table></div></div>
     <div class="card"><div class="card-head"><h2>{% translate "Disclosure" %}</h2></div><div class="card-body"><p><strong>{{ issue.get_disclosure_finding_display }}</strong></p><p class="text-2">{{ issue.disclosure_note }}</p><small class="muted">"Not found in reviewed materials" means only that our review did not find it.</small></div></div>
-    <div class="card"><div class="card-head"><h2>{% translate "Source documents" %}</h2></div><div class="card-body flush"><table class="t"><tbody>{% for l in documents %}<tr><td><a href="{{ l.document.get_absolute_url }}">{{ l.document }}</a></td></tr>{% empty %}<tr><td><div class="empty">{% translate "None attached." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
   </div>
 </div>
 {% endblock %}

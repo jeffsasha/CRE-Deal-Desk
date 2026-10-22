@@ -16,7 +16,6 @@ from crm.models import Contact, Organization
 from deadlines.models import Reminder
 from deadlines.reminders import acknowledge, deliver
 from deals.models import Deal, Stage
-from documents.models import Document
 from properties.models import Property
 
 from . import dashboard as dash
@@ -55,12 +54,6 @@ def search(request):
             Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(email__icontains=q) | Q(organization__name__icontains=q)
         ).select_related("organization")[:25]
         results["Companies"] = Organization.objects.filter(name__icontains=q)[:25]
-        docs = Document.objects.filter(
-            Q(title__icontains=q) | Q(tags__icontains=q) | Q(versions__full_text__icontains=q)
-        ).distinct()
-        if not has_perm(request.user, "document.confidential"):
-            docs = docs.exclude(access_level="confidential")
-        results["Documents"] = docs[:25]
     return render(request, "core/search.html", {"q": q, "results": results})
 
 
@@ -78,11 +71,6 @@ def quick_search(request):
             out.append({"group": str(_("Properties")), "label": p.name, "hint": p.city, "url": p.get_absolute_url(), "icon": "property_list"})
         for c in Contact.objects.active().filter(Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(organization__name__icontains=q)).select_related("organization")[:5]:
             out.append({"group": str(_("Contacts")), "label": c.full_name, "hint": c.organization.name if c.organization_id else "", "url": c.get_absolute_url(), "icon": "contact_list"})
-        docs = Document.objects.active().filter(Q(title__icontains=q) | Q(tags__icontains=q))
-        if not has_perm(request.user, "document.confidential"):
-            docs = docs.exclude(access_level="confidential")
-        for doc in docs[:5]:
-            out.append({"group": str(_("Documents")), "label": doc.title, "hint": str(doc.get_doc_type_display()), "url": doc.get_absolute_url(), "icon": "document_list"})
     return JsonResponse({"results": out})
 
 
@@ -124,13 +112,9 @@ def save_view(request):
 @require_perm("view")
 def settings_index(request):
     from deadlines.reminders import default_reminder_days
-    from documents.processing import extraction_engine_label
-    from documents.text import ocr_engine, ocr_engine_label
 
     roles, matrix = role_matrix()
     integrations = [
-        (gettext_lazy("Contract extraction"), extraction_engine_label(), bool(settings.ANTHROPIC_API_KEY)),
-        (gettext_lazy("OCR for scanned documents"), ocr_engine_label(), ocr_engine() is not None),
         (gettext_lazy("Email reminders"), gettext_lazy("Configured (SMTP)") if settings.EMAIL_CONFIGURED else gettext_lazy("Not configured — in-app reminders only"),
          settings.EMAIL_CONFIGURED),
         (gettext_lazy("Calendar export"), "ICS download and private feed URL (no external account connected)", True),
@@ -301,7 +285,7 @@ def audit_log(request):
     if request.GET.get("export") == "csv":
         return listing.export_csv("audit-log")
     return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Audit log"),
-                                                   "subtitle": gettext_lazy("Meaningful changes to contract dates, execution status, deadline rules, prices, closings, commissions, permissions and documents.")})
+                                                   "subtitle": gettext_lazy("Meaningful changes to contract dates, execution status, deadline rules, prices, closings, commissions and permissions.")})
 
 
 @require_perm("view")
@@ -311,7 +295,6 @@ def archived(request):
     data = {
         "deals": Deal.objects.archived(),
         "properties": Property.objects.archived(),
-        "documents": Document.objects.archived() if has_perm(request.user, "document.archive") else [],
         "contacts": Contact.objects.archived(),
         "organizations": Organization.objects.archived(),
         "agreements": CommissionAgreement.objects.archived() if has_perm(request.user, "commission.view") else [],
@@ -324,13 +307,11 @@ def archived(request):
 def restore(request, kind, pk):
     from commissions.models import CommissionAgreement
 
-    models = {"deal": Deal, "property": Property, "document": Document, "contact": Contact,
+    models = {"deal": Deal, "property": Property, "contact": Contact,
               "organization": Organization, "agreement": CommissionAgreement}
     model = models.get(kind)
     if model is None:
         return redirect("archived")
-    if kind == "document":
-        require(request.user, "document.archive")
     if kind == "agreement":
         require(request.user, "commission.edit")
     obj = get_object_or_404(model, pk=pk)

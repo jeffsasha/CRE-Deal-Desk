@@ -141,7 +141,9 @@ class Deadline(models.Model):
 
     @property
     def is_overdue(self):
-        return self.is_open and self.current_date is not None and self.current_date < timezone.localdate()
+        # A Feasibility Period simply ends on its date; it is a milestone, not a task that can be late.
+        return (self.is_open and self.category != "feasibility" and self.current_date is not None
+                and self.current_date < timezone.localdate())
 
     def rule_snapshot(self):
         return {

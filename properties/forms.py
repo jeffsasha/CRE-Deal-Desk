@@ -74,7 +74,7 @@ class FactForm(StyledModelForm):
 
     class Meta:
         model = PropertyFact
-        fields = ["catalog_key", "category", "label", "value", "unit", "space", "source", "source_document",
+        fields = ["catalog_key", "category", "label", "value", "unit", "space", "source",
                   "verification", "verified_on", "notes"]
         help_texts = {
             "verification": "Marketing statements and broker flyers are recorded as such and are never shown as verified.",
@@ -87,9 +87,6 @@ class FactForm(StyledModelForm):
         self.fields["category"].required = False
         if property is not None:
             self.fields["space"].queryset = property.spaces.all()
-            from documents.models import Document
-
-            self.fields["source_document"].queryset = Document.objects.filter(links__property=property)
         if self.instance.pk:
             self.fields["catalog_key"].initial = f"{self.instance.category}:{self.instance.key}"
 

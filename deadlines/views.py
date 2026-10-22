@@ -23,7 +23,7 @@ def _bucket(qs, bucket):
     today = timezone.localdate()
     computed = qs.filter(computation="computed", state="open")
     return {
-        "overdue": computed.filter(current_date__lt=today),
+        "overdue": computed.filter(current_date__lt=today).exclude(category="feasibility"),
         "today": computed.filter(current_date=today),
         "week": computed.filter(current_date__gte=today, current_date__lte=today + timedelta(days=7)),
         "next14": computed.filter(current_date__gte=today, current_date__lte=today + timedelta(days=14)),

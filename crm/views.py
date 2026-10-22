@@ -74,8 +74,7 @@ def contact_detail(request, pk):
     c = get_object_or_404(Contact.objects.select_related("organization"), pk=pk)
     show = has_perm(request.user, "client.details") or not c.is_confidential_client
     parties = DealParty.objects.filter(contact=c).select_related("deal__stage")
-    return render(request, "crm/contact.html", {"c": c, "show": show, "parties": parties,
-                                                "documents": c.document_links.select_related("document")})
+    return render(request, "crm/contact.html", {"c": c, "show": show, "parties": parties})
 
 
 @require_perm("view")
@@ -86,7 +85,6 @@ def organization_detail(request, pk):
     return render(request, "crm/organization.html", {
         "o": o, "show": show, "parties": parties, "contacts": o.contacts.active(),
         "client_deals": o.client_deals.select_related("stage"), "owned": o.owned_properties.all(),
-        "documents": o.document_links.select_related("document"),
     })
 
 

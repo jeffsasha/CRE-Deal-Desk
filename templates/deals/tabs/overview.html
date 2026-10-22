@@ -1,38 +1,61 @@
 {% load i18n %}<div class="split">
   <div class="stack">
-    <div class="card"><div class="card-head"><h2>{% translate "Upcoming deadlines" %}</h2><a class="btn btn-sm" href="?tab=contract">{% translate "All dates" %}</a></div>
-      <div class="card-body flush table-wrap"><table class="t"><tbody>
-      {% for dl in next_deadlines %}<tr class="{% if dl.is_overdue %}row-alert{% elif dl.computation != 'computed' %}row-warn{% endif %}">
-        <td><a href="{{ dl.get_absolute_url }}">{{ dl.name }}</a>{% if not dl.is_contractual %} <span class="tag">{% translate "Internal" %}</span>{% endif %}</td>
-        <td class="nowrap">{% if dl.current_date %}<strong>{{ dl.current_date|dshort }}</strong> <small class="muted">{{ dl.current_date|relday }}</small>{% else %}{% pill dl.computation dl.get_computation_display %}{% endif %}</td>
-        <td class="hide-sm"><small class="muted">{{ dl.responsible_user|default:"" }}</small></td></tr>
-      {% empty %}<tr><td><div class="empty">{% translate "No open deadlines." %} {% if can.edit %}{% translate "Approve contract terms, then generate deadlines on the Contract & Dates tab." %}{% endif %}</div></td></tr>{% endfor %}
-      </tbody></table></div></div>
-    <div class="card"><div class="card-head"><h2>{% translate "Properties" %}</h2></div><div class="card-body flush table-wrap"><table class="t">
-      <thead><tr><th>{% translate "Property" %}</th><th>{% translate "Suite" %}</th><th>{% translate "Type" %}</th><th class="num">{% translate "Allocation" %}</th></tr></thead>
-      <tbody>{% for l in properties %}<tr><td><a href="{{ l.property.get_absolute_url }}">{{ l.property.name }}</a>{% if l.is_primary %} <span class="tag">{% translate "Primary" %}</span>{% endif %}<br><small class="muted">{{ l.property.address }}</small></td><td>{{ l.space.suite|default:"—" }}</td><td>{{ l.property.get_property_type_display }}</td><td class="num">{{ l.allocated_price_cents|money:"—" }}</td></tr>
-      {% empty %}<tr><td colspan="4"><div class="empty">{% translate "No property linked." %}</div></td></tr>{% endfor %}</tbody></table>
-      {% if properties|length > 1 %}<div style="padding:8px 12px"><small class="muted">{% translate "Multi-property deal: volume reports count the deal-level consideration once. Allocations are informational and never added on top." %}</small></div>{% endif %}</div></div>
+    <div class="card"><div class="card-head"><h2>{% translate "Key dates" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_key_dates' deal.pk %}">{% if tl.start %}{% translate "Edit key dates" %}{% else %}{% translate "Enter key dates" %}{% endif %}</a>{% endif %}</div>
+      <div class="card-body">
+        {% include "partials/timeline.html" %}
+        {% if not tl.start %}<p class="muted" style="margin:12px 0 0">{% translate "Enter the Effective Date and contract periods; the Feasibility Period and Closing Date are calculated for you." %}</p>{% endif %}
+      </div>
+      {% if other_deadlines %}<div class="card-body flush table-wrap"><table class="t"><thead><tr><th>{% translate "Other dates" %}</th><th>{% translate "Date" %}</th></tr></thead><tbody>
+      {% for dl in other_deadlines %}<tr class="{% if dl.is_overdue %}row-alert{% endif %}"><td><a href="{{ dl.get_absolute_url }}">{{ dl.name|tr }}</a></td>
+        <td class="nowrap">{% if dl.current_date %}<strong>{{ dl.current_date|dshort }}</strong> <small class="muted">{{ dl.current_date|relday }}</small>{% else %}{% pill dl.computation dl.get_computation_display %}{% endif %}</td></tr>{% endfor %}
+      </tbody></table></div>{% endif %}
+      {% if can.edit %}<div class="card-foot"><a class="btn btn-sm btn-ghost" href="{% url 'deadline_create' %}?deal={{ deal.pk }}">{% icon "plus" %}{% translate "Add another date" %}</a></div>{% endif %}
+    </div>
+
+    <div class="card"><div class="card-head"><h2>{% translate "Property" %}</h2></div><div class="card-body flush table-wrap"><table class="t"><tbody>
+      {% for l in properties %}<tr><td><a href="{{ l.property.get_absolute_url }}">{{ l.property.name }}</a>{% if l.space.suite %} · {% translate "Suite" %} {{ l.space.suite }}{% endif %}<br><small class="muted">{{ l.property.address }}</small></td><td class="num muted">{{ l.property.get_property_type_display }}</td></tr>
+      {% empty %}<tr><td><div class="empty">{% translate "No property linked." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
     {% if deal.description %}<div class="card"><div class="card-head"><h2>{% translate "Notes" %}</h2></div><div class="card-body"><div style="white-space:pre-wrap">{{ deal.description }}</div></div></div>{% endif %}
   </div>
+
   <div class="stack">
+    {% if can.commission_view %}
+    <div class="card commission-card"><div class="card-head"><h2>{% translate "SKW commission" %}</h2>{% pill skw.status skw.status_label skw.tone %}</div>
+      <div class="card-body">
+        <div class="cm-figures">
+          <div><div class="k">{% translate "Expected" %}</div><div class="v">{{ skw.expected|money0:_("Not entered") }}</div></div>
+          <div><div class="k">{% translate "Received" %}</div><div class="v">{{ skw.received|money0 }}</div></div>
+          <div><div class="k">{% translate "Outstanding" %}</div><div class="v">{{ skw.outstanding|money0:"—" }}</div></div>
+        </div>
+        <div class="cm-bar"><span style="width:{{ skw.pct }}%"></span></div>
+        {% if can.commission_edit %}
+          {% if skw.editable %}
+          <form method="post" action="{% url 'deal_commission' deal.pk %}" class="cm-form">{% csrf_token %}
+            <label for="cm-expected">{% translate "SKW commission (expected)" %}</label>
+            <div class="cm-row"><input id="cm-expected" name="expected" inputmode="decimal" placeholder="$0.00" value="{% if skw.expected is not None %}{{ skw.expected|money }}{% endif %}"><button class="btn">{% translate "Save" %}</button></div>
+          </form>
+          {% else %}<p class="muted"><small>{% translate "This deal has a detailed commission agreement." %} <a href="{% url 'commission_list' %}">{% translate "View" %}</a></small></p>{% endif %}
+          <details class="cm-receipt"{% if not skw.receipts %} open{% endif %}><summary>{% icon "plus" %}{% translate "Record a payment received" %}</summary>
+            <form method="post" action="{% url 'deal_receipt' deal.pk %}" class="cm-form">{% csrf_token %}
+              <div class="cm-row"><input name="amount" inputmode="decimal" placeholder="{% translate "Amount" %}" required><input type="date" name="entry_date" value="{{ today|date:'Y-m-d' }}" required></div>
+              <div class="cm-row"><input name="reference" placeholder="{% translate "Check / wire reference (optional)" %}"><button class="btn btn-primary">{% translate "Record" %}</button></div>
+            </form>
+          </details>
+        {% endif %}
+      </div>
+      {% if skw.receipts %}<div class="card-body flush"><table class="t"><tbody>
+        {% for r in skw.receipts %}<tr class="{% if r.reversed %}row-muted{% endif %}"><td class="nowrap">{{ r.entry.entry_date|dshort }}</td><td>{% if r.reversed %}<s>{{ r.signed|money }}</s> <small class="muted">{% translate "reversed" %}</small>{% else %}{{ r.signed|money }}{% endif %}{% if r.entry.reference %}<br><small class="muted">{{ r.entry.reference }}</small>{% endif %}</td>
+          <td class="num">{% if can.commission_edit and not r.reversed %}<form method="post" action="{% url 'deal_receipt_reverse' deal.pk r.entry.pk %}" data-confirm="{% translate "Reverse this payment? The original stays in the ledger and a reversal offsets it." %}">{% csrf_token %}<button class="btn btn-sm btn-ghost">{% translate "Reverse" %}</button></form>{% endif %}</td></tr>{% endfor %}
+      </tbody></table></div>{% endif %}
+    </div>
+    {% endif %}
+
     <div class="card"><div class="card-head"><h2>{% translate "Status" %}</h2></div><div class="card-body"><table class="kv">
       <tr><th>{% translate "Client" %}</th><td>{% if deal.client %}<a href="{{ deal.client.get_absolute_url }}">{{ deal.client }}</a>{% else %}—{% endif %}</td></tr>
-      <tr><th>{% translate "Financing" %}</th><td>{{ deal.get_financing_status_display }}{% if deal.financing_terms %}<br><small class="muted">{{ deal.financing_terms }}</small>{% endif %}</td></tr>
-      <tr><th>{% translate "Open checklist items" %}</th><td><a href="?tab=checklist">{{ open_item_count }}</a>{% if blocked_items %} · <span style="color:var(--red-fg)">{{ blocked_items|length }} {% translate "blocked" %}</span>{% endif %}</td></tr>
-      <tr><th>{% translate "Open issues" %}</th><td><a href="?tab=issues">{{ open_issues|length }}</a></td></tr>
-      <tr><th>{% translate "Team" %}</th><td>{% for u in deal.team.all %}{{ u }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
-      <tr><th>{% translate "Time zone" %}</th><td>{{ deal.time_zone }}</td></tr>
+      <tr><th>{% translate "Open checklist items" %}</th><td><a href="?tab=checklist">{{ open_item_count }}</a></td></tr>
+      {% if deal.next_action %}<tr><th>{% translate "Next action" %}</th><td>{{ deal.next_action }}{% if deal.next_action_due %} · {{ deal.next_action_due|dshort }}{% endif %}</td></tr>{% endif %}
       {% if deal.termination_reason %}<tr><th>{% translate "Termination / lost reason" %}</th><td>{{ deal.termination_reason }}</td></tr>{% endif %}
     </table></div></div>
-    <div class="card"><div class="card-head"><h2>{% translate "Deposits" %}</h2></div><div class="card-body flush"><table class="t"><tbody>
-      {% for dep in deposits %}<tr class="{% if dep.awaiting %}row-warn{% endif %}"><td>{{ dep.get_kind_display }}<br><small class="muted">{{ dep.status|tr }}</small></td><td class="num">{{ dep.amount_cents|money }}</td></tr>
-      {% empty %}<tr><td><div class="empty">{% translate "No deposits recorded." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
-    <div class="card"><div class="card-head"><h2>{% translate "Linked deals" %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'link' %}">{% translate "Link" %}</a>{% endif %}</div><div class="card-body flush"><table class="t"><tbody>
-      {% for l in links_out %}<tr><td>{{ l.get_link_type_display }} <a href="{{ l.to_deal.get_absolute_url }}">{{ l.to_deal.name }}</a> {% pill l.to_deal.stage.category l.to_deal.stage.name %}{% if l.notes %}<br><small class="muted">{{ l.notes }}</small>{% endif %}</td></tr>{% endfor %}
-      {% for l in links_in %}<tr><td><a href="{{ l.from_deal.get_absolute_url }}">{{ l.from_deal.name }}</a> {{ l.get_link_type_display|lower }} {% translate "this deal" %} {% pill l.from_deal.stage.category l.from_deal.stage.name %}</td></tr>{% endfor %}
-      {% if not links_out and not links_in %}<tr><td><div class="empty">{% translate "None." %}</div></td></tr>{% endif %}
-    </tbody></table></div></div>
     {% if can.edit %}<div style="text-align:right"><a class="btn btn-sm btn-danger" href="{% url 'deal_archive' deal.pk %}">{% translate "Archive deal" %}</a></div>{% endif %}
   </div>
 </div>

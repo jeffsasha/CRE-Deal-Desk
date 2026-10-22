@@ -7,7 +7,6 @@ from core import views as core
 from crm import views as crm
 from deadlines import views as deadlines
 from deals import views as deals
-from documents import views as documents
 from imports import views as imports
 from properties import views as properties
 from reports import views as reports
@@ -65,11 +64,14 @@ urlpatterns = [
     path("deals/<int:pk>/archive/", deals.deal_archive, name="deal_archive"),
     path("deals/<int:pk>/event/", deals.deal_event, name="deal_event"),
     path("deals/<int:pk>/term/", deals.deal_term, name="deal_term"),
+    path("deals/<int:pk>/key-dates/", deals.deal_key_dates, name="deal_key_dates"),
+    path("deals/<int:pk>/commission/", deals.deal_commission, name="deal_commission"),
+    path("deals/<int:pk>/commission/receipt/", deals.deal_receipt, name="deal_receipt"),
+    path("deals/<int:pk>/commission/receipt/<int:entry>/reverse/", deals.deal_receipt_reverse, name="deal_receipt_reverse"),
     path("deals/<int:pk>/deadlines/generate/", deals.deal_generate_deadlines, name="deal_generate_deadlines"),
     path("deals/<int:pk>/checklist/apply/", deals.deal_apply_checklist, name="deal_apply_checklist"),
     path("deals/<int:deal_pk>/checklist/new/", checklists.item_form, name="checklist_item_create"),
     path("deals/<int:pk>/draft/", deals.deal_draft, name="deal_draft"),
-    path("deals/<int:pk>/notes/", documents.deal_notes, name="deal_notes"),
     path("deals/<int:pk>/calendar.ics", deadlines.deal_ics, name="deal_ics"),
     path("deals/<int:pk>/<str:kind>/new/", deals.deal_subrecord, name="deal_sub"),
     path("deals/<int:pk>/<str:kind>/<int:item>/", deals.deal_subrecord, name="deal_sub_edit"),
@@ -94,30 +96,6 @@ urlpatterns = [
     # Tasks & checklists
     path("tasks/", checklists.checklist_list, name="checklist_list"),
     path("tasks/<int:pk>/", checklists.item_form, name="checklist_item_edit"),
-
-    # Documents
-    path("documents/", documents.document_list, name="document_list"),
-    path("documents/upload/", documents.document_upload, name="document_upload"),
-    path("documents/review/", documents.review_queue, name="review_queue"),
-    path("documents/file/<str:token>/", documents.document_file, name="document_file"),
-    path("documents/<int:pk>/", documents.document_detail, name="document_detail"),
-    path("documents/<int:pk>/version/", documents.document_new_version, name="document_new_version"),
-    path("documents/<int:pk>/meta/", documents.document_meta, name="document_meta"),
-    path("documents/<int:pk>/link/", documents.document_link, name="document_link"),
-    path("documents/<int:pk>/unlink/<int:link_pk>/", documents.document_unlink, name="document_unlink"),
-    path("documents/<int:pk>/archive/", documents.document_archive, name="document_archive"),
-    path("documents/versions/<int:version_pk>/execution/", documents.document_execution, name="document_execution"),
-    path("documents/versions/<int:version_pk>/reprocess/", documents.document_reprocess, name="document_reprocess"),
-    path("documents/versions/<int:version_pk>/manual/", documents.manual_field, name="manual_field"),
-    path("documents/versions/<int:version_pk>/manual/start/", documents.manual_start, name="manual_start"),
-    path("documents/versions/<int:version_pk>/page/<int:page>/", documents.version_page_text, name="version_page_text"),
-    path("extractions/<int:pk>/", documents.extraction_review, name="extraction_review"),
-    path("extractions/<int:pk>/publish/", documents.publish, name="publish"),
-    path("extractions/<int:pk>/amendment/", documents.prepare_amendment, name="prepare_amendment"),
-    path("extractions/fields/<int:pk>/", documents.field_action, name="field_action"),
-    path("amendments/<int:pk>/", documents.amendment_detail, name="amendment_detail"),
-    path("amendments/<int:pk>/apply/", documents.amendment_apply, name="amendment_apply"),
-    path("amendments/<int:pk>/reject/", documents.amendment_reject, name="amendment_reject"),
 
     # Contacts
     path("contacts/", crm.contact_list, name="contact_list"),

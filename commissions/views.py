@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext, gettext_lazy
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit, diff, snapshot
 from core.listing import Column, Filter, Listing
@@ -21,36 +21,25 @@ AGREEMENT_TRACKED = ["status", "basis_type", "basis_amount_cents", "rate_percent
 
 @require_perm("commission.view")
 def commission_list(request):
-    qs = CommissionAgreement.objects.active().select_related("deal__stage", "payer")
-    cache = {}
+    """SKW's commission per deal: expected, received, outstanding. No broker splits."""
+    from deals.models import Deal
 
-    def s(a):
-        if a.pk not in cache:
-            cache[a.pk] = summarize(a)
-        return cache[a.pk]
+    from . import simple
 
-    listing = Listing(
-        request, qs, area="commissions",
-        columns=[
-            Column("title", gettext_lazy("Agreement"), lambda a: a.title, sort="title"),
-            Column("deal", gettext_lazy("Deal"), lambda a: a.deal.name, sort="deal__name"),
-            Column("side", gettext_lazy("Side"), lambda a: a.get_represented_side_display(), sort="represented_side"),
-            Column("gross", gettext_lazy("Gross"), lambda a: format_cents(s(a).gross), cls="num"),
-            Column("skw", gettext_lazy("SKW share"), lambda a: format_cents(s(a).skw_share), cls="num"),
-            Column("earned", gettext_lazy("Earned"), lambda a: s(a).earned.display() if s(a).earned.count else "—", cls="num"),
-            Column("received", gettext_lazy("Received"), lambda a: format_cents(s(a).received), cls="num"),
-            Column("outstanding", gettext_lazy("Outstanding"), lambda a: format_cents(s(a).outstanding), cls="num"),
-            Column("db", gettext_lazy("Designated broker paid"), lambda a: format_cents(s(a).designated_broker_paid), cls="num", default=False),
-            Column("status", gettext_lazy("Status"), lambda a: gettext(s(a).status)),
-            Column("dist", gettext_lazy("Distributions"), lambda a: gettext(s(a).distribution_status), default=False),
-        ],
-        search_fields=["title", "deal__name", "payer_name", "payer__name"],
-        filters=[Filter("status", gettext_lazy("Agreement"), CommissionAgreement.STATUSES, lambda qs, v: qs.filter(status=v))],
-        default_sort="-created_at",
-    )
-    if request.GET.get("export") == "csv":
-        return listing.export_csv("commissions")
-    return render(request, "commissions/list.html", {"listing": listing})
+    show = request.GET.get("show", "open")
+    deals = Deal.objects.active().select_related("stage").order_by("name")
+    if show == "open":
+        deals = deals.filter(stage__category__in=["active", "on_hold"])
+    elif show == "closed":
+        deals = deals.filter(stage__category="closed")
+    rows = [(d, simple.for_deal(d)) for d in deals]
+    totals = {
+        "expected": sum(c.expected for _d, c in rows if c.expected is not None),
+        "unknown": sum(1 for _d, c in rows if c.expected is None),
+        "received": sum(c.received for _d, c in rows),
+        "outstanding": sum(c.outstanding for _d, c in rows if c.outstanding is not None),
+    }
+    return render(request, "commissions/list.html", {"rows": rows, "totals": totals, "show": show})
 
 
 @require_perm("commission.view")
@@ -148,7 +137,7 @@ def entry_create(request, pk):
         try:
             services.record_entry(a, request.user, entry_type=d["entry_type"], amount_cents=d["amount"],
                                   entry_date=d["entry_date"], installment=d["installment"], allocation=d["allocation"],
-                                  reference=d["reference"], proof_document=d["proof_document"], notes=d["notes"])
+                                  reference=d["reference"], notes=d["notes"])
             messages.success(request, gettext_lazy("Ledger entry recorded."))
             return redirect(a)
         except ValidationError as exc:

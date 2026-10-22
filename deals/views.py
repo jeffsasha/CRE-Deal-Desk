@@ -18,11 +18,10 @@ from core.listing import Column, Filter, Listing
 from core.models import User
 from core.money import format_cents
 from core.permissions import has_perm, require, require_edit_on_post, require_perm
-from documents.models import DocumentLink
 
 from . import drafts as draft_templates
 from . import services
-from .catalog import TERM_CATALOG, TERM_CATEGORY_ORDER, event_label
+from .catalog import event_label
 from .forms import (
     ActivityForm,
     CloseDealForm,
@@ -188,8 +187,8 @@ def deal_create(request):
     form = NewDealForm(request.POST or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         deal = services.create_guided_deal(request.user, form.cleaned_data)
-        messages.success(request, _("Deal %(id)s created.") % {"id": deal.internal_id})
-        return redirect(deal)
+        messages.success(request, _("Deal %(id)s created. Enter its key dates.") % {"id": deal.internal_id})
+        return redirect("deal_key_dates", pk=deal.pk)
     return render(request, "deals/new.html", {
         "form": form, "kinds": KIND_CHOICES, "sides": SIDE_CHOICES, "client_labels": CLIENT_LABELS,
         "kind": form.data.get("kind") or form.initial.get("kind") or "",
@@ -214,63 +213,40 @@ def deal_edit(request, pk):
     return render(request, "form.html", {"form": form, "title": f"Edit {deal.name}", "back_url": deal.get_absolute_url()})
 
 
-TABS = [("overview", gettext_lazy("Overview")), ("parties", gettext_lazy("Parties")), ("contract", gettext_lazy("Contract & Dates")),
-        ("checklist", gettext_lazy("Checklist")), ("documents", gettext_lazy("Documents")), ("issues", gettext_lazy("Issues")),
-        ("activity", gettext_lazy("Activity")), ("commissions", gettext_lazy("Commissions")), ("closing", gettext_lazy("Closing"))]
+TABS = [("overview", gettext_lazy("Overview")), ("parties", gettext_lazy("Parties")), ("checklist", gettext_lazy("Checklist")),
+        ("activity", gettext_lazy("Activity")), ("closing", gettext_lazy("Closing"))]
 
 
 @require_perm("view")
 def deal_detail(request, pk):
     deal = get_object_or_404(Deal.objects.select_related("stage", "client", "responsible_broker"), pk=pk)
     tab = request.GET.get("tab", "overview")
-    tabs = [t for t in TABS if t[0] != "commissions" or has_perm(request.user, "commission.view")]
+    tabs = TABS
     if tab not in dict(tabs):
         tab = "overview"
     today = timezone.localdate()
     deadlines = deal.deadlines.exclude(state__in=["superseded", "cancelled"]).select_related("responsible_user")
     open_items = deal.checklist_items.filter(status__in=["not_started", "requested", "in_progress", "received", "under_review", "blocked"])
-    docs = DocumentLink.objects.filter(deal=deal, document__archived_at__isnull=True).select_related("document")
-    if not has_perm(request.user, "document.confidential"):
-        docs = docs.exclude(document__access_level="confidential")
+    from commissions import simple
+
+    from . import keydates
+
+    key = keydates.key_deadlines(deal)
     ctx = {
         "deal": deal, "tab": tab, "tabs": tabs, "today": today,
         "properties": deal.deal_properties.select_related("property", "space"),
         "deadlines": deadlines,
-        "next_deadlines": [d for d in deadlines if d.state == "open"][:6],
-        "open_issues": deal.issues.filter(status__in=["open", "monitoring"]),
+        "tl": keydates.timeline(deal, key, today),
+        "other_deadlines": [d for d in deadlines if d.state == "open" and d.template_key not in keydates.KEY_TEMPLATES],
+        "skw": simple.for_deal(deal) if has_perm(request.user, "commission.view") else None,
         "open_item_count": open_items.count(),
         "blocked_items": open_items.filter(status="blocked"),
-        "deposits": deal.deposits.select_related("holder", "due_deadline"),
-        "links_out": deal.links_out.select_related("to_deal__stage"),
-        "links_in": deal.links_in.select_related("from_deal__stage"),
-        "requested_credits": deal.issues.filter(requested_credit_cents__isnull=False).exclude(resolution_status="executed"),
-        "documents": docs,
         "stage_form": StageChangeForm(initial={"stage": deal.stage}),
-        "pending_amendments": deal.amendments.filter(status="proposed").select_related("version"),
     }
     if tab == "parties":
         ctx["parties"] = deal.parties.select_related("organization", "contact")
         ctx["representations"] = deal.representations.select_related("brokerage", "broker_user", "agreement_document")
         ctx["show_client_details"] = has_perm(request.user, "client.details")
-    elif tab == "contract":
-        terms = deal.terms.select_related("source_version__document", "approved_by", "amendment")
-        active = [t for t in terms if t.status == "active"]
-        grouped = {}
-        for t in active:
-            cat = TERM_CATALOG.get(t.key, ("", "", "Other", ""))[2]
-            grouped.setdefault(cat, []).append(t)
-        ctx["term_groups"] = [(c, grouped[c]) for c in TERM_CATEGORY_ORDER + ["Other"] if c in grouped]
-        ctx["superseded_terms"] = [t for t in terms if t.status == "superseded"]
-        ctx["events"] = deal.events.select_related("evidence_document", "recorded_by")
-        recorded = set(deal.events.values_list("key", flat=True))
-        needed = set()
-        for d in deadlines:
-            for k in d.trigger_keys or []:
-                if not k.startswith("deadline:"):
-                    needed.add(k)
-        ctx["missing_events"] = [(k, event_label(k)) for k in sorted(needed - recorded)]
-        ctx["price_events"] = deal.price_events.select_related("document", "issue")
-        ctx["amendments"] = deal.amendments.select_related("version__document")
     elif tab == "checklist":
         items = deal.checklist_items.select_related("owner", "outside_party", "deadline").prefetch_related("evidence")
         groups = {}
@@ -281,19 +257,10 @@ def deal_detail(request, pk):
         ctx["templates"] = ChecklistTemplate.objects.filter(enabled=True)
         ctx["conditions"] = CONDITIONS
         ctx["status_filter"] = request.GET.get("status", "")
-    elif tab == "documents":
-        ctx["doc_rows"] = [(l, l.document.current_version) for l in docs]
-    elif tab == "issues":
-        ctx["issues"] = deal.issues.prefetch_related("statements")
     elif tab == "activity":
         ctx["activities"] = deal.activities.select_related("created_by", "document")[:300]
         ctx["drafts"] = deal.drafts.all()
         ctx["draft_templates"] = [(k, v[0]) for k, v in draft_templates.TEMPLATES.items()]
-    elif tab == "commissions":
-        require(request.user, "commission.view")
-        from commissions.ledger import summarize
-
-        ctx["agreements"] = [(a, summarize(a)) for a in deal.commission_agreements.active()]
     elif tab == "closing":
         ctx["close_form"] = CloseDealForm(deal=deal, initial={
             "actual_closing_date": deal.actual_closing_date,
@@ -430,7 +397,7 @@ def deal_event(request, pk):
         if form.is_valid():
             d = form.cleaned_data
             services.record_event(deal, d["key"], d["occurred_on"], request.user, status=d["status"],
-                                  evidence_document=d["evidence_document"], evidence_note=d["evidence_note"],
+                                  evidence_note=d["evidence_note"],
                                   occurred_time=d["occurred_time"])
             messages.success(request, f"{event_label(d['key'])} recorded. Dependent deadlines were recomputed.")
             return redirect(back)
@@ -446,9 +413,7 @@ def deal_term(request, pk):
     back = f"{deal.get_absolute_url()}?tab=contract"
     if request.method == "POST" and form.is_valid():
         d = form.cleaned_data
-        src = d.get("source_document")
-        services.set_term(deal, d["key"], d["typed"], request.user, source_version=src, page=d.get("page"),
-                          section=d.get("section", ""), quote=d.get("quote", ""), note=d.get("note") or "Entered manually")
+        services.set_term(deal, d["key"], d["typed"], request.user, note=d.get("note") or "Entered manually")
         messages.success(request, gettext_lazy("Contract term approved. Dependent deadlines were recomputed."))
         return redirect(back)
     return render(request, "form.html", {"form": form, "title": f"Enter contract term — {deal.name}", "back_url": back,
@@ -602,3 +567,77 @@ def issue_list(request):
     if request.GET.get("export") == "csv":
         return listing.export_csv("issues")
     return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Issues")})
+
+
+# --- Key dates and SKW commission (simplified entry) --------------------------
+
+@require_edit_on_post
+def deal_key_dates(request, pk):
+    from . import keydates
+    from .forms import KeyDatesForm
+
+    require(request.user, "edit")
+    deal = get_object_or_404(Deal, pk=pk)
+    form = KeyDatesForm(request.POST or None, deal=deal, initial=keydates.current_values(deal))
+    if request.method == "POST" and form.is_valid():
+        keydates.save(deal, form.cleaned_data, request.user)
+        messages.success(request, gettext_lazy("Key dates saved. Deadlines were recomputed."))
+        return redirect(deal)
+    return render(request, "deals/key_dates.html", {"form": form, "deal": deal})
+
+
+@require_POST
+@require_perm("commission.edit")
+def deal_commission(request, pk):
+    from commissions import simple
+
+    from .forms import SkwCommissionForm
+
+    deal = get_object_or_404(Deal, pk=pk)
+    form = SkwCommissionForm(request.POST)
+    if form.is_valid():
+        try:
+            simple.set_expected(deal, form.cleaned_data["expected"], request.user)
+            messages.success(request, gettext_lazy("SKW commission saved."))
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+    else:
+        messages.error(request, " ".join(e for errs in form.errors.values() for e in errs))
+    return redirect(deal)
+
+
+@require_POST
+@require_perm("commission.edit")
+def deal_receipt(request, pk):
+    from commissions import simple
+
+    from .forms import ReceiptForm
+
+    deal = get_object_or_404(Deal, pk=pk)
+    form = ReceiptForm(request.POST)
+    if form.is_valid():
+        d = form.cleaned_data
+        try:
+            simple.record_receipt(deal, d["amount"], d["entry_date"], request.user, reference=d["reference"])
+            messages.success(request, gettext_lazy("Payment recorded."))
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+    else:
+        messages.error(request, " ".join(e for errs in form.errors.values() for e in errs))
+    return redirect(deal)
+
+
+@require_POST
+@require_perm("commission.edit")
+def deal_receipt_reverse(request, pk, entry):
+    from commissions import simple
+    from commissions.models import LedgerEntry
+
+    deal = get_object_or_404(Deal, pk=pk)
+    e = get_object_or_404(LedgerEntry, pk=entry)
+    try:
+        simple.reverse_receipt(deal, e, timezone.localdate(), request.POST.get("reason") or "Entered in error", request.user)
+        messages.success(request, gettext_lazy("Payment reversed. The original entry is kept in the ledger."))
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+    return redirect(deal)

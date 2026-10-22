@@ -87,16 +87,12 @@ class PartyForm(StyledModelForm):
 class RepresentationForm(StyledModelForm):
     class Meta:
         model = Representation
-        fields = ["side", "is_skw", "broker_user", "brokerage", "broker_name", "agreement_document", "notes"]
+        fields = ["side", "is_skw", "broker_user", "brokerage", "broker_name", "notes"]
 
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["broker_user"].queryset = staff_users()
         self.fields["brokerage"].queryset = Organization.objects.filter(org_type="brokerage")
-        if deal is not None:
-            from documents.models import Document
-
-            self.fields["agreement_document"].queryset = Document.objects.filter(links__deal=deal)
 
 
 class PriceEventForm(MoneyModelFormMixin, StyledModelForm):
@@ -106,16 +102,13 @@ class PriceEventForm(MoneyModelFormMixin, StyledModelForm):
 
     class Meta:
         model = PriceEvent
-        fields = ["kind", "amount", "event_date", "party", "issue", "document", "notes"]
+        fields = ["kind", "amount", "event_date", "party", "issue", "notes"]
         help_texts = {"kind": "Executed contract and closing prices come from approved terms and the Closing tab."}
 
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["kind"].choices = [c for c in PriceEvent.KINDS if c[0] in self.MANUAL_KINDS]
         if deal is not None:
-            from documents.models import Document
-
-            self.fields["document"].queryset = Document.objects.filter(links__deal=deal)
             self.fields["issue"].queryset = deal.issues.all()
 
 
@@ -126,24 +119,21 @@ class DepositForm(MoneyModelFormMixin, StyledModelForm):
     class Meta:
         model = Deposit
         fields = ["kind", "amount", "holder", "holder_contact", "due_deadline", "sent_on", "receipt_confirmed_on",
-                  "receipt_evidence", "refundability", "refundability_note", "released_on", "notes"]
+                  "refundability", "refundability_note", "released_on", "notes"]
 
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["holder"].queryset = Organization.objects.active()
         self.fields["holder_contact"].queryset = Contact.objects.active()
         if deal is not None:
-            from documents.models import Document
-
             self.fields["due_deadline"].queryset = deal.deadlines.exclude(state__in=["superseded", "cancelled"])
-            self.fields["receipt_evidence"].queryset = Document.objects.filter(links__deal=deal)
 
     def clean(self):
         data = super().clean()
         if data.get("refundability") in {"per_contract_refundable", "per_contract_nonrefundable"} and not data.get("refundability_note"):
             self.add_error("refundability_note", gettext_lazy("Quote the contract language supporting this refundability position."))
-        if data.get("receipt_confirmed_on") and not (data.get("receipt_evidence") or data.get("notes")):
-            self.add_error("notes", gettext_lazy("Note how receipt was confirmed, or attach the receipt evidence."))
+        if data.get("receipt_confirmed_on") and not data.get("notes"):
+            self.add_error("notes", gettext_lazy("Note how receipt was confirmed."))
         return data
 
 
@@ -161,7 +151,7 @@ class EventForm(StyledModelForm):
 
     class Meta:
         model = DealEvent
-        fields = ["key", "occurred_on", "occurred_time", "status", "evidence_document", "evidence_note"]
+        fields = ["key", "occurred_on", "occurred_time", "status", "evidence_note"]
         labels = {"occurred_on": "Actual date the event occurred"}
         help_texts = {
             "occurred_on": "Enter the actual date (e.g. the date the title commitment was received) — not the date a file was uploaded.",
@@ -171,17 +161,13 @@ class EventForm(StyledModelForm):
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["key"].choices = event_choices(deal)
-        if deal is not None:
-            from documents.models import Document
-
-            self.fields["evidence_document"].queryset = Document.objects.filter(links__deal=deal)
 
     def clean(self):
         data = super().clean()
         if data.get("status") == DealEvent.STATUS_CONFIRMED and not data.get("occurred_on"):
             self.add_error("occurred_on", gettext_lazy("A confirmed event needs its actual date."))
-        if data.get("status") == DealEvent.STATUS_CONFIRMED and not (data.get("evidence_document") or data.get("evidence_note")):
-            self.add_error("evidence_note", gettext_lazy("Record how the date is known (document or note)."))
+        if data.get("status") == DealEvent.STATUS_CONFIRMED and not data.get("evidence_note"):
+            self.add_error("evidence_note", gettext_lazy("Record how the date is known."))
         return data
 
 
@@ -195,21 +181,12 @@ def term_choices():
 class ManualTermForm(LocalizedForm):
     key = forms.ChoiceField(label="Contract term", choices=term_choices)
     value = forms.CharField(help_text="Dates as 'March 4, 2026' or 2026-03-04; money as $; periods as a number of days.")
-    source_document = forms.ModelChoiceField(queryset=None, required=False,
-                                             help_text="The executed document this value comes from.")
-    page = forms.IntegerField(required=False, min_value=1)
-    section = forms.CharField(required=False)
-    quote = forms.CharField(widget=forms.Textarea(attrs={"rows": 2}), required=False, label="Supporting text")
     note = forms.CharField(required=False, label="Reason / note",
                            help_text="Required when replacing an existing approved value.")
 
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
-        from documents.models import DocumentVersion
-
         self.deal = deal
-        self.fields["source_document"].queryset = DocumentVersion.objects.filter(document__links__deal=deal)
-        self.fields["source_document"].label_from_instance = lambda v: f"{v} — {v.get_execution_status_display()}"
 
     def clean(self):
         from .services import parse_term_value
@@ -221,9 +198,6 @@ class ManualTermForm(LocalizedForm):
                 data["typed"] = parse_term_value(key, value)
             except ValueError as exc:
                 self.add_error("value", str(exc))
-        src = data.get("source_document")
-        if src is not None and not src.is_executed:
-            self.add_error("source_document", gettext_lazy("This document's execution is not confirmed; its terms cannot be approved yet."))
         if key and self.deal.terms.filter(key=key, status="active").exists() and not data.get("note"):
             self.add_error("note", gettext_lazy("Explain why the approved value is being replaced (e.g. correction, or cite the amendment)."))
         return data
@@ -246,15 +220,11 @@ class ActivityForm(StyledModelForm):
 
     class Meta:
         model = Activity
-        fields = ["kind", "direction", "occurred_at", "summary", "counterparties", "body", "document"]
+        fields = ["kind", "direction", "occurred_at", "summary", "counterparties", "body"]
 
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["kind"].choices = [c for c in Activity.KINDS if c[0] != "system"]
-        if deal is not None:
-            from documents.models import Document
-
-            self.fields["document"].queryset = Document.objects.filter(links__deal=deal)
 
 
 class IssueForm(MoneyModelFormMixin, StyledModelForm):
@@ -267,7 +237,7 @@ class IssueForm(MoneyModelFormMixin, StyledModelForm):
         model = Issue
         fields = ["title", "category", "severity", "status", "discovered_on", "responsible", "description",
                   "requested_remedy", "requested_credit", "estimated_cost", "counterparty_response",
-                  "resolution_status", "resolution_document", "resolution_notes", "disclosure_finding", "disclosure_note"]
+                  "resolution_status", "resolution_notes", "disclosure_finding", "disclosure_note"]
         help_texts = {
             "disclosure_finding": "'Not found in reviewed materials' is different from 'confirmed not disclosed'.",
             "resolution_status": "Only an executed amendment or written agreement changes contract terms.",
@@ -276,22 +246,18 @@ class IssueForm(MoneyModelFormMixin, StyledModelForm):
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["responsible"].queryset = staff_users()
-        from documents.models import Document
-
-        self.fields["resolution_document"].queryset = Document.objects.filter(links__deal=deal) if deal else Document.objects.all()
 
     def clean(self):
         data = super().clean()
-        if data.get("resolution_status") == "executed" and not data.get("resolution_document"):
-            self.add_error("resolution_document", gettext_lazy("An executed resolution needs the executed document."))
+        if data.get("resolution_status") == "executed" and not data.get("resolution_notes"):
+            self.add_error("resolution_notes", gettext_lazy("Identify the executed amendment or written agreement."))
         return data
 
 
 class IssueStatementForm(StyledModelForm):
     class Meta:
         model = IssueStatement
-        fields = ["party", "statement", "statement_date", "document", "page", "document_date", "delivered_on",
-                  "receipt_evidence"]
+        fields = ["party", "statement", "statement_date", "document_date", "delivered_on"]
         help_texts = {
             "document_date": "The date printed on the document. It does not show when the document was delivered.",
             "delivered_on": "When it was actually delivered to us; leave blank if unknown.",
@@ -398,3 +364,44 @@ class NewDealForm(LocalizedForm):
         if mode == "none" and kind != "business" and not d.get("name"):
             self.add_error("name", _("Without a property, give the deal a name."))
         return d
+
+
+class KeyDatesForm(LocalizedForm):
+    """Effective Date plus contract periods; deadlines are computed from these."""
+
+    effective_date = forms.DateField(label="Effective Date", required=False, widget=forms.DateInput(attrs={"type": "date"}),
+                                     help_text="As defined in the executed contract.")
+    feasibility_days = forms.IntegerField(label="Feasibility Period (days)", required=False, min_value=0,
+                                          help_text="Calendar days after the Effective Date.")
+    closing_mode = forms.ChoiceField(label="Closing Date is", initial="days", widget=forms.RadioSelect,
+                                     choices=[("days", "Days after the Effective Date"), ("date", "A fixed date")])
+    closing_days = forms.IntegerField(label="Closing (days after Effective Date)", required=False, min_value=0)
+    closing_date = forms.DateField(label="Closing Date", required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    commencement_date = forms.DateField(label="Commencement Date", required=False,
+                                        widget=forms.DateInput(attrs={"type": "date"}))
+    next_business_day = forms.BooleanField(
+        label="Contract moves a deadline on a weekend or holiday to the next business day", required=False)
+
+    def __init__(self, *args, deal=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        drop = ["feasibility_days", "closing_mode", "closing_days", "closing_date"] if deal.is_lease else ["commencement_date"]
+        for name in drop:
+            del self.fields[name]
+
+    def clean(self):
+        data = super().clean()
+        mode = data.get("closing_mode")
+        if mode == "date" and data.get("closing_date") and data.get("effective_date") \
+                and data["closing_date"] < data["effective_date"]:
+            self.add_error("closing_date", gettext_lazy("The Closing Date is before the Effective Date."))
+        return data
+
+
+class SkwCommissionForm(LocalizedForm):
+    expected = MoneyField(label="SKW commission (expected)", help_text="What SKW Realty expects to receive. Blank = unknown.")
+
+
+class ReceiptForm(LocalizedForm):
+    amount = MoneyField(label="Amount received", required=True)
+    entry_date = forms.DateField(label="Date received", widget=forms.DateInput(attrs={"type": "date"}))
+    reference = forms.CharField(label="Check / wire reference", required=False, max_length=120)
