@@ -1,37 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Settings{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Settings" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Settings</h1><div class="sub">Workspace configuration, integrations, roles and data management.</div></div></div>
+<div class="page-head"><div><h1>{% translate "Settings" %}</h1><div class="sub">{% translate "Workspace configuration, integrations, roles and data management." %}</div></div></div>
 <div class="grid grid-2">
-  <div class="card"><div class="card-head"><h2>Integrations</h2></div><div class="card-body flush"><table class="t"><tbody>
+  <div class="card"><div class="card-head"><h2>{% translate "Integrations" %}</h2></div><div class="card-body flush"><table class="t"><tbody>
     {% for name, status, ok in integrations %}<tr><td>{{ name }}</td><td>{% if ok %}{% pill "approved" status %}{% else %}{% pill "draft" status %}{% endif %}</td></tr>{% endfor %}
   </tbody></table>
-  <div style="padding:10px 12px" class="muted"><small>Integrations are reported as connected only when credentials are actually configured on the server.</small></div></div></div>
+  <div style="padding:10px 12px" class="muted"><small>{% translate "Integrations are reported as connected only when credentials are actually configured on the server." %}</small></div></div></div>
 
-  <div class="card"><div class="card-head"><h2>Workspace</h2></div><div class="card-body">
+  <div class="card"><div class="card-head"><h2>{% translate "Workspace" %}</h2></div><div class="card-body">
     <ul style="margin:0;padding-left:18px;line-height:1.9">
-      {% if can.users_manage %}<li><a href="{% url 'user_list' %}">Users and roles</a></li>{% endif %}
-      <li><a href="{% url 'stage_list' %}">Deal stages</a></li>
-      <li><a href="{% url 'template_list' %}">Checklist templates</a></li>
-      <li><a href="{% url 'holiday_list' %}">Holiday calendars</a></li>
-      <li><a href="{% url 'reminder_settings' %}">Reminder defaults</a> — currently {{ reminder_days|join:", " }} days before</li>
-      <li><a href="{% url 'reminder_log' %}">Reminder delivery log</a></li>
-      <li><a href="{% url 'import_list' %}">Historical imports</a></li>
-      <li><a href="{% url 'archived' %}">Archived records (restore)</a></li>
-      {% if can.audit_view %}<li><a href="{% url 'audit_log' %}">Audit log</a></li>{% endif %}
-      {% if can.settings_manage %}<li><a href="{% url 'jobs' %}">Background jobs</a> — {{ jobs_queued }} queued, {{ jobs_failed }} failed</li>{% endif %}
-      <li><a href="{% url 'requirements' %}">Requirements checklist</a></li>
+      {% if can.users_manage %}<li><a href="{% url 'user_list' %}">{% translate "Users and roles" %}</a></li>{% endif %}
+      <li><a href="{% url 'stage_list' %}">{% translate "Deal stages" %}</a></li>
+      <li><a href="{% url 'template_list' %}">{% translate "Checklist templates" %}</a></li>
+      <li><a href="{% url 'holiday_list' %}">{% translate "Holiday calendars" %}</a></li>
+      <li><a href="{% url 'reminder_settings' %}">{% translate "Reminder defaults" %}</a> — {% translate "currently" %} {{ reminder_days|join:", " }} {% translate "days before" %}</li>
+      <li><a href="{% url 'reminder_log' %}">{% translate "Reminder delivery log" %}</a></li>
+      <li><a href="{% url 'import_list' %}">{% translate "Historical imports" %}</a></li>
+      <li><a href="{% url 'archived' %}">{% translate "Archived records (restore)" %}</a></li>
+      {% if can.audit_view %}<li><a href="{% url 'audit_log' %}">{% translate "Audit log" %}</a></li>{% endif %}
+      {% if can.settings_manage %}<li><a href="{% url 'jobs' %}">{% translate "Background jobs" %}</a> — {{ jobs_queued }} {% translate "queued," %} {{ jobs_failed }} {% translate "failed" %}</li>{% endif %}
+      <li><a href="{% url 'requirements' %}">{% translate "Requirements checklist" %}</a></li>
     </ul>
   </div></div>
 
-  <div class="card"><div class="card-head"><h2>Your calendar feed</h2></div><div class="card-body">
-    <p class="text-2">Subscribe in a calendar app to see computed deadlines for deals you can access. The URL is private to you; treat it like a password.</p>
+  <div class="card"><div class="card-head"><h2>{% translate "Your calendar feed" %}</h2></div><div class="card-body">
+    <p class="text-2">{% translate "Subscribe in a calendar app to see computed deadlines for deals you can access. The URL is private to you; treat it like a password." %}</p>
     <input type="text" readonly value="{{ calendar_feed }}" style="width:100%" onclick="this.select()">
-    <p style="margin-top:8px"><a class="btn btn-sm" href="{% url 'deadline_ics' %}">Download .ics now</a></p>
+    <p style="margin-top:8px"><a class="btn btn-sm" href="{% url 'deadline_ics' %}">{% translate "Download .ics now" %}</a></p>
   </div></div>
 
-  <div class="card"><div class="card-head"><h2>Role permissions</h2><small class="muted">Enforced on the server</small></div><div class="card-body flush table-wrap"><table class="t">
-    <thead><tr><th>Permission</th>{% for key, label in roles %}<th>{{ label }}</th>{% endfor %}</tr></thead>
+  <div class="card"><div class="card-head"><h2>{% translate "Role permissions" %}</h2><small class="muted">{% translate "Enforced on the server" %}</small></div><div class="card-body flush table-wrap"><table class="t">
+    <thead><tr><th>{% translate "Permission" %}</th>{% for key, label in roles %}<th>{{ label }}</th>{% endfor %}</tr></thead>
     <tbody>{% for row in matrix %}<tr><td>{{ row.label }}</td>{% for c in row.cells %}<td>{% if c %}✓{% else %}<span class="muted">—</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
   </table></div></div>
 </div>

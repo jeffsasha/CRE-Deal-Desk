@@ -152,16 +152,16 @@ def deposit_list(request):
     listing = Listing(
         request, qs, area="deposits",
         columns=[
-            Column("deal", "Deal", lambda d: d.deal.name, sort="deal__name"),
-            Column("kind", "Deposit", lambda d: d.get_kind_display(), sort="kind"),
-            Column("amount", "Amount", lambda d: format_cents(d.amount_cents), cls="num", sort="amount_cents"),
-            Column("holder", "Held by", lambda d: d.holder or "—"),
-            Column("due", "Due", lambda d: (d.due_deadline.current_date.strftime("%b %-d, %Y") if d.due_deadline and d.due_deadline.current_date
+            Column("deal", gettext_lazy("Deal"), lambda d: d.deal.name, sort="deal__name"),
+            Column("kind", gettext_lazy("Deposit"), lambda d: d.get_kind_display(), sort="kind"),
+            Column("amount", gettext_lazy("Amount"), lambda d: format_cents(d.amount_cents), cls="num", sort="amount_cents"),
+            Column("holder", gettext_lazy("Held by"), lambda d: d.holder or "—"),
+            Column("due", gettext_lazy("Due"), lambda d: (d.due_deadline.current_date.strftime("%b %-d, %Y") if d.due_deadline and d.due_deadline.current_date
                                              else (d.due_deadline.get_computation_display() if d.due_deadline else "No deadline linked"))),
-            Column("status", "Status", lambda d: d.status),
-            Column("refund", "Refundability", lambda d: d.get_refundability_display(), default=False),
+            Column("status", gettext_lazy("Status"), lambda d: _(d.status)),
+            Column("refund", gettext_lazy("Refundability"), lambda d: d.get_refundability_display(), default=False),
         ],
-        filters=[Filter("awaiting", "Status", [("1", "Awaiting receipt confirmation")],
+        filters=[Filter("awaiting", gettext_lazy("Status"), [("1", "Awaiting receipt confirmation")],
                         lambda qs, v: qs.filter(receipt_confirmed_on__isnull=True, released_on__isnull=True))],
         row_url=lambda d: f"{d.deal.get_absolute_url()}?tab=contract",
         row_class=lambda d: "row-warn" if d.awaiting else "",
@@ -173,8 +173,8 @@ def deposit_list(request):
                           row_class=listing.row_class)
     if request.GET.get("export") == "csv":
         return listing.export_csv("deposits")
-    return render(request, "core/list_page.html", {"listing": listing, "title": "Earnest money & deposits",
-                                                   "subtitle": "Deposits on active deals not yet confirmed received by the holder. Refundability is never inferred from a feasibility date."})
+    return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Earnest money & deposits"),
+                                                   "subtitle": gettext_lazy("Deposits on active deals not yet confirmed received by the holder. Refundability is never inferred from a feasibility date.")})
 
 
 @require_edit_on_post
@@ -335,14 +335,14 @@ def deal_close(request, pk):
             services.close_deal(deal, request.user, actual_closing_date=form.cleaned_data["actual_closing_date"],
                                 total_cents=form.cleaned_data["total"], allocations=form.allocations(),
                                 note=form.cleaned_data["note"])
-            messages.success(request, "Deal closed.")
+            messages.success(request, gettext_lazy("Deal closed."))
             return redirect(f"{deal.get_absolute_url()}?tab=closing")
         except ValidationError as exc:
             form.add_error(None, " ".join(exc.messages))
     return render(request, "form.html", {"form": form, "title": f"Close {deal.name}",
                                          "back_url": f"{deal.get_absolute_url()}?tab=closing",
-                                         "notice": "Closing records the actual date and deal-level consideration. A proposed or scheduled closing is not a closed transaction.",
-                                         "submit_label": "Close deal"})
+                                         "notice": gettext_lazy("Closing records the actual date and deal-level consideration. A proposed or scheduled closing is not a closed transaction."),
+                                         "submit_label": gettext_lazy("Close deal")})
 
 
 @require_edit_on_post
@@ -354,11 +354,11 @@ def deal_archive(request, pk):
         deal.archived_by = request.user
         deal.save()
         audit(request.user, "deal.archived", deal, note=request.POST.get("reason", ""))
-        messages.success(request, "Deal archived. It can be restored from Settings → Archived records.")
+        messages.success(request, gettext_lazy("Deal archived. It can be restored from Settings → Archived records."))
         return redirect("deal_list")
     return render(request, "confirm.html", {"title": f"Archive {deal}", "back_url": deal.get_absolute_url(),
-                                            "message": "Archived deals are hidden from lists and excluded from reports. Nothing is deleted; you can restore it.",
-                                            "reason_required": True, "submit_label": "Archive deal", "danger": True})
+                                            "message": gettext_lazy("Archived deals are hidden from lists and excluded from reports. Nothing is deleted; you can restore it."),
+                                            "reason_required": True, "submit_label": gettext_lazy("Archive deal"), "danger": True})
 
 
 # --- Sub-record forms --------------------------------------------------------
@@ -391,7 +391,7 @@ def deal_subrecord(request, pk, kind, item=None):
     if request.method == "POST":
         if request.POST.get("delete") and instance:
             if kind in {"price", "activity"}:
-                raise PermissionDenied("History records cannot be deleted.")
+                raise PermissionDenied(gettext_lazy("History records cannot be deleted."))
             audit(request.user, f"deal.{kind}_removed", deal, {label: str(instance)})
             log_activity(deal, f"{label} removed: {instance}", actor=request.user)
             instance.delete()
@@ -435,7 +435,7 @@ def deal_event(request, pk):
             messages.success(request, f"{event_label(d['key'])} recorded. Dependent deadlines were recomputed.")
             return redirect(back)
     return render(request, "form.html", {"form": form, "title": f"Record event — {deal.name}", "back_url": back,
-                                         "notice": "Deadlines that depend on this event are computed from the date you enter here. Never substitute the date a file was uploaded."})
+                                         "notice": gettext_lazy("Deadlines that depend on this event are computed from the date you enter here. Never substitute the date a file was uploaded.")})
 
 
 @require_edit_on_post
@@ -449,11 +449,11 @@ def deal_term(request, pk):
         src = d.get("source_document")
         services.set_term(deal, d["key"], d["typed"], request.user, source_version=src, page=d.get("page"),
                           section=d.get("section", ""), quote=d.get("quote", ""), note=d.get("note") or "Entered manually")
-        messages.success(request, "Contract term approved. Dependent deadlines were recomputed.")
+        messages.success(request, gettext_lazy("Contract term approved. Dependent deadlines were recomputed."))
         return redirect(back)
     return render(request, "form.html", {"form": form, "title": f"Enter contract term — {deal.name}", "back_url": back,
-                                         "notice": "Manual entry is always available. Enter only values stated in an executed agreement; superseded values are kept in history.",
-                                         "submit_label": "Approve term"})
+                                         "notice": gettext_lazy("Manual entry is always available. Enter only values stated in an executed agreement; superseded values are kept in history."),
+                                         "submit_label": gettext_lazy("Approve term")})
 
 
 @require_POST
@@ -513,13 +513,13 @@ def draft_edit(request, pk):
             Activity.objects.create(deal=draft.deal, kind="email", direction="outbound", summary=draft.subject,
                                     body=f"To: {draft.to}\n\n{draft.body}", created_by=request.user,
                                     counterparties=draft.to)
-            messages.success(request, "Recorded as sent by you. DealDesk did not send anything.")
+            messages.success(request, gettext_lazy("Recorded as sent by you. DealDesk did not send anything."))
             return redirect(back)
         if action == "discard":
             draft.status = "discarded"
             draft.save()
             return redirect(back)
-        messages.success(request, "Draft saved.")
+        messages.success(request, gettext_lazy("Draft saved."))
     return render(request, "deals/draft.html", {"form": form, "draft": draft, "back_url": back})
 
 
@@ -551,7 +551,7 @@ def issue_form(request, pk=None):
                                           notes="Requested credit — not an approved price change.")
         return redirect(obj)
     back = issue.get_absolute_url() if issue else (f"{deal.get_absolute_url()}?tab=issues" if deal else (prop.get_absolute_url() if prop else "/"))
-    return render(request, "form.html", {"form": form, "title": "Edit issue" if issue else "Record issue", "back_url": back})
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit issue") if issue else "Record issue", "back_url": back})
 
 
 @require_perm("view")
@@ -585,20 +585,20 @@ def issue_list(request):
     listing = Listing(
         request, qs, area="issues",
         columns=[
-            Column("title", "Issue", lambda i: i.title, sort="title"),
-            Column("deal", "Deal / property", lambda i: i.deal or i.property or "—"),
-            Column("category", "Category", lambda i: i.get_category_display(), sort="category"),
-            Column("severity", "Severity", lambda i: i.get_severity_display(), sort="severity"),
-            Column("status", "Status", lambda i: i.get_status_display(), sort="status"),
-            Column("resolution", "Resolution", lambda i: i.get_resolution_status_display()),
-            Column("credit", "Requested credit", lambda i: format_cents(i.requested_credit_cents, unknown="—"), cls="num"),
-            Column("disclosure", "Disclosure finding", lambda i: i.get_disclosure_finding_display(), default=False),
+            Column("title", gettext_lazy("Issue"), lambda i: i.title, sort="title"),
+            Column("deal", gettext_lazy("Deal / property"), lambda i: i.deal or i.property or "—"),
+            Column("category", gettext_lazy("Category"), lambda i: i.get_category_display(), sort="category"),
+            Column("severity", gettext_lazy("Severity"), lambda i: i.get_severity_display(), sort="severity"),
+            Column("status", gettext_lazy("Status"), lambda i: i.get_status_display(), sort="status"),
+            Column("resolution", gettext_lazy("Resolution"), lambda i: i.get_resolution_status_display()),
+            Column("credit", gettext_lazy("Requested credit"), lambda i: format_cents(i.requested_credit_cents, unknown="—"), cls="num"),
+            Column("disclosure", gettext_lazy("Disclosure finding"), lambda i: i.get_disclosure_finding_display(), default=False),
         ],
         search_fields=["title", "description", "deal__name", "property__name"],
-        filters=[Filter("status", "Status", Issue.STATUSES, lambda qs, v: qs.filter(status=v)),
-                 Filter("category", "Category", Issue.CATEGORIES, lambda qs, v: qs.filter(category=v))],
+        filters=[Filter("status", gettext_lazy("Status"), Issue.STATUSES, lambda qs, v: qs.filter(status=v)),
+                 Filter("category", gettext_lazy("Category"), Issue.CATEGORIES, lambda qs, v: qs.filter(category=v))],
         default_sort="-created_at",
     )
     if request.GET.get("export") == "csv":
         return listing.export_csv("issues")
-    return render(request, "core/list_page.html", {"listing": listing, "title": "Issues"})
+    return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Issues")})

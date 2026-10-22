@@ -1,62 +1,62 @@
-<div class="split">
+{% load i18n %}<div class="split">
 <div class="stack">
-  <div class="card"><div class="card-head"><h2>Deadlines</h2>
+  <div class="card"><div class="card-head"><h2>{% translate "Deadlines" %}</h2>
     <div class="actions">{% if can.edit %}
-      <form method="post" action="{% url 'deal_generate_deadlines' deal.pk %}">{% csrf_token %}<button class="btn btn-sm" title="Only from approved terms; no default periods">Generate from approved terms</button></form>
-      <a class="btn btn-sm btn-primary" href="{% url 'deadline_create' %}?deal={{ deal.pk }}">Add deadline</a>{% endif %}
+      <form method="post" action="{% url 'deal_generate_deadlines' deal.pk %}">{% csrf_token %}<button class="btn btn-sm" title="{% translate "Only from approved terms; no default periods" %}">{% translate "Generate from approved terms" %}</button></form>
+      <a class="btn btn-sm btn-primary" href="{% url 'deadline_create' %}?deal={{ deal.pk }}">{% translate "Add deadline" %}</a>{% endif %}
       <a class="btn btn-sm" href="{% url 'deal_ics' deal.pk %}">.ics</a></div></div>
     <div class="card-body flush table-wrap"><table class="t">
-    <thead><tr><th>Deadline</th><th>Date</th><th>Rule</th><th>Status</th><th class="hide-sm">Responsible</th></tr></thead>
+    <thead><tr><th>{% translate "Deadline" %}</th><th>{% translate "Date" %}</th><th>{% translate "Rule" %}</th><th>{% translate "Status" %}</th><th class="hide-sm">{% translate "Responsible" %}</th></tr></thead>
     <tbody>{% for dl in deadlines %}<tr class="{% if dl.is_overdue %}row-alert{% elif dl.computation != 'computed' and dl.state == 'open' %}row-warn{% elif dl.state != 'open' %}row-muted{% endif %}">
-      <td><a href="{{ dl.get_absolute_url }}">{{ dl.name }}</a>{% if not dl.is_contractual %} <span class="tag">Internal target</span>{% endif %}</td>
+      <td><a href="{{ dl.get_absolute_url }}">{{ dl.name }}</a>{% if not dl.is_contractual %} <span class="tag">{% translate "Internal target" %}</span>{% endif %}</td>
       <td class="nowrap">{% if dl.current_date %}<strong>{{ dl.current_date|d }}</strong>{% if dl.due_time %}<br><small>{{ dl.due_time|time:"g:i A" }} {{ dl.time_zone }}</small>{% endif %}{% if dl.original_date and dl.original_date != dl.current_date %}<br><small class="diff-old">{{ dl.original_date|d }}</small>{% endif %}{% else %}—{% endif %}</td>
       <td><small>{{ dl.computation_note|truncatechars:150 }}</small></td>
-      <td>{% if dl.state == 'open' %}{% pill dl.computation dl.get_computation_display %}{% else %}{% pill dl.state dl.get_state_display %}{% endif %}<br>{% if dl.confirmation == 'confirmed' %}<small style="color:var(--green-fg)">Rule confirmed</small>{% else %}<small class="muted">Rule unconfirmed</small>{% endif %}</td>
+      <td>{% if dl.state == 'open' %}{% pill dl.computation dl.get_computation_display %}{% else %}{% pill dl.state dl.get_state_display %}{% endif %}<br>{% if dl.confirmation == 'confirmed' %}<small style="color:var(--green-fg)">{% translate "Rule confirmed" %}</small>{% else %}<small class="muted">{% translate "Rule unconfirmed" %}</small>{% endif %}</td>
       <td class="hide-sm">{{ dl.responsible_user|default:"—" }}</td></tr>
-    {% empty %}<tr><td colspan="5"><div class="empty">No deadlines yet.</div></td></tr>{% endfor %}</tbody></table></div></div>
+    {% empty %}<tr><td colspan="5"><div class="empty">{% translate "No deadlines yet." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
 
-  <div class="card"><div class="card-head"><h2>Approved contract terms</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_term' deal.pk %}">Enter term manually</a>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>{% translate "Approved contract terms" %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_term' deal.pk %}">{% translate "Enter term manually" %}</a>{% endif %}</div>
     <div class="card-body flush table-wrap">
     {% for cat, terms in term_groups %}
-      <table class="t"><thead><tr><th colspan="3">{{ cat }}</th></tr></thead><tbody>
-      {% for t in terms %}<tr><td style="width:36%">{{ t.label }}{% if t.version > 1 %} <span class="tag">v{{ t.version }}</span>{% endif %}</td>
+      <table class="t"><thead><tr><th colspan="3">{{ cat|tr }}</th></tr></thead><tbody>
+      {% for t in terms %}<tr><td style="width:36%">{{ t.label|tr }}{% if t.version > 1 %} <span class="tag">v{{ t.version }}</span>{% endif %}</td>
         <td><strong>{{ t.display_value }}</strong></td>
-        <td><small class="muted">{% if t.source_version %}<a href="{{ t.source_version.document.get_absolute_url }}">{{ t.source_version }}</a>{% if t.source_page %}, p. {{ t.source_page }}{% endif %}{% if t.source_section %}, {{ t.source_section }}{% endif %}{% else %}Manual entry{% endif %}{% if t.amendment %} · via <a href="{{ t.amendment.get_absolute_url }}">amendment</a>{% endif %} · {{ t.approved_by|default:"" }} {{ t.approved_at|date:"M j, Y" }}</small>{% if t.source_quote %}<br><small>“{{ t.source_quote|truncatechars:180 }}”</small>{% endif %}</td></tr>{% endfor %}
+        <td><small class="muted">{% if t.source_version %}<a href="{{ t.source_version.document.get_absolute_url }}">{{ t.source_version }}</a>{% if t.source_page %}{% translate ", p." %} {{ t.source_page }}{% endif %}{% if t.source_section %}, {{ t.source_section }}{% endif %}{% else %}{% translate "Manual entry" %}{% endif %}{% if t.amendment %} · {% translate "via" %} <a href="{{ t.amendment.get_absolute_url }}">{% translate "amendment" %}</a>{% endif %} · {{ t.approved_by|default:"" }} {{ t.approved_at|date:"M j, Y" }}</small>{% if t.source_quote %}<br><small>“{{ t.source_quote|truncatechars:180 }}”</small>{% endif %}</td></tr>{% endfor %}
       </tbody></table>
-    {% empty %}<div class="empty">No approved terms. Upload the executed contract and review the extracted terms, or enter terms manually.</div>{% endfor %}
+    {% empty %}<div class="empty">{% translate "No approved terms. Upload the executed contract and review the extracted terms, or enter terms manually." %}</div>{% endfor %}
     </div></div>
 
-  {% if superseded_terms %}<div class="card"><div class="card-head"><h2>Superseded terms</h2><small class="muted">Kept for history</small></div><div class="card-body flush table-wrap"><table class="t"><tbody>
-    {% for t in superseded_terms %}<tr class="row-muted"><td>{{ t.label }} <span class="tag">v{{ t.version }}</span></td><td class="diff-old">{{ t.display_value }}</td><td><small>{% if t.source_version %}{{ t.source_version }}{% else %}Manual{% endif %} · superseded {{ t.superseded_at|d }}</small></td></tr>{% endfor %}
+  {% if superseded_terms %}<div class="card"><div class="card-head"><h2>{% translate "Superseded terms" %}</h2><small class="muted">{% translate "Kept for history" %}</small></div><div class="card-body flush table-wrap"><table class="t"><tbody>
+    {% for t in superseded_terms %}<tr class="row-muted"><td>{{ t.label|tr }} <span class="tag">v{{ t.version }}</span></td><td class="diff-old">{{ t.display_value }}</td><td><small>{% if t.source_version %}{{ t.source_version }}{% else %}{% translate "Manual" %}{% endif %} · {% translate "superseded" %} {{ t.superseded_at|d }}</small></td></tr>{% endfor %}
   </tbody></table></div></div>{% endif %}
 
-  <div class="card"><div class="card-head"><h2>Price history</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'price' %}">Record offer / counter / credit request</a>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>{% translate "Price history" %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'price' %}">{% translate "Record offer / counter / credit request" %}</a>{% endif %}</div>
     <div class="card-body flush table-wrap"><table class="t"><tbody>
     {% for p in price_events %}<tr><td class="nowrap">{{ p.event_date|d }}</td><td>{{ p.get_kind_display }}{% if p.party %}<br><small class="muted">{{ p.party }}</small>{% endif %}</td><td class="num"><strong>{{ p.amount_cents|money }}</strong></td><td><small class="muted">{{ p.notes }}</small></td></tr>
-    {% empty %}<tr><td><div class="empty">No price history recorded.</div></td></tr>{% endfor %}
-    </tbody></table><div style="padding:8px 12px"><small class="muted">Asking, offer, counteroffer, executed contract, amendment and actual closing prices are distinct values. Requested credits do not change the executed price.</small></div></div></div>
+    {% empty %}<tr><td><div class="empty">{% translate "No price history recorded." %}</div></td></tr>{% endfor %}
+    </tbody></table><div style="padding:8px 12px"><small class="muted">{% translate "Asking, offer, counteroffer, executed contract, amendment and actual closing prices are distinct values. Requested credits do not change the executed price." %}</small></div></div></div>
 </div>
 <div class="stack">
-  <div class="card"><div class="card-head"><h2>Trigger events</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_event' deal.pk %}">Record event</a>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>{% translate "Trigger events" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_event' deal.pk %}">{% translate "Record event" %}</a>{% endif %}</div>
     <div class="card-body flush"><table class="t"><tbody>
-    {% for ev in events %}<tr><td>{{ ev.label }}<br><small class="muted">{{ ev.evidence_note|truncatechars:80 }}{% if ev.evidence_document %} · <a href="{{ ev.evidence_document.get_absolute_url }}">{{ ev.evidence_document }}</a>{% endif %}</small></td>
-      <td class="nowrap num">{% if ev.occurred_on %}<strong>{{ ev.occurred_on|d }}</strong>{% else %}—{% endif %}<br>{% if ev.status == 'confirmed' %}<small style="color:var(--green-fg)">Confirmed</small>{% else %}{% pill "needs_review" "Needs review" %}{% endif %}
-      {% if can.edit %}<br><a class="btn btn-sm" href="{% url 'deal_event' deal.pk %}?key={{ ev.key }}">Edit</a>{% endif %}</td></tr>
+    {% for ev in events %}<tr><td>{{ ev.label|tr }}<br><small class="muted">{{ ev.evidence_note|truncatechars:80 }}{% if ev.evidence_document %} · <a href="{{ ev.evidence_document.get_absolute_url }}">{{ ev.evidence_document }}</a>{% endif %}</small></td>
+      <td class="nowrap num">{% if ev.occurred_on %}<strong>{{ ev.occurred_on|d }}</strong>{% else %}—{% endif %}<br>{% if ev.status == 'confirmed' %}<small style="color:var(--green-fg)">{% translate "Confirmed" %}</small>{% else %}{% translate "Needs review" as pl_label %}{% pill "needs_review" pl_label %}{% endif %}
+      {% if can.edit %}<br><a class="btn btn-sm" href="{% url 'deal_event' deal.pk %}?key={{ ev.key }}">{% translate "Edit" %}</a>{% endif %}</td></tr>
     {% endfor %}
-    {% for key, label in missing_events %}<tr class="row-warn"><td>{{ label }}<br><small class="muted">Required by a deadline — not yet recorded</small></td><td class="num">{% pill "awaiting_trigger" "Awaiting" %}{% if can.edit %}<br><a class="btn btn-sm" href="{% url 'deal_event' deal.pk %}?key={{ key }}">Record</a>{% endif %}</td></tr>{% endfor %}
-    {% if not events and not missing_events %}<tr><td><div class="empty">No events recorded.</div></td></tr>{% endif %}
+    {% for key, label in missing_events %}<tr class="row-warn"><td>{{ label|tr }}<br><small class="muted">{% translate "Required by a deadline — not yet recorded" %}</small></td><td class="num">{% translate "Awaiting" as pl_label %}{% pill "awaiting_trigger" pl_label %}{% if can.edit %}<br><a class="btn btn-sm" href="{% url 'deal_event' deal.pk %}?key={{ key }}">{% translate "Record" %}</a>{% endif %}</td></tr>{% endfor %}
+    {% if not events and not missing_events %}<tr><td><div class="empty">{% translate "No events recorded." %}</div></td></tr>{% endif %}
     </tbody></table></div></div>
 
-  <div class="card"><div class="card-head"><h2>Earnest money & deposits</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'deposit' %}">Add</a>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>{% translate "Earnest money & deposits" %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'deposit' %}">{% translate "Add" %}</a>{% endif %}</div>
     <div class="card-body flush"><table class="t"><tbody>
-    {% for dep in deposits %}<tr class="{% if dep.awaiting %}row-warn{% endif %}"><td><strong>{{ dep.get_kind_display }}</strong> {{ dep.amount_cents|money }}<br><small class="muted">{{ dep.status }}{% if dep.holder %} · {{ dep.holder }}{% endif %}</small><br><small>Due: {% if dep.due_deadline %}{% if dep.due_deadline.current_date %}{{ dep.due_deadline.current_date|d }}{% else %}{{ dep.due_deadline.get_computation_display }}{% endif %}{% else %}no deadline linked{% endif %}</small><br><small>Refundability: {{ dep.get_refundability_display }}</small></td>
-    <td class="num">{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'deposit' dep.pk %}">Edit</a>{% endif %}</td></tr>
-    {% empty %}<tr><td><div class="empty">None recorded.</div></td></tr>{% endfor %}
+    {% for dep in deposits %}<tr class="{% if dep.awaiting %}row-warn{% endif %}"><td><strong>{{ dep.get_kind_display }}</strong> {{ dep.amount_cents|money }}<br><small class="muted">{{ dep.status|tr }}{% if dep.holder %} · {{ dep.holder }}{% endif %}</small><br><small>{% translate "Due" %}: {% if dep.due_deadline %}{% if dep.due_deadline.current_date %}{{ dep.due_deadline.current_date|d }}{% else %}{{ dep.due_deadline.get_computation_display }}{% endif %}{% else %}{% translate "no deadline linked" %}{% endif %}</small><br><small>{% translate "Refundability" %}: {{ dep.get_refundability_display }}</small></td>
+    <td class="num">{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'deposit' dep.pk %}">{% translate "Edit" %}</a>{% endif %}</td></tr>
+    {% empty %}<tr><td><div class="empty">{% translate "None recorded." %}</div></td></tr>{% endfor %}
     </tbody></table></div></div>
 
-  <div class="card"><div class="card-head"><h2>Amendments</h2></div><div class="card-body flush"><table class="t"><tbody>
+  <div class="card"><div class="card-head"><h2>{% translate "Amendments" %}</h2></div><div class="card-body flush"><table class="t"><tbody>
     {% for a in amendments %}<tr><td><a href="{{ a.get_absolute_url }}">{{ a.title }}</a><br><small class="muted">{{ a.created_at|d }}</small></td><td>{% pill a.status a.get_status_display %}</td></tr>
-    {% empty %}<tr><td><div class="empty">None. Upload an amendment or extension to compare it with current terms.</div></td></tr>{% endfor %}
+    {% empty %}<tr><td><div class="empty">{% translate "None. Upload an amendment or extension to compare it with current terms." %}</div></td></tr>{% endfor %}
   </tbody></table></div></div>
 </div>
 </div>

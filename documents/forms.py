@@ -1,6 +1,6 @@
 from django import forms
 
-from core.forms import DateInput
+from core.forms import DateInput, LocalizedForm
 from crm.models import Contact, Organization
 from deals.catalog import TERM_CATALOG
 from deals.models import Deal, Issue
@@ -9,7 +9,7 @@ from properties.models import Property
 from .models import CATEGORIES, DOC_TYPES, Document
 
 
-class UploadForm(forms.Form):
+class UploadForm(LocalizedForm):
     file = forms.FileField(help_text="PDF (including scans), images, DOCX, TXT, CSV or XLSX. The original is preserved unchanged.")
     title = forms.CharField(required=False, help_text="Defaults to the file name.")
     category = forms.ChoiceField(choices=CATEGORIES)
@@ -30,7 +30,7 @@ class UploadForm(forms.Form):
     extract = forms.BooleanField(required=False, initial=True, label="Propose contract terms for review (contracts, leases, LOIs, amendments)")
 
 
-class NewVersionForm(forms.Form):
+class NewVersionForm(LocalizedForm):
     file = forms.FileField()
     change_note = forms.CharField(required=False)
     document_date = forms.DateField(required=False, widget=DateInput(), label="Date shown on document")
@@ -45,7 +45,7 @@ class DocumentMetaForm(forms.ModelForm):
         fields = ["title", "category", "doc_type", "doc_type_confirmed", "access_level", "tags", "description"]
 
 
-class ExecutionForm(forms.Form):
+class ExecutionForm(LocalizedForm):
     status = forms.ChoiceField(choices=[
         ("unknown", "Unknown"),
         ("draft", "Draft / unsigned"),
@@ -57,7 +57,7 @@ class ExecutionForm(forms.Form):
                                help_text="Required to confirm execution: how do you know it is fully signed by all parties?")
 
 
-class LinkForm(forms.Form):
+class LinkForm(LocalizedForm):
     deal = forms.ModelChoiceField(queryset=Deal.objects.active(), required=False)
     property = forms.ModelChoiceField(queryset=Property.objects.active(), required=False)
     organization = forms.ModelChoiceField(queryset=Organization.objects.active(), required=False, label="Company")
@@ -69,7 +69,7 @@ def manual_key_choices():
     return [("effective_date", "Effective date (explicit date)")] + [(k, v[0]) for k, v in TERM_CATALOG.items()]
 
 
-class ManualFieldForm(forms.Form):
+class ManualFieldForm(LocalizedForm):
     key = forms.ChoiceField(choices=manual_key_choices, label="Field")
     value = forms.CharField()
     page = forms.IntegerField(required=False, min_value=1)
@@ -77,7 +77,7 @@ class ManualFieldForm(forms.Form):
     quote = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}), label="Supporting text")
 
 
-class NotesForm(forms.Form):
+class NotesForm(LocalizedForm):
     title = forms.CharField(initial="Historical transaction notes")
     text = forms.CharField(widget=forms.Textarea(attrs={"rows": 14}), label="Pasted notes",
                            help_text="Stored as an original document (plain text). Nothing in it is interpreted as instructions or applied automatically.")

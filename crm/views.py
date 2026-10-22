@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit
 from core.listing import Column, Filter, Listing
@@ -32,33 +33,33 @@ def contact_list(request):
         listing = Listing(
             request, Organization.objects.active(), area="companies",
             columns=[
-                Column("name", "Company", lambda o: str(o), sort="name"),
-                Column("type", "Type", lambda o: o.get_org_type_display(), sort="org_type"),
-                Column("client", "Client", lambda o: "Client" if o.is_client else ""),
-                Column("phone", "Phone", lambda o: masked(u, o, o.phone)),
-                Column("email", "Email", lambda o: masked(u, o, o.email), default=False),
-                Column("city", "City", lambda o: o.city, sort="city", default=False),
-                Column("contacts", "People", lambda o: o.contacts.count(), cls="num"),
+                Column("name", gettext_lazy("Company"), lambda o: str(o), sort="name"),
+                Column("type", gettext_lazy("Type"), lambda o: o.get_org_type_display(), sort="org_type"),
+                Column("client", gettext_lazy("Client"), lambda o: "Client" if o.is_client else ""),
+                Column("phone", gettext_lazy("Phone"), lambda o: masked(u, o, o.phone)),
+                Column("email", gettext_lazy("Email"), lambda o: masked(u, o, o.email), default=False),
+                Column("city", gettext_lazy("City"), lambda o: o.city, sort="city", default=False),
+                Column("contacts", gettext_lazy("People"), lambda o: o.contacts.count(), cls="num"),
             ],
             search_fields=["name", "branch_name", "tags", "city"],
-            filters=[Filter("type", "Type", Organization.TYPE_CHOICES, lambda qs, v: qs.filter(org_type=v)),
-                     Filter("client", "Clients", [("1", "Clients only")], lambda qs, v: qs.filter(is_client=True))],
+            filters=[Filter("type", gettext_lazy("Type"), Organization.TYPE_CHOICES, lambda qs, v: qs.filter(org_type=v)),
+                     Filter("client", gettext_lazy("Clients"), [("1", "Clients only")], lambda qs, v: qs.filter(is_client=True))],
             default_sort="name",
         )
     else:
         listing = Listing(
             request, Contact.objects.active().select_related("organization"), area="people",
             columns=[
-                Column("name", "Name", lambda c: c.full_name, sort="last_name"),
-                Column("org", "Company", lambda c: c.organization or "—", sort="organization__name"),
-                Column("title", "Title / roles", lambda c: ", ".join(x for x in [c.title, c.roles] if x)),
-                Column("email", "Email", lambda c: masked(u, c, c.email)),
-                Column("phone", "Phone", lambda c: masked(u, c, c.phone or c.mobile)),
-                Column("client", "Client", lambda c: "Client" if c.is_confidential_client else "", default=False),
+                Column("name", gettext_lazy("Name"), lambda c: c.full_name, sort="last_name"),
+                Column("org", gettext_lazy("Company"), lambda c: c.organization or "—", sort="organization__name"),
+                Column("title", gettext_lazy("Title / roles"), lambda c: ", ".join(x for x in [c.title, c.roles] if x)),
+                Column("email", gettext_lazy("Email"), lambda c: masked(u, c, c.email)),
+                Column("phone", gettext_lazy("Phone"), lambda c: masked(u, c, c.phone or c.mobile)),
+                Column("client", gettext_lazy("Client"), lambda c: "Client" if c.is_confidential_client else "", default=False),
             ],
             search_fields=["first_name", "last_name", "email", "organization__name", "roles", "title"],
-            filters=[Filter("type", "Company type", Organization.TYPE_CHOICES, lambda qs, v: qs.filter(organization__org_type=v)),
-                     Filter("role", "Role", [(r, r) for r in ["Escrow officer", "Surveyor", "Attorney", "Lender", "Inspector", "Title"]],
+            filters=[Filter("type", gettext_lazy("Company type"), Organization.TYPE_CHOICES, lambda qs, v: qs.filter(organization__org_type=v)),
+                     Filter("role", gettext_lazy("Role"), [(r, r) for r in ["Escrow officer", "Surveyor", "Attorney", "Lender", "Inspector", "Title"]],
                             lambda qs, v: qs.filter(roles__icontains=v))],
             default_sort="last_name",
         )
@@ -98,7 +99,7 @@ def contact_form(request, pk=None):
         c = form.save()
         audit(request.user, "contact.saved", c)
         return redirect(c)
-    return render(request, "form.html", {"form": form, "title": "Edit contact" if obj else "New contact",
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit contact") if obj else "New contact",
                                          "back_url": obj.get_absolute_url() if obj else reverse("contact_list")})
 
 
@@ -111,7 +112,7 @@ def organization_form(request, pk=None):
         o = form.save()
         audit(request.user, "organization.saved", o)
         return redirect(o)
-    return render(request, "form.html", {"form": form, "title": "Edit company" if obj else "New company",
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit company") if obj else "New company",
                                          "back_url": obj.get_absolute_url() if obj else reverse("contact_list") + "?tab=companies"})
 
 
@@ -128,5 +129,5 @@ def archive_party(request, kind, pk):
         messages.success(request, f"{obj} archived; restore from Settings.")
         return redirect("contact_list")
     return render(request, "confirm.html", {"title": f"Archive {obj}", "back_url": obj.get_absolute_url(),
-                                            "message": "Archived contacts stay linked to past deals and can be restored.",
-                                            "reason_required": True, "submit_label": "Archive"})
+                                            "message": gettext_lazy("Archived contacts stay linked to past deals and can be restored."),
+                                            "reason_required": True, "submit_label": gettext_lazy("Archive")})

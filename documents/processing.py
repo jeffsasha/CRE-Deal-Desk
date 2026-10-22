@@ -33,7 +33,9 @@ def extraction_engine():
 def extraction_engine_label():
     if extraction_engine() == "claude":
         return f"Claude ({settings.EXTRACTION_MODEL})"
-    return "Offline pattern extractor (no AI credential configured)"
+    from django.utils.translation import gettext
+
+    return gettext("Offline pattern extractor (no AI credential configured)")
 
 
 def queue_processing(version, actor=None, extract=True):

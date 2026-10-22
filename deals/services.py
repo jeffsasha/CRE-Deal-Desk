@@ -4,6 +4,7 @@ from datetime import date, datetime
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit
 from core.money import MoneyParseError, parse_cents
@@ -146,7 +147,7 @@ def record_event(deal, key, occurred_on, actor, *, status=DealEvent.STATUS_CONFI
     """Record an actual event date. Upload dates are never used as substitutes; the
     caller must supply the actual date the event occurred."""
     if occurred_on is None and status == DealEvent.STATUS_CONFIRMED:
-        raise ValidationError("A confirmed event requires the actual date it occurred.")
+        raise ValidationError(gettext_lazy("A confirmed event requires the actual date it occurred."))
     existing = DealEvent.objects.filter(deal=deal, key=key).first()
     old = (existing.occurred_on, existing.status) if existing else (None, None)
     ev, _ = DealEvent.objects.update_or_create(
@@ -185,7 +186,7 @@ TERMINAL_REASON_CATEGORIES = {Stage.CATEGORY_TERMINATED, Stage.CATEGORY_LOST}
 @transaction.atomic
 def change_stage(deal, stage, actor, reason=""):
     if stage.category == Stage.CATEGORY_CLOSED:
-        raise ValidationError("Use the Closing tab to close a deal: it records the actual closing date and consideration.")
+        raise ValidationError(gettext_lazy("Use the Closing tab to close a deal: it records the actual closing date and consideration."))
     if stage.category in TERMINAL_REASON_CATEGORIES and not (reason or deal.termination_reason):
         raise ValidationError(f"A reason is required to mark a deal {stage.name}.")
     old = deal.stage
@@ -207,17 +208,17 @@ def close_deal(deal, actor, *, actual_closing_date, total_cents, allocations=Non
     `allocations` maps DealProperty id -> cents and, when given for a multi-property
     deal, must add up to the total so nothing is double-counted or lost."""
     if actual_closing_date is None:
-        raise ValidationError("The actual closing date is required to close a deal.")
+        raise ValidationError(gettext_lazy("The actual closing date is required to close a deal."))
     if actual_closing_date > timezone.localdate():
-        raise ValidationError("The actual closing date cannot be in the future. Proposed closings are not closed transactions.")
+        raise ValidationError(gettext_lazy("The actual closing date cannot be in the future. Proposed closings are not closed transactions."))
     links = {dp.pk: dp for dp in deal.deal_properties.all()}
     allocations = {k: v for k, v in (allocations or {}).items() if v is not None}
     if allocations:
         unknown = set(allocations) - set(links)
         if unknown:
-            raise ValidationError("Allocation references a property that is not linked to this deal.")
+            raise ValidationError(gettext_lazy("Allocation references a property that is not linked to this deal."))
         if total_cents is None:
-            raise ValidationError("Enter the deal-level total before allocating it among properties.")
+            raise ValidationError(gettext_lazy("Enter the deal-level total before allocating it among properties."))
         if sum(allocations.values()) != total_cents:
             raise ValidationError(
                 f"Property allocations total {sum(allocations.values()) / 100:,.2f} but the deal total is "

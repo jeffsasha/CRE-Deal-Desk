@@ -7,13 +7,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from core.forms import LocalizedForm
 from core.permissions import require_perm
 
 from . import services
 from .models import ImportBatch, ImportRow
 
 
-class NewImportForm(forms.Form):
+class NewImportForm(LocalizedForm):
     kind = forms.ChoiceField(choices=ImportBatch.KINDS)
     file = forms.FileField(help_text="CSV or Excel (.xlsx). The first row must contain column headers.")
 

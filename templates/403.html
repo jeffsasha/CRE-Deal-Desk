@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Not permitted{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Not permitted" %}{% endblock %}
 {% block content %}
-<div class="page-head"><h1>Not permitted</h1></div>
-<div class="notice notice-error">{% icon "lock" %}<div>{{ exception|default:"Your role does not allow this action." }}</div></div>
-<a class="btn" href="javascript:history.back()">Go back</a>
+<div class="page-head"><h1>{% translate "Not permitted" %}</h1></div>
+<div class="notice notice-error">{% icon "lock" %}<div>{{ exception|default:_("Your role does not allow this action.") }}</div></div>
+<a class="btn" href="javascript:history.back()">{% translate "Go back" %}</a>
 {% endblock %}

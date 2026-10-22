@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Notifications{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Notifications" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Notifications</h1><div class="sub">In-app reminders. Acknowledging a reminder does not complete the deadline or task.</div></div>
-<div class="actions"><a class="btn" href="{% url 'reminder_log' %}">Reminder delivery log</a><form method="post">{% csrf_token %}<button class="btn">Mark all read</button></form></div></div>
+<div class="page-head"><div><h1>{% translate "Notifications" %}</h1><div class="sub">{% translate "In-app reminders. Acknowledging a reminder does not complete the deadline or task." %}</div></div>
+<div class="actions"><a class="btn" href="{% url 'reminder_log' %}">{% translate "Reminder delivery log" %}</a><form method="post">{% csrf_token %}<button class="btn">{% translate "Mark all read" %}</button></form></div></div>
 <div class="card"><div class="card-body flush"><table class="t"><tbody>
 {% for n in items %}
 <tr class="{% if n.read_at %}row-muted{% endif %}">
@@ -10,11 +11,11 @@
   <td><strong>{{ n.title }}</strong><div class="muted" style="white-space:pre-wrap;font-size:12px">{{ n.body }}</div></td>
   <td class="nowrap">
     <form method="post" action="{% url 'notification_read' n.pk %}" class="inline-form">{% csrf_token %}
-      <button class="btn btn-sm">Open</button>
-      {% if n.reminder and not n.reminder.acknowledged_at %}<button class="btn btn-sm" name="acknowledge" value="1">Acknowledge</button>{% elif n.reminder.acknowledged_at %}{% pill "approved" "Acknowledged" %}{% endif %}
+      <button class="btn btn-sm">{% translate "Open" %}</button>
+      {% if n.reminder and not n.reminder.acknowledged_at %}<button class="btn btn-sm" name="acknowledge" value="1">{% translate "Acknowledge" %}</button>{% elif n.reminder.acknowledged_at %}{% translate "Acknowledged" as pl_label %}{% pill "approved" pl_label %}{% endif %}
     </form>
   </td>
 </tr>
-{% empty %}<tr><td><div class="empty">No notifications.</div></td></tr>{% endfor %}
+{% empty %}<tr><td><div class="empty">{% translate "No notifications." %}</div></td></tr>{% endfor %}
 </tbody></table></div></div>
 {% endblock %}

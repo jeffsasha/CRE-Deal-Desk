@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Users{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Users" %}{% endblock %}
 {% block content %}
-<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
-<div class="page-head"><h1>Users and roles</h1><a class="btn btn-primary" href="{% url 'user_create' %}">New user</a></div>
+<div class="crumbs"><a href="{% url 'settings_index' %}">← {% translate "Settings" %}</a></div>
+<div class="page-head"><h1>{% translate "Users and roles" %}</h1><a class="btn btn-primary" href="{% url 'user_create' %}">{% translate "New user" %}</a></div>
 <div class="card"><div class="card-body flush"><table class="t">
-<thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Designated broker</th><th>Email reminders</th><th>Status</th></tr></thead>
-<tbody>{% for u in users %}<tr><td><a href="{% url 'user_edit' u.pk %}">{{ u.username }}</a></td><td>{{ u.get_full_name }}</td><td>{{ u.get_role_display }}</td><td>{% if u.is_designated_broker %}Yes{% endif %}</td><td>{% if u.email_reminders %}On{% else %}Off{% endif %}</td><td>{% if u.is_active %}Active{% else %}Disabled{% endif %}</td></tr>{% endfor %}</tbody>
+<thead><tr><th>{% translate "Username" %}</th><th>{% translate "Name" %}</th><th>{% translate "Role" %}</th><th>{% translate "Designated broker" %}</th><th>{% translate "Email reminders" %}</th><th>{% translate "Status" %}</th></tr></thead>
+<tbody>{% for u in users %}<tr><td><a href="{% url 'user_edit' u.pk %}">{{ u.username }}</a></td><td>{{ u.get_full_name }}</td><td>{{ u.get_role_display }}</td><td>{% if u.is_designated_broker %}{% translate "Yes" %}{% endif %}</td><td>{% if u.email_reminders %}{% translate "On" %}{% else %}{% translate "Off" %}{% endif %}</td><td>{% if u.is_active %}{% translate "Active" %}{% else %}{% translate "Disabled" %}{% endif %}</td></tr>{% endfor %}</tbody>
 </table></div></div>
 {% endblock %}

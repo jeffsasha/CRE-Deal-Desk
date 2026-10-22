@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Search{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Search" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Search</h1><div class="sub">{% if q %}Results for “{{ q }}” — includes full text of documents{% else %}Enter a term in the search bar{% endif %}</div></div></div>
+<div class="page-head"><div><h1>{% translate "Search" %}</h1><div class="sub">{% if q %}{% translate "Results for “" %}{{ q }}{% translate "” — includes full text of documents" %}{% else %}{% translate "Enter a term in the search bar" %}{% endif %}</div></div></div>
 {% for label, items in results.items %}
 <div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ label }}</h2><span class="muted">{{ items|length }}</span></div>
   <div class="card-body flush"><table class="t"><tbody>
-  {% for obj in items %}<tr><td><a href="{{ obj.get_absolute_url }}">{{ obj }}</a></td></tr>{% empty %}<tr><td><div class="empty">No matches.</div></td></tr>{% endfor %}
+  {% for obj in items %}<tr><td><a href="{{ obj.get_absolute_url }}">{{ obj }}</a></td></tr>{% empty %}<tr><td><div class="empty">{% translate "No matches." %}</div></td></tr>{% endfor %}
   </tbody></table></div></div>
 {% endfor %}
 {% endblock %}

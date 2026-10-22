@@ -1,38 +1,38 @@
-<div class="split">
+{% load i18n %}<div class="split">
   <div class="stack">
-    <div class="card"><div class="card-head"><h2>Upcoming deadlines</h2><a class="btn btn-sm" href="?tab=contract">All dates</a></div>
+    <div class="card"><div class="card-head"><h2>{% translate "Upcoming deadlines" %}</h2><a class="btn btn-sm" href="?tab=contract">{% translate "All dates" %}</a></div>
       <div class="card-body flush table-wrap"><table class="t"><tbody>
       {% for dl in next_deadlines %}<tr class="{% if dl.is_overdue %}row-alert{% elif dl.computation != 'computed' %}row-warn{% endif %}">
-        <td><a href="{{ dl.get_absolute_url }}">{{ dl.name }}</a>{% if not dl.is_contractual %} <span class="tag">Internal</span>{% endif %}</td>
+        <td><a href="{{ dl.get_absolute_url }}">{{ dl.name }}</a>{% if not dl.is_contractual %} <span class="tag">{% translate "Internal" %}</span>{% endif %}</td>
         <td class="nowrap">{% if dl.current_date %}<strong>{{ dl.current_date|dshort }}</strong> <small class="muted">{{ dl.current_date|relday }}</small>{% else %}{% pill dl.computation dl.get_computation_display %}{% endif %}</td>
         <td class="hide-sm"><small class="muted">{{ dl.responsible_user|default:"" }}</small></td></tr>
-      {% empty %}<tr><td><div class="empty">No open deadlines. {% if can.edit %}Approve contract terms, then generate deadlines on the Contract & Dates tab.{% endif %}</div></td></tr>{% endfor %}
+      {% empty %}<tr><td><div class="empty">{% translate "No open deadlines." %} {% if can.edit %}{% translate "Approve contract terms, then generate deadlines on the Contract & Dates tab." %}{% endif %}</div></td></tr>{% endfor %}
       </tbody></table></div></div>
-    <div class="card"><div class="card-head"><h2>Properties</h2></div><div class="card-body flush table-wrap"><table class="t">
-      <thead><tr><th>Property</th><th>Suite</th><th>Type</th><th class="num">Allocation</th></tr></thead>
-      <tbody>{% for l in properties %}<tr><td><a href="{{ l.property.get_absolute_url }}">{{ l.property.name }}</a>{% if l.is_primary %} <span class="tag">Primary</span>{% endif %}<br><small class="muted">{{ l.property.address }}</small></td><td>{{ l.space.suite|default:"—" }}</td><td>{{ l.property.get_property_type_display }}</td><td class="num">{{ l.allocated_price_cents|money:"—" }}</td></tr>
-      {% empty %}<tr><td colspan="4"><div class="empty">No property linked.</div></td></tr>{% endfor %}</tbody></table>
-      {% if properties|length > 1 %}<div style="padding:8px 12px"><small class="muted">Multi-property deal: volume reports count the deal-level consideration once. Allocations are informational and never added on top.</small></div>{% endif %}</div></div>
-    {% if deal.description %}<div class="card"><div class="card-head"><h2>Notes</h2></div><div class="card-body"><div style="white-space:pre-wrap">{{ deal.description }}</div></div></div>{% endif %}
+    <div class="card"><div class="card-head"><h2>{% translate "Properties" %}</h2></div><div class="card-body flush table-wrap"><table class="t">
+      <thead><tr><th>{% translate "Property" %}</th><th>{% translate "Suite" %}</th><th>{% translate "Type" %}</th><th class="num">{% translate "Allocation" %}</th></tr></thead>
+      <tbody>{% for l in properties %}<tr><td><a href="{{ l.property.get_absolute_url }}">{{ l.property.name }}</a>{% if l.is_primary %} <span class="tag">{% translate "Primary" %}</span>{% endif %}<br><small class="muted">{{ l.property.address }}</small></td><td>{{ l.space.suite|default:"—" }}</td><td>{{ l.property.get_property_type_display }}</td><td class="num">{{ l.allocated_price_cents|money:"—" }}</td></tr>
+      {% empty %}<tr><td colspan="4"><div class="empty">{% translate "No property linked." %}</div></td></tr>{% endfor %}</tbody></table>
+      {% if properties|length > 1 %}<div style="padding:8px 12px"><small class="muted">{% translate "Multi-property deal: volume reports count the deal-level consideration once. Allocations are informational and never added on top." %}</small></div>{% endif %}</div></div>
+    {% if deal.description %}<div class="card"><div class="card-head"><h2>{% translate "Notes" %}</h2></div><div class="card-body"><div style="white-space:pre-wrap">{{ deal.description }}</div></div></div>{% endif %}
   </div>
   <div class="stack">
-    <div class="card"><div class="card-head"><h2>Status</h2></div><div class="card-body"><table class="kv">
-      <tr><th>Client</th><td>{% if deal.client %}<a href="{{ deal.client.get_absolute_url }}">{{ deal.client }}</a>{% else %}—{% endif %}</td></tr>
-      <tr><th>Financing</th><td>{{ deal.get_financing_status_display }}{% if deal.financing_terms %}<br><small class="muted">{{ deal.financing_terms }}</small>{% endif %}</td></tr>
-      <tr><th>Open checklist items</th><td><a href="?tab=checklist">{{ open_item_count }}</a>{% if blocked_items %} · <span style="color:var(--red-fg)">{{ blocked_items|length }} blocked</span>{% endif %}</td></tr>
-      <tr><th>Open issues</th><td><a href="?tab=issues">{{ open_issues|length }}</a></td></tr>
-      <tr><th>Team</th><td>{% for u in deal.team.all %}{{ u }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
-      <tr><th>Time zone</th><td>{{ deal.time_zone }}</td></tr>
-      {% if deal.termination_reason %}<tr><th>Termination / lost reason</th><td>{{ deal.termination_reason }}</td></tr>{% endif %}
+    <div class="card"><div class="card-head"><h2>{% translate "Status" %}</h2></div><div class="card-body"><table class="kv">
+      <tr><th>{% translate "Client" %}</th><td>{% if deal.client %}<a href="{{ deal.client.get_absolute_url }}">{{ deal.client }}</a>{% else %}—{% endif %}</td></tr>
+      <tr><th>{% translate "Financing" %}</th><td>{{ deal.get_financing_status_display }}{% if deal.financing_terms %}<br><small class="muted">{{ deal.financing_terms }}</small>{% endif %}</td></tr>
+      <tr><th>{% translate "Open checklist items" %}</th><td><a href="?tab=checklist">{{ open_item_count }}</a>{% if blocked_items %} · <span style="color:var(--red-fg)">{{ blocked_items|length }} {% translate "blocked" %}</span>{% endif %}</td></tr>
+      <tr><th>{% translate "Open issues" %}</th><td><a href="?tab=issues">{{ open_issues|length }}</a></td></tr>
+      <tr><th>{% translate "Team" %}</th><td>{% for u in deal.team.all %}{{ u }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
+      <tr><th>{% translate "Time zone" %}</th><td>{{ deal.time_zone }}</td></tr>
+      {% if deal.termination_reason %}<tr><th>{% translate "Termination / lost reason" %}</th><td>{{ deal.termination_reason }}</td></tr>{% endif %}
     </table></div></div>
-    <div class="card"><div class="card-head"><h2>Deposits</h2></div><div class="card-body flush"><table class="t"><tbody>
-      {% for dep in deposits %}<tr class="{% if dep.awaiting %}row-warn{% endif %}"><td>{{ dep.get_kind_display }}<br><small class="muted">{{ dep.status }}</small></td><td class="num">{{ dep.amount_cents|money }}</td></tr>
-      {% empty %}<tr><td><div class="empty">No deposits recorded.</div></td></tr>{% endfor %}</tbody></table></div></div>
-    <div class="card"><div class="card-head"><h2>Linked deals</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'link' %}">Link</a>{% endif %}</div><div class="card-body flush"><table class="t"><tbody>
+    <div class="card"><div class="card-head"><h2>{% translate "Deposits" %}</h2></div><div class="card-body flush"><table class="t"><tbody>
+      {% for dep in deposits %}<tr class="{% if dep.awaiting %}row-warn{% endif %}"><td>{{ dep.get_kind_display }}<br><small class="muted">{{ dep.status|tr }}</small></td><td class="num">{{ dep.amount_cents|money }}</td></tr>
+      {% empty %}<tr><td><div class="empty">{% translate "No deposits recorded." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
+    <div class="card"><div class="card-head"><h2>{% translate "Linked deals" %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'link' %}">{% translate "Link" %}</a>{% endif %}</div><div class="card-body flush"><table class="t"><tbody>
       {% for l in links_out %}<tr><td>{{ l.get_link_type_display }} <a href="{{ l.to_deal.get_absolute_url }}">{{ l.to_deal.name }}</a> {% pill l.to_deal.stage.category l.to_deal.stage.name %}{% if l.notes %}<br><small class="muted">{{ l.notes }}</small>{% endif %}</td></tr>{% endfor %}
-      {% for l in links_in %}<tr><td><a href="{{ l.from_deal.get_absolute_url }}">{{ l.from_deal.name }}</a> {{ l.get_link_type_display|lower }} this deal {% pill l.from_deal.stage.category l.from_deal.stage.name %}</td></tr>{% endfor %}
-      {% if not links_out and not links_in %}<tr><td><div class="empty">None.</div></td></tr>{% endif %}
+      {% for l in links_in %}<tr><td><a href="{{ l.from_deal.get_absolute_url }}">{{ l.from_deal.name }}</a> {{ l.get_link_type_display|lower }} {% translate "this deal" %} {% pill l.from_deal.stage.category l.from_deal.stage.name %}</td></tr>{% endfor %}
+      {% if not links_out and not links_in %}<tr><td><div class="empty">{% translate "None." %}</div></td></tr>{% endif %}
     </tbody></table></div></div>
-    {% if can.edit %}<div style="text-align:right"><a class="btn btn-sm btn-danger" href="{% url 'deal_archive' deal.pk %}">Archive deal</a></div>{% endif %}
+    {% if can.edit %}<div style="text-align:right"><a class="btn btn-sm btn-danger" href="{% url 'deal_archive' deal.pk %}">{% translate "Archive deal" %}</a></div>{% endif %}
   </div>
 </div>

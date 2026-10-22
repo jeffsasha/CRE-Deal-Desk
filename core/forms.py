@@ -14,7 +14,40 @@ class TimeInput(forms.TimeInput):
     input_type = "time"
 
 
-class StyledModelForm(forms.ModelForm):
+def localize_fields(form):
+    """Translate labels, help text and static choices of a bound form into the
+    active language. The English strings are collected for translators by
+    `manage.py collect_strings`."""
+    from django.forms.utils import pretty_name
+    from django.utils.translation import gettext
+
+    def tr(value):
+        return gettext(str(value)) if value else value
+
+    for name, field in form.fields.items():
+        field.label = tr(field.label if field.label is not None else pretty_name(name))
+        field.help_text = tr(field.help_text)
+        if isinstance(field, forms.ChoiceField) and not isinstance(field, forms.ModelChoiceField):
+            translated = []
+            for value, label in field.choices:
+                if isinstance(label, (list, tuple)):
+                    translated.append((tr(value), [(v, tr(lab)) for v, lab in label]))
+                else:
+                    translated.append((value, tr(label)))
+            field.choices = translated
+
+
+class LocalizedFormMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        localize_fields(self)
+
+
+class LocalizedForm(LocalizedFormMixin, forms.Form):
+    pass
+
+
+class StyledModelForm(LocalizedFormMixin, forms.ModelForm):
     """ModelForm with HTML5 date/time widgets and compact textareas."""
 
     full_width = ()
@@ -70,7 +103,7 @@ class HolidayForm(StyledModelForm):
         fields = ["date", "name"]
 
 
-class ReminderDefaultsForm(forms.Form):
+class ReminderDefaultsForm(LocalizedForm):
     reminder_days = forms.CharField(
         label="Default reminder lead times (days before due date)",
         help_text="Comma-separated, e.g. 7, 3, 1, 0. Each deadline can override this.",

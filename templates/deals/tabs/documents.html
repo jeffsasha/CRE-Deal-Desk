@@ -1,10 +1,10 @@
-<div class="card"><div class="card-head"><h2>Documents</h2>{% if can.edit %}<div class="actions"><a class="btn btn-sm" href="{% url 'deal_notes' deal.pk %}">Paste historical notes</a><a class="btn btn-sm btn-primary" href="{% url 'document_upload' %}?deal={{ deal.pk }}">Upload</a></div>{% endif %}</div>
+{% load i18n %}<div class="card"><div class="card-head"><h2>{% translate "Documents" %}</h2>{% if can.edit %}<div class="actions"><a class="btn btn-sm" href="{% url 'deal_notes' deal.pk %}">{% translate "Paste historical notes" %}</a><a class="btn btn-sm btn-primary" href="{% url 'document_upload' %}?deal={{ deal.pk }}">{% translate "Upload" %}</a></div>{% endif %}</div>
 <div class="card-body flush table-wrap"><table class="t">
-<thead><tr><th>Document</th><th>Type</th><th>Execution</th><th>Version</th><th>Text / OCR</th><th>Delivered</th><th>Updated</th></tr></thead>
+<thead><tr><th>{% translate "Document" %}</th><th>{% translate "Type" %}</th><th>{% translate "Execution" %}</th><th>{% translate "Version" %}</th><th>{% translate "Text / OCR" %}</th><th>{% translate "Delivered" %}</th><th>{% translate "Updated" %}</th></tr></thead>
 <tbody>{% for link, v in doc_rows %}<tr>
-  <td><a href="{{ link.document.get_absolute_url }}">{{ link.document.title }}</a>{% if link.document.access_level == 'confidential' %} {% icon "lock" %}{% endif %}{% if link.document.is_generated_summary %} <span class="tag">Generated summary</span>{% endif %}</td>
+  <td><a href="{{ link.document.get_absolute_url }}">{{ link.document.title }}</a>{% if link.document.access_level == 'confidential' %} {% icon "lock" %}{% endif %}{% if link.document.is_generated_summary %} <span class="tag">{% translate "Generated summary" %}</span>{% endif %}</td>
   <td>{{ link.document.get_doc_type_display }}</td>
   <td>{% if v %}{% pill v.execution_status v.get_execution_status_display %}{% endif %}</td>
   <td>v{{ v.version }}</td><td>{% if v %}{% pill v.text_status v.get_text_status_display tone="gray" %}{% endif %}</td>
   <td>{{ v.delivered_on|d }}</td><td>{{ link.document.updated_at|d }}</td></tr>
-{% empty %}<tr><td colspan="7"><div class="empty">No documents linked.</div></td></tr>{% endfor %}</tbody></table></div></div>
+{% empty %}<tr><td colspan="7"><div class="empty">{% translate "No documents linked." %}</div></td></tr>{% endfor %}</tbody></table></div></div>

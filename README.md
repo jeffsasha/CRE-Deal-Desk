@@ -51,6 +51,20 @@ Demo mode uses its own database and storage (`var-demo/`). It loads clearly fict
 
 There are 104 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), amendments, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, document safeguards, and an end-to-end run of all 15 acceptance flows through the HTTP layer. They pass on SQLite and on PostgreSQL 17.
 
+## Languages (中 / EN)
+
+The switch in the top bar changes the whole interface between English and Simplified Chinese; the choice is remembered per browser. Text you enter (deal names, notes, deadline names) is shown as entered, and computed explanations such as deadline rule text stay in English.
+
+After adding or changing interface text:
+
+```bash
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python manage.py collect_strings
+.venv/bin/python manage.py makemessages -l zh_Hans --ignore=.venv --ignore=var --ignore=var-demo --ignore=tests --ignore=locale --no-obsolete
+.venv/bin/python locale/fill_zh.py      # lists any strings that still need a Chinese entry in locale/zh_extra_*.py
+.venv/bin/python manage.py compilemessages -l zh_Hans --ignore=.venv
+```
+
 ## Repository map
 
 ```

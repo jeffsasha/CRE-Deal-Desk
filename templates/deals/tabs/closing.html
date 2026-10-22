@@ -1,18 +1,18 @@
-<div class="split">
+{% load i18n %}<div class="split">
   <div class="stack">
     {% if deal.is_closed %}
-    <div class="notice notice-success">Closed on {{ deal.actual_closing_date|d }}. {% if deal.is_lease %}Lease consideration {{ deal.lease_total_consideration_cents|money }}.{% else %}Actual consideration {{ deal.actual_closing_price_cents|money }} (deal level, counted once).{% endif %}</div>
+    <div class="notice notice-success">{% translate "Closed on" %} {{ deal.actual_closing_date|d }}. {% if deal.is_lease %}{% translate "Lease consideration" %} {{ deal.lease_total_consideration_cents|money }}.{% else %}{% translate "Actual consideration" %} {{ deal.actual_closing_price_cents|money }} {% translate "(deal level, counted once)." %}{% endif %}</div>
     {% endif %}
-    <div class="card"><div class="card-head"><h2>Closing and post-closing items</h2></div><div class="card-body flush table-wrap"><table class="t"><tbody>
+    <div class="card"><div class="card-head"><h2>{% translate "Closing and post-closing items" %}</h2></div><div class="card-body flush table-wrap"><table class="t"><tbody>
       {% for it in closing_items %}<tr class="{% if not it.is_open %}row-muted{% endif %}"><td>{% if can.edit %}<a href="{% url 'checklist_item_edit' it.pk %}">{{ it.title }}</a>{% else %}{{ it.title }}{% endif %}<br><small class="muted">{{ it.category }}</small></td><td>{% pill it.status it.get_status_display %}</td></tr>
-      {% empty %}<tr><td><div class="empty">No closing checklist items. Create a checklist on the Checklist tab.</div></td></tr>{% endfor %}
+      {% empty %}<tr><td><div class="empty">{% translate "No closing checklist items. Create a checklist on the Checklist tab." %}</div></td></tr>{% endfor %}
     </tbody></table></div></div>
   </div>
   <div class="stack">
-    {% if can.edit %}<div class="card"><div class="card-head"><h2>{% if deal.is_closed %}Correct closing record{% else %}Close this deal{% endif %}</h2></div><div class="card-body">
-      {% if open_deadlines %}<div class="notice notice-warn">{{ open_deadlines|length }} deadline{{ open_deadlines|length|pluralize }} still open. Review them before closing.</div>{% endif %}
+    {% if can.edit %}<div class="card"><div class="card-head"><h2>{% if deal.is_closed %}{% translate "Correct closing record" %}{% else %}{% translate "Close this deal" %}{% endif %}</h2></div><div class="card-body">
+      {% if open_deadlines %}<div class="notice notice-warn">{{ open_deadlines|length }} {% translate "deadline" %}{{ open_deadlines|length|pluralize }} {% translate "still open. Review them before closing." %}</div>{% endif %}
       <form method="post" action="{% url 'deal_close' deal.pk %}">{% csrf_token %}{% with form=close_form %}{% include "partials/form_fields.html" %}{% endwith %}
-      <div class="form-actions"><button class="btn btn-primary" data-confirm="Record this deal as closed with the date and consideration entered?">{% if deal.is_closed %}Update closing record{% else %}Close deal{% endif %}</button></div></form>
+      <div class="form-actions"><button class="btn btn-primary" data-confirm="{% translate "Record this deal as closed with the date and consideration entered?" %}">{% if deal.is_closed %}{% translate "Update closing record" %}{% else %}{% translate "Close deal" %}{% endif %}</button></div></form>
     </div></div>{% endif %}
   </div>
 </div>

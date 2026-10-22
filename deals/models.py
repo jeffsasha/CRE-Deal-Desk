@@ -86,7 +86,7 @@ SALE_TYPES = {"purchase", "sale", "land_purchase", "land_sale"}
 LEASE_TYPES = {"lease", "lease_renewal", "lease_expansion", "lease_assignment"}
 BUSINESS_TYPES = {"business_asset"}
 
-PRIORITIES = [("low", "Low"), ("normal", "Normal"), ("high", "High"), ("critical", "Critical")]
+PRIORITIES = [("low", _("Low")), ("normal", _("Normal")), ("high", _("High")), ("critical", _("Critical"))]
 
 
 class Deal(TimeStamped, Archivable, Imported):
@@ -128,12 +128,12 @@ class Deal(TimeStamped, Archivable, Imported):
 
     financing_terms = models.TextField(blank=True)
     FINANCING_STATUS = [
-        ("not_applicable", "Not applicable / cash"),
-        ("unknown", "Unknown"),
-        ("pending", "Contingency pending"),
-        ("satisfied", "Satisfied"),
-        ("waived", "Waived"),
-        ("failed", "Failed"),
+        ("not_applicable", _("Not applicable / cash")),
+        ("unknown", _("Unknown")),
+        ("pending", _("Contingency pending")),
+        ("satisfied", _("Satisfied")),
+        ("waived", _("Waived")),
+        ("failed", _("Failed")),
     ]
     financing_status = models.CharField(max_length=20, choices=FINANCING_STATUS, default="unknown")
 
@@ -210,26 +210,26 @@ class DealProperty(models.Model):
 
 
 PARTY_ROLES = [
-    ("buyer", "Buyer"),
-    ("seller", "Seller"),
-    ("landlord", "Landlord"),
-    ("tenant", "Tenant"),
-    ("assignor", "Assignor"),
-    ("assignee", "Assignee"),
-    ("guarantor", "Guarantor"),
-    ("title_company", "Title company"),
-    ("escrow_officer", "Escrow officer"),
-    ("surveyor", "Surveyor"),
-    ("inspector", "Inspector"),
-    ("environmental", "Environmental consultant"),
-    ("lender", "Lender"),
-    ("appraiser", "Appraiser"),
-    ("attorney", "Attorney"),
-    ("insurance_agent", "Insurance agent"),
-    ("cooperating_broker", "Cooperating broker"),
-    ("referral_broker", "Referral broker"),
-    ("property_manager", "Property manager"),
-    ("other", "Other"),
+    ("buyer", _("Buyer")),
+    ("seller", _("Seller")),
+    ("landlord", _("Landlord")),
+    ("tenant", _("Tenant")),
+    ("assignor", _("Assignor")),
+    ("assignee", _("Assignee")),
+    ("guarantor", _("Guarantor")),
+    ("title_company", _("Title company")),
+    ("escrow_officer", _("Escrow officer")),
+    ("surveyor", _("Surveyor")),
+    ("inspector", _("Inspector")),
+    ("environmental", _("Environmental consultant")),
+    ("lender", _("Lender")),
+    ("appraiser", _("Appraiser")),
+    ("attorney", _("Attorney")),
+    ("insurance_agent", _("Insurance agent")),
+    ("cooperating_broker", _("Cooperating broker")),
+    ("referral_broker", _("Referral broker")),
+    ("property_manager", _("Property manager")),
+    ("other", _("Other")),
 ]
 
 
@@ -276,14 +276,14 @@ class PriceEvent(models.Model):
     distinct records. A requested credit is not a price change."""
 
     KINDS = [
-        ("asking", "Asking price"),
-        ("offer", "Offer"),
-        ("counteroffer", "Counteroffer"),
-        ("executed_contract", "Executed contract price"),
-        ("amendment", "Price per executed amendment"),
-        ("requested_credit", "Requested credit / reduction (not approved)"),
-        ("agreed_credit_unexecuted", "Credit agreed in principle (not executed)"),
-        ("actual_closing", "Actual closing price"),
+        ("asking", _("Asking price")),
+        ("offer", _("Offer")),
+        ("counteroffer", _("Counteroffer")),
+        ("executed_contract", _("Executed contract price")),
+        ("amendment", _("Price per executed amendment")),
+        ("requested_credit", _("Requested credit / reduction (not approved)")),
+        ("agreed_credit_unexecuted", _("Credit agreed in principle (not executed)")),
+        ("actual_closing", _("Actual closing price")),
     ]
 
     deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="price_events")
@@ -306,16 +306,16 @@ class PriceEvent(models.Model):
 
 class Deposit(models.Model):
     KINDS = [
-        ("earnest_money", "Earnest money"),
-        ("additional_deposit", "Additional deposit"),
-        ("option_fee", "Option / independent consideration"),
-        ("security_deposit", "Lease security deposit"),
+        ("earnest_money", _("Earnest money")),
+        ("additional_deposit", _("Additional deposit")),
+        ("option_fee", _("Option / independent consideration")),
+        ("security_deposit", _("Lease security deposit")),
     ]
     REFUNDABILITY = [
-        ("unknown", "Unknown — not determined"),
-        ("needs_review", "Needs review"),
-        ("per_contract_refundable", "Refundable under stated conditions (see note)"),
-        ("per_contract_nonrefundable", "Non-refundable under stated conditions (see note)"),
+        ("unknown", _("Unknown — not determined")),
+        ("needs_review", _("Needs review")),
+        ("per_contract_refundable", _("Refundable under stated conditions (see note)")),
+        ("per_contract_nonrefundable", _("Non-refundable under stated conditions (see note)")),
     ]
 
     deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="deposits")
@@ -452,10 +452,10 @@ class DealTerm(models.Model):
 
 class DealLink(models.Model):
     TYPES = [
-        ("depends_on", "Depends on"),
-        ("related", "Related"),
-        ("linked_business_asset", "Business asset sale linked to"),
-        ("replaces", "Replaces / successor of"),
+        ("depends_on", _("Depends on")),
+        ("related", _("Related")),
+        ("linked_business_asset", _("Business asset sale linked to")),
+        ("replaces", _("Replaces / successor of")),
     ]
 
     from_deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="links_out")
@@ -469,18 +469,18 @@ class DealLink(models.Model):
 
 class Activity(models.Model):
     KINDS = [
-        ("note", "Note"),
-        ("email", "Email"),
-        ("call", "Call"),
-        ("meeting", "Meeting"),
-        ("showing", "Showing / tour"),
-        ("document_delivery", "Document delivery"),
-        ("decision", "Decision"),
-        ("negotiation", "Negotiation"),
-        ("follow_up", "Follow-up"),
-        ("system", "System change"),
+        ("note", _("Note")),
+        ("email", _("Email")),
+        ("call", _("Call")),
+        ("meeting", _("Meeting")),
+        ("showing", _("Showing / tour")),
+        ("document_delivery", _("Document delivery")),
+        ("decision", _("Decision")),
+        ("negotiation", _("Negotiation")),
+        ("follow_up", _("Follow-up")),
+        ("system", _("System change")),
     ]
-    DIRECTIONS = [("internal", "Internal"), ("inbound", "Inbound"), ("outbound", "Outbound")]
+    DIRECTIONS = [("internal", _("Internal")), ("inbound", _("Inbound")), ("outbound", _("Outbound"))]
 
     deal = models.ForeignKey(Deal, null=True, blank=True, on_delete=models.CASCADE, related_name="activities")
     property = models.ForeignKey(
@@ -509,38 +509,38 @@ def log_activity(deal, summary, actor=None, kind="system", body="", document=Non
 
 class Issue(TimeStamped):
     CATEGORIES = [
-        ("hvac", "HVAC"),
-        ("roof", "Roof"),
-        ("structural", "Structural"),
-        ("mechanical", "Electrical / plumbing / mechanical"),
-        ("environmental", "Environmental"),
-        ("title", "Title exception"),
-        ("survey", "Survey / encroachment"),
-        ("flood", "Flood"),
-        ("zoning_use", "Use / zoning / restrictions"),
-        ("financial", "Financial / price"),
-        ("legal", "Legal / contract"),
-        ("other", "Other"),
+        ("hvac", _("HVAC")),
+        ("roof", _("Roof")),
+        ("structural", _("Structural")),
+        ("mechanical", _("Electrical / plumbing / mechanical")),
+        ("environmental", _("Environmental")),
+        ("title", _("Title exception")),
+        ("survey", _("Survey / encroachment")),
+        ("flood", _("Flood")),
+        ("zoning_use", _("Use / zoning / restrictions")),
+        ("financial", _("Financial / price")),
+        ("legal", _("Legal / contract")),
+        ("other", _("Other")),
     ]
-    SEVERITIES = [("low", "Low"), ("medium", "Medium"), ("high", "High"), ("critical", "Critical")]
+    SEVERITIES = [("low", _("Low")), ("medium", _("Medium")), ("high", _("High")), ("critical", _("Critical"))]
     STATUSES = [
-        ("open", "Open"),
-        ("monitoring", "Monitoring"),
-        ("resolved", "Resolved"),
-        ("closed", "Closed — no action"),
-        ("withdrawn", "Withdrawn"),
+        ("open", _("Open")),
+        ("monitoring", _("Monitoring")),
+        ("resolved", _("Resolved")),
+        ("closed", _("Closed — no action")),
+        ("withdrawn", _("Withdrawn")),
     ]
     RESOLUTION = [
-        ("none", "No resolution yet"),
-        ("proposed", "Resolution proposed"),
-        ("agreed_unexecuted", "Agreed in principle — not executed"),
-        ("executed", "Executed (amendment or written agreement)"),
+        ("none", _("No resolution yet")),
+        ("proposed", _("Resolution proposed")),
+        ("agreed_unexecuted", _("Agreed in principle — not executed")),
+        ("executed", _("Executed (amendment or written agreement)")),
     ]
     DISCLOSURE = [
-        ("not_assessed", "Not assessed"),
-        ("disclosed", "Disclosed (see source)"),
-        ("not_found", "Not found in reviewed materials"),
-        ("confirmed_not_disclosed", "Confirmed not disclosed"),
+        ("not_assessed", _("Not assessed")),
+        ("disclosed", _("Disclosed (see source)")),
+        ("not_found", _("Not found in reviewed materials")),
+        ("confirmed_not_disclosed", _("Confirmed not disclosed")),
     ]
 
     deal = models.ForeignKey(Deal, null=True, blank=True, on_delete=models.CASCADE, related_name="issues")
@@ -603,7 +603,7 @@ class IssueStatement(models.Model):
 
 
 class CommunicationDraft(TimeStamped):
-    STATUSES = [("draft", "Draft"), ("marked_sent", "Marked as sent by user"), ("discarded", "Discarded")]
+    STATUSES = [("draft", _("Draft")), ("marked_sent", _("Marked as sent by user")), ("discarded", _("Discarded"))]
 
     deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="drafts")
     to = models.CharField(max_length=255, blank=True)

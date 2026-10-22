@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Archived records{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Archived records" %}{% endblock %}
 {% block content %}
-<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
-<div class="page-head"><div><h1>Archived records</h1><div class="sub">Archiving is recoverable. Nothing here has been deleted; restore returns a record to active lists.</div></div></div>
+<div class="crumbs"><a href="{% url 'settings_index' %}">← {% translate "Settings" %}</a></div>
+<div class="page-head"><div><h1>{% translate "Archived records" %}</h1><div class="sub">{% translate "Archiving is recoverable. Nothing here has been deleted; restore returns a record to active lists." %}</div></div></div>
 <div class="grid grid-2">
 {% with items=deals kind="deal" label="Deals" %}{% include "core/_archived_section.html" %}{% endwith %}
 {% with items=properties kind="property" label="Properties" %}{% include "core/_archived_section.html" %}{% endwith %}

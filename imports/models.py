@@ -2,22 +2,23 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 User = settings.AUTH_USER_MODEL
 
 
 class ImportBatch(models.Model):
     KINDS = [
-        ("deals", "Historical deals (with properties, commissions)"),
-        ("properties", "Properties"),
-        ("contacts", "Contacts & companies"),
+        ("deals", _("Historical deals (with properties, commissions)")),
+        ("properties", _("Properties")),
+        ("contacts", _("Contacts & companies")),
     ]
     STATUSES = [
-        ("uploaded", "Uploaded — map fields"),
-        ("validated", "Validated — review before committing"),
-        ("committed", "Committed"),
-        ("reverted", "Reverted"),
-        ("partially_reverted", "Partially reverted"),
+        ("uploaded", _("Uploaded — map fields")),
+        ("validated", _("Validated — review before committing")),
+        ("committed", _("Committed")),
+        ("reverted", _("Reverted")),
+        ("partially_reverted", _("Partially reverted")),
     ]
 
     kind = models.CharField(max_length=20, choices=KINDS)
@@ -46,15 +47,15 @@ class ImportBatch(models.Model):
 
 class ImportRow(models.Model):
     STATUSES = [
-        ("pending", "Pending"),
-        ("valid", "Valid"),
-        ("invalid", "Has errors"),
-        ("committed", "Committed"),
-        ("skipped", "Skipped"),
-        ("reverted", "Reverted"),
-        ("revert_blocked", "Revert blocked"),
+        ("pending", _("Pending")),
+        ("valid", _("Valid")),
+        ("invalid", _("Has errors")),
+        ("committed", _("Committed")),
+        ("skipped", _("Skipped")),
+        ("reverted", _("Reverted")),
+        ("revert_blocked", _("Revert blocked")),
     ]
-    ACTIONS = [("create", "Create"), ("skip", "Skip")]
+    ACTIONS = [("create", _("Create")), ("skip", _("Skip"))]
 
     batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE, related_name="rows")
     row_number = models.PositiveIntegerField()

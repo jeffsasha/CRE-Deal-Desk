@@ -1,5 +1,5 @@
-<div class="card"><div class="card-head"><h2>{{ label }}</h2></div><div class="card-body flush"><table class="t"><tbody>
-{% for obj in items %}<tr><td><a href="{{ obj.get_absolute_url }}">{{ obj }}</a><br><small class="muted">Archived {{ obj.archived_at|d }}{% if obj.archived_by %} by {{ obj.archived_by }}{% endif %}</small></td>
-<td class="num">{% if can.edit %}<form method="post" action="{% url 'restore' kind obj.pk %}">{% csrf_token %}<button class="btn btn-sm">Restore</button></form>{% endif %}</td></tr>
-{% empty %}<tr><td><div class="empty">None archived.</div></td></tr>{% endfor %}
+{% load i18n %}<div class="card"><div class="card-head"><h2>{{ label }}</h2></div><div class="card-body flush"><table class="t"><tbody>
+{% for obj in items %}<tr><td><a href="{{ obj.get_absolute_url }}">{{ obj }}</a><br><small class="muted">{% translate "Archived" %} {{ obj.archived_at|d }}{% if obj.archived_by %} {% translate "by" %} {{ obj.archived_by }}{% endif %}</small></td>
+<td class="num">{% if can.edit %}<form method="post" action="{% url 'restore' kind obj.pk %}">{% csrf_token %}<button class="btn btn-sm">{% translate "Restore" %}</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td><div class="empty">{% translate "None archived." %}</div></td></tr>{% endfor %}
 </tbody></table></div></div>

@@ -14,6 +14,7 @@ from datetime import date, timedelta
 
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from commissions.ledger import effective_entries, summarize
 from commissions.models import CommissionAgreement, CommissionInstallment, LedgerEntry
@@ -130,7 +131,7 @@ def closed_sales_volume(f):
     total = Total()
     for d in deals:
         total.add(d.actual_closing_price_cents, d)
-    return {"label": "Closed sales volume (by actual closing date)", "deals": deals, "total": total}
+    return {"label": gettext_lazy("Closed sales volume (by actual closing date)"), "deals": deals, "total": total}
 
 
 def closed_business_asset_volume(f):
@@ -138,7 +139,7 @@ def closed_business_asset_volume(f):
     total = Total()
     for d in deals:
         total.add(d.actual_closing_price_cents, d)
-    return {"label": "Business asset sales — consideration (reported separately)", "deals": deals, "total": total}
+    return {"label": gettext_lazy("Business asset sales — consideration (reported separately)"), "deals": deals, "total": total}
 
 
 def executed_leases(f):
@@ -153,7 +154,7 @@ def executed_leases(f):
         else:
             area += d.lease_area_sf
     return {
-        "label": "Executed leases (by execution date) — not included in sales volume",
+        "label": gettext_lazy("Executed leases (by execution date) — not included in sales volume"),
         "deals": deals,
         "count": len(deals),
         "area_sf": area,
@@ -184,7 +185,7 @@ def pipeline(f):
             sales.add(value, d)
         rows.append({"deal": d, "value": value if not d.is_lease else d.lease_total_consideration_cents, "basis": basis})
     return {
-        "label": "Expected pipeline (active deals, not closed)",
+        "label": gettext_lazy("Expected pipeline (active deals, not closed)"),
         "rows": rows,
         "sales_total": sales,
         "lease_total": leases,
@@ -202,7 +203,7 @@ def earned_commissions(f):
     total = Total()
     for inst in qs:
         total.add(inst.amount_cents, inst)
-    return {"label": "Commissions earned (by earned date, amounts due to SKW)", "rows": list(qs), "total": total}
+    return {"label": gettext_lazy("Commissions earned (by earned date, amounts due to SKW)"), "rows": list(qs), "total": total}
 
 
 def _ledger_rows(f, kinds, designated_broker_only=False):
@@ -225,17 +226,17 @@ def _ledger_rows(f, kinds, designated_broker_only=False):
 
 def cash_receipts(f):
     rows, total = _ledger_rows(f, {"receipt"})
-    return {"label": "Cash received by SKW (by receipt date, net of refunds and reversals)", "rows": rows, "total": total}
+    return {"label": gettext_lazy("Cash received by SKW (by receipt date, net of refunds and reversals)"), "rows": rows, "total": total}
 
 
 def designated_broker_receipts(f):
     rows, total = _ledger_rows(f, {"distribution", "direct_payment"}, designated_broker_only=True)
-    return {"label": "Designated broker's actual receipts (by payment date)", "rows": rows, "total": total}
+    return {"label": gettext_lazy("Designated broker's actual receipts (by payment date)"), "rows": rows, "total": total}
 
 
 def distributions(f):
     rows, total = _ledger_rows(f, {"distribution", "direct_payment"})
-    return {"label": "Distributions paid (by payment date)", "rows": rows, "total": total}
+    return {"label": gettext_lazy("Distributions paid (by payment date)"), "rows": rows, "total": total}
 
 
 def outstanding_balances(f, today=None):
@@ -268,7 +269,7 @@ def outstanding_balances(f, today=None):
         if (s.outstanding or 0) != 0 or s.outstanding is None or dist_unpaid or dist_unknown:
             rows.append({"agreement": a, "summary": s, "dist_unpaid": dist_unpaid, "dist_unknown": dist_unknown})
     return {
-        "label": "Outstanding balances (as of today)",
+        "label": gettext_lazy("Outstanding balances (as of today)"),
         "rows": rows,
         "receivable": receivable,
         "unpaid_distributions": unpaid_dist,
@@ -287,14 +288,14 @@ def pipeline_commissions(f=None):
         s = summarize(a)
         total.add(s.expected_receipt, a)
         rows.append({"agreement": a, "summary": s})
-    return {"label": "Expected commissions on active deals (not yet closed)", "rows": rows, "total": total}
+    return {"label": gettext_lazy("Expected commissions on active deals (not yet closed)"), "rows": rows, "total": total}
 
 
 def closed_without_commission(f):
     deals = _closed(SALE_TYPES | LEASE_TYPES | BUSINESS_TYPES, f)
     with_agreement = CommissionAgreement.objects.exclude(status="void").values_list("deal_id", flat=True)
     rows = list(deals.exclude(pk__in=with_agreement))
-    return {"label": "Closed deals with unknown commission (no agreement recorded)", "deals": rows}
+    return {"label": gettext_lazy("Closed deals with unknown commission (no agreement recorded)"), "deals": rows}
 
 
 def full_report(f):

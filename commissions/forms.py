@@ -1,9 +1,10 @@
 import json
 
 from django import forms
+from django.utils.translation import gettext_lazy
 
 from core.fields import MoneyField, MoneyModelFormMixin
-from core.forms import DateInput, StyledModelForm
+from core.forms import DateInput, LocalizedForm, StyledModelForm
 from core.models import User
 from crm.models import Organization
 from deals.models import Deal
@@ -41,16 +42,16 @@ class AgreementForm(MoneyModelFormMixin, StyledModelForm):
         data = super().clean()
         bt = data.get("basis_type")
         if bt == "percentage" and data.get("rate_percent") is None:
-            self.add_error("rate_percent", "Enter the percentage.")
+            self.add_error("rate_percent", gettext_lazy("Enter the percentage."))
         if bt == "flat" and data.get("flat_amount") is None:
-            self.add_error("flat_amount", "Enter the flat fee, or use 'custom' if the amount is unknown.")
+            self.add_error("flat_amount", gettext_lazy("Enter the flat fee, or use 'custom' if the amount is unknown."))
         if bt == "tiered":
             try:
                 tiers = json.loads(data.get("tiers_text") or "[]")
                 assert isinstance(tiers, list) and tiers and all("rate_percent" in t for t in tiers)
                 data["tiers"] = tiers
             except (ValueError, AssertionError):
-                self.add_error("tiers_text", "Enter tiers as a JSON list with rate_percent on each tier.")
+                self.add_error("tiers_text", gettext_lazy("Enter tiers as a JSON list with rate_percent on each tier."))
         return data
 
     def save(self, commit=True):
@@ -83,13 +84,13 @@ class AllocationForm(MoneyModelFormMixin, StyledModelForm):
         data = super().clean()
         m = data.get("method")
         if m in {"percent_of_gross", "percent_of_skw"} and data.get("percent") is None:
-            self.add_error("percent", "Enter the percentage.")
+            self.add_error("percent", gettext_lazy("Enter the percentage."))
         if m == "flat" and data.get("amount") is None:
-            self.add_error("amount", "Enter the amount, or choose 'Unknown'.")
+            self.add_error("amount", gettext_lazy("Enter the amount, or choose 'Unknown'."))
         if data.get("level") == "payer" and m == "percent_of_skw":
-            self.add_error("method", "Payer-level allocations divide the gross commission.")
+            self.add_error("method", gettext_lazy("Payer-level allocations divide the gross commission."))
         if data.get("level") == "internal" and data.get("recipient_type") == "skw":
-            self.add_error("recipient_type", "SKW's own share is a payer-level allocation.")
+            self.add_error("recipient_type", gettext_lazy("SKW's own share is a payer-level allocation."))
         return data
 
 
@@ -105,7 +106,7 @@ class InstallmentForm(MoneyModelFormMixin, StyledModelForm):
     def clean(self):
         data = super().clean()
         if data.get("earned_status") == "earned" and not data.get("earned_on"):
-            self.add_error("earned_on", "An earned installment needs the date it was earned.")
+            self.add_error("earned_on", gettext_lazy("An earned installment needs the date it was earned."))
         return data
 
 
@@ -118,7 +119,7 @@ class AdjustmentForm(MoneyModelFormMixin, StyledModelForm):
         fields = ["amount", "reason", "document"]
 
 
-class EntryForm(forms.Form):
+class EntryForm(LocalizedForm):
     entry_type = forms.ChoiceField(choices=[c for c in LedgerEntry.TYPES if c[0] != "reversal"])
     amount = MoneyField(required=True, help_text="Positive amount; the type determines direction.")
     entry_date = forms.DateField(widget=DateInput(), label="Date (receipt or payment date)")
@@ -138,6 +139,6 @@ class EntryForm(forms.Form):
         self.fields["proof_document"].queryset = Document.objects.filter(links__deal=agreement.deal)
 
 
-class ReverseForm(forms.Form):
+class ReverseForm(LocalizedForm):
     entry_date = forms.DateField(widget=DateInput())
     reason = forms.CharField(widget=forms.Textarea(attrs={"rows": 2}))

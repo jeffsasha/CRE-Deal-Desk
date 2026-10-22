@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core.choices import REPRESENTED_SIDES
 from core.models import Archivable, Imported, TimeStamped
@@ -18,16 +19,16 @@ User = settings.AUTH_USER_MODEL
 
 class CommissionAgreement(TimeStamped, Archivable, Imported):
     BASIS_TYPES = [
-        ("percentage", "Percentage of a stated basis"),
-        ("flat", "Flat fee"),
-        ("tiered", "Tiered percentage"),
-        ("custom", "Custom (gross amount stated directly)"),
+        ("percentage", _("Percentage of a stated basis")),
+        ("flat", _("Flat fee")),
+        ("tiered", _("Tiered percentage")),
+        ("custom", _("Custom (gross amount stated directly)")),
     ]
     STATUSES = [
-        ("draft", "Draft / unsigned"),
-        ("active", "Executed / in effect"),
-        ("disputed", "Disputed"),
-        ("void", "Void / terminated"),
+        ("draft", _("Draft / unsigned")),
+        ("active", _("Executed / in effect")),
+        ("disputed", _("Disputed")),
+        ("void", _("Void / terminated")),
     ]
 
     deal = models.ForeignKey("deals.Deal", on_delete=models.PROTECT, related_name="commission_agreements")
@@ -82,21 +83,21 @@ class CommissionAllocation(models.Model):
     broker) or the house. No fixed split is ever assumed.
     """
 
-    LEVELS = [("payer", "Division of gross commission"), ("internal", "Distribution of SKW share")]
+    LEVELS = [("payer", _("Division of gross commission")), ("internal", _("Distribution of SKW share"))]
     RECIPIENT_TYPES = [
-        ("skw", "SKW Realty LLC (brokerage share)"),
-        ("cooperating_broker", "Cooperating broker"),
-        ("referral", "Referral"),
-        ("agent", "Agent"),
-        ("designated_broker", "Designated broker"),
-        ("house", "House / retained by SKW"),
-        ("other", "Other"),
+        ("skw", _("SKW Realty LLC (brokerage share)")),
+        ("cooperating_broker", _("Cooperating broker")),
+        ("referral", _("Referral")),
+        ("agent", _("Agent")),
+        ("designated_broker", _("Designated broker")),
+        ("house", _("House / retained by SKW")),
+        ("other", _("Other")),
     ]
     METHODS = [
-        ("percent_of_gross", "Percent of gross commission"),
-        ("percent_of_skw", "Percent of SKW share"),
-        ("flat", "Fixed amount"),
-        ("unknown", "Unknown / to be determined"),
+        ("percent_of_gross", _("Percent of gross commission")),
+        ("percent_of_skw", _("Percent of SKW share")),
+        ("flat", _("Fixed amount")),
+        ("unknown", _("Unknown / to be determined")),
     ]
 
     agreement = models.ForeignKey(CommissionAgreement, on_delete=models.CASCADE, related_name="allocations")
@@ -127,10 +128,10 @@ class CommissionInstallment(models.Model):
     execution, occupancy, ...)."""
 
     EARNED = [
-        ("not_earned", "Not yet earned"),
-        ("earned", "Earned"),
-        ("waived", "Waived"),
-        ("cancelled", "Cancelled"),
+        ("not_earned", _("Not yet earned")),
+        ("earned", _("Earned")),
+        ("waived", _("Waived")),
+        ("cancelled", _("Cancelled")),
     ]
 
     agreement = models.ForeignKey(CommissionAgreement, on_delete=models.CASCADE, related_name="installments")
@@ -157,11 +158,11 @@ class LedgerEntry(models.Model):
     """Immutable cash record. Corrections are made with a reversal entry."""
 
     TYPES = [
-        ("receipt", "Receipt — cash received by SKW"),
-        ("distribution", "Distribution — paid by SKW to a recipient"),
-        ("direct_payment", "Direct payment — paid by payer directly to a recipient"),
-        ("refund", "Refund — returned by SKW to payer"),
-        ("reversal", "Reversal of an earlier entry"),
+        ("receipt", _("Receipt — cash received by SKW")),
+        ("distribution", _("Distribution — paid by SKW to a recipient")),
+        ("direct_payment", _("Direct payment — paid by payer directly to a recipient")),
+        ("refund", _("Refund — returned by SKW to payer")),
+        ("reversal", _("Reversal of an earlier entry")),
     ]
 
     agreement = models.ForeignKey(CommissionAgreement, on_delete=models.PROTECT, related_name="ledger_entries")

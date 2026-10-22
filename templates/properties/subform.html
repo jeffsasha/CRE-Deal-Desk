@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}{{ label }}{% endblock %}
 {% block content %}
 <div class="crumbs"><a href="{{ back_url }}">← {{ p.name }}</a></div>
-<div class="page-head"><h1>{% if instance %}Edit{% else %}Add{% endif %} {{ label|lower }}</h1></div>
+<div class="page-head"><h1>{% if instance %}{% translate "Edit" %}{% else %}{% translate "Add" %}{% endif %} {{ label|lower }}</h1></div>
 <div class="card" style="max-width:920px"><div class="card-body">
 <form method="post">{% csrf_token %}{% include "partials/form_fields.html" %}
-<div class="form-actions"><button class="btn btn-primary">Save</button><a class="btn" href="{{ back_url }}">Cancel</a>
-{% if instance %}<div style="flex:1"></div><button class="btn btn-danger" name="delete" value="1" formnovalidate data-confirm="Delete this {{ label|lower }}?">Delete</button>{% endif %}</div>
+<div class="form-actions"><button class="btn btn-primary">{% translate "Save" %}</button><a class="btn" href="{{ back_url }}">{% translate "Cancel" %}</a>
+{% if instance %}<div style="flex:1"></div><button class="btn btn-danger" name="delete" value="1" formnovalidate data-confirm="Delete this {{ label|lower }}?">{% translate "Delete" %}</button>{% endif %}</div>
 </form></div></div>
 {% endblock %}

@@ -36,6 +36,14 @@ def asset(path):
 
 
 @register.filter
+def tr(value):
+    """Translate a runtime string (stage names, computed statuses) if a translation exists."""
+    from django.utils.translation import gettext
+
+    return gettext(str(value)) if value else value
+
+
+@register.filter
 def money(cents, unknown="Unknown"):
     if isinstance(cents, Total):
         return cents.display()
@@ -154,7 +162,11 @@ PILL_TONES = {
 
 @register.simple_tag
 def pill(key, label=None, tone=None):
+    from django.utils.translation import gettext
+
     tone = tone or PILL_TONES.get(key, "gray")
+    if label:
+        label = gettext(str(label))
     return format_html('<span class="pill pill-{}">{}</span>', tone, label if label is not None else key)
 
 

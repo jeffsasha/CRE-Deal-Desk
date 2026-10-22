@@ -1,14 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Draft{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Draft" %}{% endblock %}
 {% block content %}
 <div class="crumbs"><a href="{{ back_url }}">← {{ draft.deal.name }}</a></div>
-<div class="page-head"><div><h1>Communication draft</h1><div class="sub">DealDesk never sends external messages. Copy the text or open it in your mail client, then mark it as sent.</div></div>{% pill draft.status draft.get_status_display %}</div>
+<div class="page-head"><div><h1>{% translate "Communication draft" %}</h1><div class="sub">{% translate "DealDesk never sends external messages. Copy the text or open it in your mail client, then mark it as sent." %}</div></div>{% pill draft.status draft.get_status_display %}</div>
 <div class="card" style="max-width:860px"><div class="card-body">
 <form method="post">{% csrf_token %}{% include "partials/form_fields.html" %}
 <div class="form-actions">
-  <button class="btn" name="action" value="save">Save draft</button>
-  <a class="btn" href="mailto:{{ draft.to|urlencode }}?subject={{ draft.subject|urlencode }}&body={{ draft.body|urlencode }}">Open in mail client</a>
-  <button class="btn btn-primary" name="action" value="mark_sent" data-confirm="Record that you sent this message yourself?">I sent it — record in activity</button>
-  <div style="flex:1"></div><button class="btn btn-danger" name="action" value="discard" formnovalidate>Discard</button>
+  <button class="btn" name="action" value="save">{% translate "Save draft" %}</button>
+  <a class="btn" href="mailto:{{ draft.to|urlencode }}?subject={{ draft.subject|urlencode }}&body={{ draft.body|urlencode }}">{% translate "Open in mail client" %}</a>
+  <button class="btn btn-primary" name="action" value="mark_sent" data-confirm="{% translate "Record that you sent this message yourself?" %}">{% translate "I sent it — record in activity" %}</button>
+  <div style="flex:1"></div><button class="btn btn-danger" name="action" value="discard" formnovalidate>{% translate "Discard" %}</button>
 </div></form></div></div>
 {% endblock %}

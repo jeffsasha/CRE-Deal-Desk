@@ -5,11 +5,11 @@
 <div class="crumbs"><a href="{% url 'deal_list' %}">{% translate "Deals" %}</a> / {{ deal.internal_id }}</div>
 <div class="deal-head">
   <div>
-    <h1>{{ deal.name }}{% if deal.archived_at %} {% pill "archived" "Archived" %}{% endif %}</h1>
+    <h1>{{ deal.name }}{% if deal.archived_at %} {% translate "Archived" as pl_label %}{% pill "archived" pl_label %}{% endif %}</h1>
     <div class="meta">
       {% translate deal.stage.name as sn %}{% pill deal.stage.category sn %}
       <span>{{ deal.internal_id }}</span>·<span>{{ deal.get_transaction_type_display }}</span>
-      {% for r in deal.representations.all %}·<span>{% if r.is_skw %}{% translate "SKW represents" %} {% translate r.get_side_display %}{% else %}{{ r.get_side_display }}: {{ r.brokerage|default:r.broker_name|default:"other / unrepresented" }}{% endif %}</span>{% empty %}·<span class="muted">{% translate "Representation not recorded" %}</span>{% endfor %}
+      {% for r in deal.representations.all %}·<span>{% if r.is_skw %}{% translate "SKW represents" %} {% translate r.get_side_display %}{% else %}{{ r.get_side_display }}: {{ r.brokerage|default:r.broker_name|default:_("other / unrepresented") }}{% endif %}</span>{% empty %}·<span class="muted">{% translate "Representation not recorded" %}</span>{% endfor %}
       {% if deal.priority == 'high' or deal.priority == 'critical' %}{% pill deal.priority deal.get_priority_display %}{% endif %}
       {% if deal.is_blocked %}{% translate "Blocked" as bl %}{% pill "blocked" bl %}{% endif %}
     </div>
@@ -17,7 +17,7 @@
   <div class="actions">
     {% if can.edit %}
     <form method="post" action="{% url 'deal_stage' deal.pk %}" class="inline-form">{% csrf_token %}
-      <select name="stage" aria-label="Stage">{% for s in stage_form.fields.stage.queryset %}<option value="{{ s.key }}" {% if s == deal.stage %}selected{% endif %}>{% translate s.name %}</option>{% endfor %}</select>
+      <select name="stage" aria-label="{% translate "Stage" %}">{% for s in stage_form.fields.stage.queryset %}<option value="{{ s.key }}" {% if s == deal.stage %}selected{% endif %}>{% translate s.name %}</option>{% endfor %}</select>
       <input name="reason" placeholder="{% translate "Reason (required for Terminated/Lost)" %}" style="width:230px">
       <button class="btn">{% translate "Change stage" %}</button>
     </form>
@@ -36,9 +36,9 @@
   <div><div class="k">{% translate "Responsible broker" %}</div><div class="v" style="font-weight:500">{{ deal.responsible_broker|default:"—" }}</div></div>
 </div>
 
-{% if deal.is_blocked %}<div class="notice notice-error">{% icon "alert" %}<div><strong>Blocked by {{ deal.blocked_by }}.</strong> {{ deal.blocker_description }}</div></div>{% endif %}
-{% for a in pending_amendments %}<div class="notice notice-warn">{% icon "alert" %}<div>Amendment pending — <a href="{{ a.get_absolute_url }}">{{ a.title }}</a>. Not effective; no terms or dates have changed.</div></div>{% endfor %}
-{% if requested_credits %}<div class="notice notice-info">{% icon "alert" %}<div>{% for i in requested_credits %}Requested credit {{ i.requested_credit_cents|money }} (<a href="{{ i.get_absolute_url }}">{{ i.title }}</a>) — {{ i.get_resolution_status_display|lower }}. {% endfor %}The executed contract price is unchanged.</div></div>{% endif %}
+{% if deal.is_blocked %}<div class="notice notice-error">{% icon "alert" %}<div><strong>{% translate "Blocked by" %} {{ deal.blocked_by }}.</strong> {{ deal.blocker_description }}</div></div>{% endif %}
+{% for a in pending_amendments %}<div class="notice notice-warn">{% icon "alert" %}<div>{% translate "Amendment pending" %} — <a href="{{ a.get_absolute_url }}">{{ a.title }}</a>{% translate ". Not effective; no terms or dates have changed." %}</div></div>{% endfor %}
+{% if requested_credits %}<div class="notice notice-info">{% icon "alert" %}<div>{% for i in requested_credits %}{% translate "Requested credit" %} {{ i.requested_credit_cents|money }} (<a href="{{ i.get_absolute_url }}">{{ i.title }}</a>) — {{ i.get_resolution_status_display|lower }}. {% endfor %}{% translate "The executed contract price is unchanged." %}</div></div>{% endif %}
 
 <nav class="tabs">{% for key, label in tabs %}<a class="{% if tab == key %}on{% endif %}" href="?tab={{ key }}">{% if tab == key %}<span class="tab-ind"></span>{% endif %}{{ label }}{% if key == 'checklist' and open_item_count %}<span class="count">{{ open_item_count }}</span>{% elif key == 'issues' and open_issues %}<span class="count">{{ open_issues|length }}</span>{% elif key == 'documents' %}<span class="count">{{ documents|length }}</span>{% endif %}</a>{% endfor %}</nav>
 {% include "deals/tabs/"|add:tab|add:".html" %}

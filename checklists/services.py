@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit
 from deals.models import log_activity
@@ -41,13 +42,13 @@ def apply_template(deal, template, conditions, actor):
 
 def validate_item(item):
     if item.status == "not_applicable" and not item.not_applicable_reason.strip():
-        raise ValidationError("Not Applicable requires a reason.")
+        raise ValidationError(gettext_lazy("Not Applicable requires a reason."))
     if item.status == "blocked" and not item.blocked_reason.strip():
-        raise ValidationError("Blocked requires a reason (who or what is blocking it).")
+        raise ValidationError(gettext_lazy("Blocked requires a reason (who or what is blocking it)."))
     if item.status == "approved" and not item.approved_on:
-        raise ValidationError("Approved requires the approval date.")
+        raise ValidationError(gettext_lazy("Approved requires the approval date."))
     if item.status == "under_review" and not item.received_on:
-        raise ValidationError("An item under review must have a received date.")
+        raise ValidationError(gettext_lazy("An item under review must have a received date."))
 
 
 @transaction.atomic

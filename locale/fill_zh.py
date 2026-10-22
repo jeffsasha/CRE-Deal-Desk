@@ -117,6 +117,10 @@ ZH = {
     "Activity": "动态",
 }
 
+sys.path.insert(0, str(Path(__file__).parent))
+for _mod in ("zh_extra_1", "zh_extra_2", "zh_extra_3", "zh_extra_4", "zh_extra_5"):
+    ZH.update(__import__(_mod).ZH)
+
 po_path = Path(__file__).parent / "zh_Hans" / "LC_MESSAGES" / "django.po"
 po = polib.pofile(str(po_path))
 po.metadata["Language"] = "zh_Hans"

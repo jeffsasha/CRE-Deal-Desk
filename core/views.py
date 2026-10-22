@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext_lazy
 
 from crm.models import Contact, Organization
 from deadlines.models import Reminder
@@ -81,7 +82,7 @@ def quick_search(request):
         if not has_perm(request.user, "document.confidential"):
             docs = docs.exclude(access_level="confidential")
         for doc in docs[:5]:
-            out.append({"group": str(_("Documents")), "label": doc.title, "hint": doc.get_doc_type_display(), "url": doc.get_absolute_url(), "icon": "document_list"})
+            out.append({"group": str(_("Documents")), "label": doc.title, "hint": str(doc.get_doc_type_display()), "url": doc.get_absolute_url(), "icon": "document_list"})
     return JsonResponse({"results": out})
 
 
@@ -102,7 +103,7 @@ def notification_read(request, pk):
     n.save(update_fields=["read_at"])
     if request.POST.get("acknowledge") and n.reminder_id:
         acknowledge(n.reminder, request.user)
-        messages.info(request, "Reminder acknowledged. The deadline itself is still open until it is marked satisfied.")
+        messages.info(request, gettext_lazy("Reminder acknowledged. The deadline itself is still open until it is marked satisfied."))
     return redirect(safe_next(request, n.url or reverse("notifications")))
 
 
@@ -124,16 +125,16 @@ def save_view(request):
 def settings_index(request):
     from deadlines.reminders import default_reminder_days
     from documents.processing import extraction_engine_label
-    from documents.text import ocr_engine_label
+    from documents.text import ocr_engine, ocr_engine_label
 
     roles, matrix = role_matrix()
     integrations = [
-        ("Contract extraction", extraction_engine_label(), bool(settings.ANTHROPIC_API_KEY)),
-        ("OCR for scanned documents", ocr_engine_label(), ocr_engine_label() != "Not available"),
-        ("Email reminders", "Configured (SMTP)" if settings.EMAIL_CONFIGURED else "Not configured — in-app reminders only",
+        (gettext_lazy("Contract extraction"), extraction_engine_label(), bool(settings.ANTHROPIC_API_KEY)),
+        (gettext_lazy("OCR for scanned documents"), ocr_engine_label(), ocr_engine() is not None),
+        (gettext_lazy("Email reminders"), gettext_lazy("Configured (SMTP)") if settings.EMAIL_CONFIGURED else gettext_lazy("Not configured — in-app reminders only"),
          settings.EMAIL_CONFIGURED),
-        ("Calendar export", "ICS download and private feed URL (no external account connected)", True),
-        ("Database", settings.DATABASES["default"]["ENGINE"].rsplit(".", 1)[-1], True),
+        (gettext_lazy("Calendar export"), "ICS download and private feed URL (no external account connected)", True),
+        (gettext_lazy("Database"), settings.DATABASES["default"]["ENGINE"].rsplit(".", 1)[-1], True),
     ]
     return render(request, "core/settings.html", {
         "roles": roles, "matrix": matrix, "integrations": integrations,
@@ -157,7 +158,7 @@ def user_create(request):
         audit(request.user, "user.created", user, {"role": user.role})
         messages.success(request, f"User {user.username} created.")
         return redirect("user_list")
-    return render(request, "form.html", {"form": form, "title": "New user", "back_url": reverse("user_list")})
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("New user"), "back_url": reverse("user_list")})
 
 
 @require_perm("users.manage")
@@ -167,13 +168,13 @@ def user_edit(request, pk):
     form = UserEditForm(request.POST or None, instance=user)
     if request.method == "POST" and form.is_valid():
         if user == request.user and form.cleaned_data["role"] != "admin":
-            form.add_error("role", "You cannot remove your own administrator role.")
+            form.add_error("role", gettext_lazy("You cannot remove your own administrator role."))
         else:
             user = form.save()
             changes = {k: (v, getattr(user, k)) for k, v in before.items() if getattr(user, k) != v}
             if changes:
                 audit(request.user, "user.permissions_changed", user, changes)
-            messages.success(request, "User updated.")
+            messages.success(request, gettext_lazy("User updated."))
             return redirect("user_list")
     return render(request, "form.html", {"form": form, "title": f"Edit {user.username}", "back_url": reverse("user_list")})
 
@@ -196,7 +197,7 @@ def stage_edit(request, pk=None):
         obj.save()
         audit(request.user, "stage.saved", obj)
         return redirect("stage_list")
-    return render(request, "form.html", {"form": form, "title": "Stage", "back_url": reverse("stage_list")})
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Stage"), "back_url": reverse("stage_list")})
 
 
 @require_perm("view")
@@ -237,9 +238,9 @@ def reminder_settings(request):
     if request.method == "POST" and form.is_valid():
         WorkspaceSetting.put("reminder_days", form.cleaned_data["reminder_days"])
         audit(request.user, "settings.reminder_days", None, {"reminder_days": form.cleaned_data["reminder_days"]})
-        messages.success(request, "Default reminder lead times saved. They apply to deadlines without their own schedule.")
+        messages.success(request, gettext_lazy("Default reminder lead times saved. They apply to deadlines without their own schedule."))
         return redirect("settings_index")
-    return render(request, "form.html", {"form": form, "title": "Reminder defaults", "back_url": reverse("settings_index")})
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Reminder defaults"), "back_url": reverse("settings_index")})
 
 
 @require_perm("view")
@@ -257,18 +258,18 @@ def reminder_log(request):
     listing = Listing(
         request, qs, area="reminders",
         columns=[
-            Column("item", "Reminder for", lambda r: r.deadline or r.checklist_item),
-            Column("deal", "Deal", lambda r: (r.deadline.deal if r.deadline_id else r.checklist_item.deal).internal_id),
-            Column("user", "Recipient", lambda r: r.user),
-            Column("channel", "Channel", lambda r: r.get_channel_display()),
-            Column("lead", "Lead", lambda r: f"{r.lead_days} d", sort="lead_days", cls="num"),
-            Column("rev", "Deadline rev.", lambda r: r.target_revision, cls="num"),
-            Column("at", "Scheduled for", lambda r: timezone.localtime(r.remind_at).strftime("%b %-d, %Y %-I:%M %p"), sort="remind_at"),
-            Column("status", "Status", lambda r: r.get_status_display(), sort="status"),
-            Column("ack", "Acknowledged", lambda r: "Yes" if r.acknowledged_at else ""),
-            Column("note", "Error / reason", lambda r: r.last_error or r.cancelled_reason),
+            Column("item", gettext_lazy("Reminder for"), lambda r: r.deadline or r.checklist_item),
+            Column("deal", gettext_lazy("Deal"), lambda r: (r.deadline.deal if r.deadline_id else r.checklist_item.deal).internal_id),
+            Column("user", gettext_lazy("Recipient"), lambda r: r.user),
+            Column("channel", gettext_lazy("Channel"), lambda r: r.get_channel_display()),
+            Column("lead", gettext_lazy("Lead"), lambda r: f"{r.lead_days} d", sort="lead_days", cls="num"),
+            Column("rev", gettext_lazy("Deadline rev."), lambda r: r.target_revision, cls="num"),
+            Column("at", gettext_lazy("Scheduled for"), lambda r: timezone.localtime(r.remind_at).strftime("%b %-d, %Y %-I:%M %p"), sort="remind_at"),
+            Column("status", gettext_lazy("Status"), lambda r: r.get_status_display(), sort="status"),
+            Column("ack", gettext_lazy("Acknowledged"), lambda r: "Yes" if r.acknowledged_at else ""),
+            Column("note", gettext_lazy("Error / reason"), lambda r: r.last_error or r.cancelled_reason),
         ],
-        filters=[Filter("status", "Status", Reminder.STATUSES, lambda qs, v: qs.filter(status=v))],
+        filters=[Filter("status", gettext_lazy("Status"), Reminder.STATUSES, lambda qs, v: qs.filter(status=v))],
         default_sort="-remind_at",
         row_url=lambda r: r.deadline.get_absolute_url() if r.deadline_id else "",
         row_class=lambda r: "row-alert" if r.status == "failed" else ("row-muted" if r.status == "cancelled" else ""),
@@ -282,25 +283,25 @@ def audit_log(request):
     listing = Listing(
         request, AuditLog.objects.select_related("actor"), area="audit",
         columns=[
-            Column("when", "When", lambda a: timezone.localtime(a.created_at).strftime("%Y-%m-%d %H:%M:%S"), sort="created_at"),
-            Column("actor", "User", lambda a: a.actor or "System"),
-            Column("action", "Action", lambda a: a.action, sort="action"),
-            Column("object", "Record", lambda a: a.object_repr),
-            Column("type", "Type", lambda a: a.model_label, default=False),
-            Column("changes", "Changes", lambda a: "; ".join(
+            Column("when", gettext_lazy("When"), lambda a: timezone.localtime(a.created_at).strftime("%Y-%m-%d %H:%M:%S"), sort="created_at"),
+            Column("actor", gettext_lazy("User"), lambda a: a.actor or "System"),
+            Column("action", gettext_lazy("Action"), lambda a: a.action, sort="action"),
+            Column("object", gettext_lazy("Record"), lambda a: a.object_repr),
+            Column("type", gettext_lazy("Type"), lambda a: a.model_label, default=False),
+            Column("changes", gettext_lazy("Changes"), lambda a: "; ".join(
                 f"{k}: {v[0]} → {v[1]}" if isinstance(v, list) and len(v) == 2 else f"{k}: {v}" for k, v in a.changes.items())),
-            Column("note", "Note", lambda a: a.note),
+            Column("note", gettext_lazy("Note"), lambda a: a.note),
         ],
         search_fields=["action", "object_repr", "note", "actor__username"],
-        filters=[Filter("action", "Action", [(x, x) for x in AuditLog.objects.values_list("action", flat=True).distinct().order_by("action")],
+        filters=[Filter("action", gettext_lazy("Action"), [(x, x) for x in AuditLog.objects.values_list("action", flat=True).distinct().order_by("action")],
                         lambda qs, v: qs.filter(action=v))],
         default_sort="-created_at",
         row_url=lambda a: "",
     )
     if request.GET.get("export") == "csv":
         return listing.export_csv("audit-log")
-    return render(request, "core/list_page.html", {"listing": listing, "title": "Audit log",
-                                                   "subtitle": "Meaningful changes to contract dates, execution status, deadline rules, prices, closings, commissions, permissions and documents."})
+    return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Audit log"),
+                                                   "subtitle": gettext_lazy("Meaningful changes to contract dates, execution status, deadline rules, prices, closings, commissions, permissions and documents.")})
 
 
 @require_perm("view")

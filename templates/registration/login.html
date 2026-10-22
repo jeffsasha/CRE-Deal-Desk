@@ -1,6 +1,6 @@
 {% load i18n %}{% load static i18n %}{% get_current_language as LANG %}<!doctype html>
 <html lang="{{ LANG }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% translate "Sign in" %} · SKW DealDesk</title>{% include "partials/theme_head.html" %}<link rel="stylesheet" href="{% asset 'css/app.css' %}"></head>
+<title>{% translate "Sign in" %} · {% translate "SKW DealDesk" %}</title>{% include "partials/theme_head.html" %}<link rel="stylesheet" href="{% asset 'css/app.css' %}"></head>
 <body>
 {% if DEMO_MODE %}<div class="demo-banner">{% translate "Demo mode — fictional sample data in an isolated database." %}</div>{% endif %}
 <div class="login-wrap"><div class="login-lang">{% include "partials/lang_switch.html" %}</div>

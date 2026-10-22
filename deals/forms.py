@@ -1,7 +1,8 @@
 from django import forms
+from django.utils.translation import gettext_lazy
 
 from core.fields import MoneyField, MoneyModelFormMixin
-from core.forms import StyledModelForm
+from core.forms import LocalizedForm, StyledModelForm
 from core.models import User
 from crm.models import Contact, Organization
 from properties.models import Property
@@ -54,13 +55,13 @@ class DealForm(MoneyModelFormMixin, StyledModelForm):
     def clean(self):
         data = super().clean()
         if data.get("lease_starting_rent") is not None and not data.get("lease_rent_unit"):
-            self.add_error("lease_rent_unit", "State the unit for the starting rent.")
+            self.add_error("lease_rent_unit", gettext_lazy("State the unit for the starting rent."))
         if data.get("is_blocked") and not data.get("blocked_by"):
-            self.add_error("blocked_by", "Name the party blocking the deal.")
+            self.add_error("blocked_by", gettext_lazy("Name the party blocking the deal."))
         return data
 
 
-class StageChangeForm(forms.Form):
+class StageChangeForm(LocalizedForm):
     stage = forms.ModelChoiceField(queryset=Stage.objects.filter(enabled=True).exclude(category="closed"))
     reason = forms.CharField(widget=forms.Textarea(attrs={"rows": 2}), required=False,
                              help_text="Required for Terminated or Lost.")
@@ -140,9 +141,9 @@ class DepositForm(MoneyModelFormMixin, StyledModelForm):
     def clean(self):
         data = super().clean()
         if data.get("refundability") in {"per_contract_refundable", "per_contract_nonrefundable"} and not data.get("refundability_note"):
-            self.add_error("refundability_note", "Quote the contract language supporting this refundability position.")
+            self.add_error("refundability_note", gettext_lazy("Quote the contract language supporting this refundability position."))
         if data.get("receipt_confirmed_on") and not (data.get("receipt_evidence") or data.get("notes")):
-            self.add_error("notes", "Note how receipt was confirmed, or attach the receipt evidence.")
+            self.add_error("notes", gettext_lazy("Note how receipt was confirmed, or attach the receipt evidence."))
         return data
 
 
@@ -178,9 +179,9 @@ class EventForm(StyledModelForm):
     def clean(self):
         data = super().clean()
         if data.get("status") == DealEvent.STATUS_CONFIRMED and not data.get("occurred_on"):
-            self.add_error("occurred_on", "A confirmed event needs its actual date.")
+            self.add_error("occurred_on", gettext_lazy("A confirmed event needs its actual date."))
         if data.get("status") == DealEvent.STATUS_CONFIRMED and not (data.get("evidence_document") or data.get("evidence_note")):
-            self.add_error("evidence_note", "Record how the date is known (document or note).")
+            self.add_error("evidence_note", gettext_lazy("Record how the date is known (document or note)."))
         return data
 
 
@@ -191,7 +192,7 @@ def term_choices():
     return [(cat, by_cat[cat]) for cat in TERM_CATEGORY_ORDER if cat in by_cat]
 
 
-class ManualTermForm(forms.Form):
+class ManualTermForm(LocalizedForm):
     key = forms.ChoiceField(label="Contract term", choices=term_choices)
     value = forms.CharField(help_text="Dates as 'March 4, 2026' or 2026-03-04; money as $; periods as a number of days.")
     source_document = forms.ModelChoiceField(queryset=None, required=False,
@@ -222,9 +223,9 @@ class ManualTermForm(forms.Form):
                 self.add_error("value", str(exc))
         src = data.get("source_document")
         if src is not None and not src.is_executed:
-            self.add_error("source_document", "This document's execution is not confirmed; its terms cannot be approved yet.")
+            self.add_error("source_document", gettext_lazy("This document's execution is not confirmed; its terms cannot be approved yet."))
         if key and self.deal.terms.filter(key=key, status="active").exists() and not data.get("note"):
-            self.add_error("note", "Explain why the approved value is being replaced (e.g. correction, or cite the amendment).")
+            self.add_error("note", gettext_lazy("Explain why the approved value is being replaced (e.g. correction, or cite the amendment)."))
         return data
 
 
@@ -282,7 +283,7 @@ class IssueForm(MoneyModelFormMixin, StyledModelForm):
     def clean(self):
         data = super().clean()
         if data.get("resolution_status") == "executed" and not data.get("resolution_document"):
-            self.add_error("resolution_document", "An executed resolution needs the executed document.")
+            self.add_error("resolution_document", gettext_lazy("An executed resolution needs the executed document."))
         return data
 
 
@@ -304,7 +305,7 @@ class DraftForm(StyledModelForm):
         widgets = {"body": forms.Textarea(attrs={"rows": 14})}
 
 
-class CloseDealForm(forms.Form):
+class CloseDealForm(LocalizedForm):
     actual_closing_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
     total = MoneyField(label="Actual total consideration (deal level)",
                        help_text="Counted once in volume reports, regardless of how many properties or sides. Blank = unknown.")
@@ -361,7 +362,7 @@ CLIENT_LABELS = {
 }
 
 
-class NewDealForm(forms.Form):
+class NewDealForm(LocalizedForm):
     kind = forms.ChoiceField(choices=KIND_CHOICES, widget=forms.RadioSelect)
     side = forms.ChoiceField(choices=[(s, s) for s in ALL_SIDES], widget=forms.RadioSelect)
     lease_type = forms.ChoiceField(choices=LEASE_TYPES_CHOICES, required=False, initial="lease")

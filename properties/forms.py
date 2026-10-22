@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy
 
 from core.forms import StyledModelForm
 
@@ -77,7 +78,7 @@ class FactForm(StyledModelForm):
                   "verification", "verified_on", "notes"]
         help_texts = {
             "verification": "Marketing statements and broker flyers are recorded as such and are never shown as verified.",
-            "label": "Used when no catalog fact is chosen.",
+            "label": gettext_lazy("Used when no catalog fact is chosen."),
         }
 
     def __init__(self, *args, property=None, **kwargs):
@@ -101,11 +102,11 @@ class FactForm(StyledModelForm):
             data["category"], data["label"], data["_key"] = cat, label, key
         else:
             if not data.get("label"):
-                self.add_error("label", "Enter a label or choose a catalog fact.")
+                self.add_error("label", gettext_lazy("Enter a label or choose a catalog fact."))
             data["category"] = data.get("category") or "other"
             data["_key"] = (data.get("label") or "").lower().replace(" ", "_")[:60]
         if data.get("verification") == "verified" and not data.get("source"):
-            self.add_error("source", "A verified fact needs its source.")
+            self.add_error("source", gettext_lazy("A verified fact needs its source."))
         return data
 
     def save(self, commit=True):

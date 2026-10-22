@@ -1,19 +1,20 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 User = settings.AUTH_USER_MODEL
 
 STATUSES = [
-    ("not_started", "Not Started"),
-    ("requested", "Requested"),
-    ("in_progress", "In Progress"),
-    ("received", "Received"),
-    ("under_review", "Under Review"),
-    ("approved", "Approved"),
-    ("waived", "Waived"),
-    ("not_applicable", "Not Applicable"),
-    ("blocked", "Blocked"),
+    ("not_started", _("Not Started")),
+    ("requested", _("Requested")),
+    ("in_progress", _("In Progress")),
+    ("received", _("Received")),
+    ("under_review", _("Under Review")),
+    ("approved", _("Approved")),
+    ("waived", _("Waived")),
+    ("not_applicable", _("Not Applicable")),
+    ("blocked", _("Blocked")),
 ]
 OPEN_STATUSES = {"not_started", "requested", "in_progress", "received", "under_review", "blocked"}
 DONE_STATUSES = {"approved", "waived", "not_applicable"}
@@ -34,14 +35,14 @@ class ChecklistTemplate(models.Model):
 
 
 CONDITIONS = [
-    ("financing", "Buyer / tenant is using financing"),
-    ("income_property", "Property has tenants / income"),
-    ("new_survey", "A new survey is being ordered"),
-    ("environmental", "Phase I or other environmental work is in scope"),
-    ("restaurant", "Restaurant or food-service use"),
-    ("construction", "Tenant improvements or construction"),
-    ("lender_title", "Lender's title policy required"),
-    ("license_dependency", "Operating license / permit dependency"),
+    ("financing", _("Buyer / tenant is using financing")),
+    ("income_property", _("Property has tenants / income")),
+    ("new_survey", _("A new survey is being ordered")),
+    ("environmental", _("Phase I or other environmental work is in scope")),
+    ("restaurant", _("Restaurant or food-service use")),
+    ("construction", _("Tenant improvements or construction")),
+    ("lender_title", _("Lender's title policy required")),
+    ("license_dependency", _("Operating license / permit dependency")),
 ]
 
 

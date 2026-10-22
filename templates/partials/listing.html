@@ -21,7 +21,7 @@
     {% endif %}
     <details class="dropdown"><summary class="btn btn-sm">{% translate "Columns" %}</summary>
       <div class="menu" style="max-height:340px;overflow:auto">
-        {% for c in listing.columns %}<label><input type="checkbox" name="col" value="{{ c.key }}" form="cols-{{ listing.area }}" {% if c.key in listing.visible_keys %}checked{% endif %}> {{ c.label }}</label>{% endfor %}
+        {% for c in listing.columns %}<label><input type="checkbox" name="col" value="{{ c.key }}" form="cols-{{ listing.area }}" {% if c.key in listing.visible_keys %}checked{% endif %}> {{ c.label|tr }}</label>{% endfor %}
         <button class="btn btn-sm btn-primary" form="cols-{{ listing.area }}">{% translate "Show columns" %}</button>
       </div>
     </details>

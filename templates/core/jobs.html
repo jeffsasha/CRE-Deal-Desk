@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Background jobs{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Background jobs" %}{% endblock %}
 {% block content %}
-<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
-<div class="page-head"><div><h1>Background jobs</h1><div class="sub">Document processing runs here. Start the worker with <code>python manage.py run_worker</code>.</div></div></div>
+<div class="crumbs"><a href="{% url 'settings_index' %}">← {% translate "Settings" %}</a></div>
+<div class="page-head"><div><h1>{% translate "Background jobs" %}</h1><div class="sub">{% translate "Document processing runs here. Start the worker with" %} <code>{% translate "python manage.py run_worker" %}</code>.</div></div></div>
 <div class="card"><div class="card-body flush table-wrap"><table class="t">
-<thead><tr><th>#</th><th>Kind</th><th>Payload</th><th>Status</th><th>Attempts</th><th>Created</th><th>Error</th><th></th></tr></thead>
+<thead><tr><th>#</th><th>{% translate "Kind" %}</th><th>{% translate "Payload" %}</th><th>{% translate "Status" %}</th><th>{% translate "Attempts" %}</th><th>{% translate "Created" %}</th><th>{% translate "Error" %}</th><th></th></tr></thead>
 <tbody>{% for j in jobs %}<tr class="{% if j.status == 'failed' %}row-alert{% endif %}"><td>{{ j.pk }}</td><td>{{ j.kind }}</td><td><code>{{ j.payload }}</code></td><td>{% pill j.status j.get_status_display %}</td><td>{{ j.attempts }}</td><td class="nowrap">{{ j.created_at|d }}</td><td><small>{{ j.last_error|truncatechars:160 }}</small></td>
-<td>{% if j.status == 'failed' or j.status == 'queued' %}<form method="post">{% csrf_token %}<input type="hidden" name="job" value="{{ j.pk }}"><button class="btn btn-sm">Run now</button></form>{% endif %}</td></tr>
-{% empty %}<tr><td colspan="8"><div class="empty">No jobs yet.</div></td></tr>{% endfor %}</tbody></table></div></div>
+<td>{% if j.status == 'failed' or j.status == 'queued' %}<form method="post">{% csrf_token %}<input type="hidden" name="job" value="{{ j.pk }}"><button class="btn btn-sm">{% translate "Run now" %}</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="8"><div class="empty">{% translate "No jobs yet." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
 {% endblock %}

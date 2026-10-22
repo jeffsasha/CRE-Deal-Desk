@@ -37,7 +37,9 @@ def ocr_engine():
 
 def ocr_engine_label():
     engine = ocr_engine()
-    return {"vision": "macOS Vision (offline)", "tesseract": "Tesseract (offline)"}.get(engine, "Not available")
+    from django.utils.translation import gettext
+
+    return {"vision": gettext("macOS Vision (offline)"), "tesseract": gettext("Tesseract (offline)")}.get(engine, gettext("Not available"))
 
 
 def _vision(path, pages=None):

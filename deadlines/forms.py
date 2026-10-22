@@ -1,6 +1,7 @@
 from django import forms
+from django.utils.translation import gettext_lazy
 
-from core.forms import StyledModelForm
+from core.forms import LocalizedForm, StyledModelForm
 from core.models import HolidayCalendar, User
 from deals.catalog import EVENT_CATALOG, TERM_CATALOG
 
@@ -63,29 +64,29 @@ class DeadlineForm(StyledModelForm):
         rt = data.get("rule_type")
         triggers = data.get("triggers") or []
         if rt == "fixed" and not data.get("fixed_date"):
-            self.add_error("fixed_date", "Enter the fixed date.")
+            self.add_error("fixed_date", gettext_lazy("Enter the fixed date."))
         if rt == "fixed_term" and not data.get("fixed_date_term_key"):
-            self.add_error("fixed_date_term_key", "Choose the contract term that holds the date.")
+            self.add_error("fixed_date_term_key", gettext_lazy("Choose the contract term that holds the date."))
         if rt == "offset" and len(triggers) != 1:
-            self.add_error("triggers", "Choose exactly one trigger event.")
+            self.add_error("triggers", gettext_lazy("Choose exactly one trigger event."))
         if rt in {"later_of", "earlier_of"} and len(triggers) < 2:
-            self.add_error("triggers", "Choose at least two events.")
+            self.add_error("triggers", gettext_lazy("Choose at least two events."))
         if rt in {"offset", "later_of", "earlier_of"}:
             if data.get("offset_days") is None and not data.get("offset_term_key"):
-                self.add_error("offset_days", "Enter the number of days or choose the term that states it. No default period is applied.")
+                self.add_error("offset_days", gettext_lazy("Enter the number of days or choose the term that states it. No default period is applied."))
             if data.get("offset_days") is not None and data.get("offset_term_key"):
-                self.add_error("offset_term_key", "Use either a fixed number of days or a contract term, not both.")
+                self.add_error("offset_term_key", gettext_lazy("Use either a fixed number of days or a contract term, not both."))
         if data.get("weekend_rule") and data["weekend_rule"] != "none" and not data.get("weekend_rule_source"):
-            self.add_error("weekend_rule_source", "Cite the contract clause that establishes this adjustment.")
+            self.add_error("weekend_rule_source", gettext_lazy("Cite the contract clause that establishes this adjustment."))
         if data.get("day_basis") == "business" and not data.get("holiday_calendar"):
-            self.add_error("holiday_calendar", "Business-day counting needs a holiday calendar (choose 'No holidays' if none apply).")
+            self.add_error("holiday_calendar", gettext_lazy("Business-day counting needs a holiday calendar (choose 'No holidays' if none apply)."))
         if data.get("confirmation") == "confirmed" and not (data.get("source_clause") or data.get("source_version")):
-            self.add_error("confirmation", "A confirmed rule needs its source clause or document.")
+            self.add_error("confirmation", gettext_lazy("A confirmed rule needs its source clause or document."))
         text = data.get("reminder_days_text", "")
         try:
             data["reminder_days"] = sorted({int(x) for x in text.split(",") if x.strip()}, reverse=True) if text else []
         except ValueError:
-            self.add_error("reminder_days_text", "Use whole numbers separated by commas.")
+            self.add_error("reminder_days_text", gettext_lazy("Use whole numbers separated by commas."))
         return data
 
     def save(self, commit=True):
@@ -101,7 +102,7 @@ class DeadlineForm(StyledModelForm):
         return obj
 
 
-class StateForm(forms.Form):
+class StateForm(LocalizedForm):
     state = forms.ChoiceField(choices=[("open", "Open"), ("satisfied", "Satisfied / performed"), ("waived", "Waived"),
                                        ("expired", "Passed without action"), ("cancelled", "Cancelled / not applicable")])
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}),
@@ -110,5 +111,5 @@ class StateForm(forms.Form):
     def clean(self):
         data = super().clean()
         if data.get("state") in {"waived", "cancelled"} and not data.get("note"):
-            self.add_error("note", "Explain the waiver or cancellation.")
+            self.add_error("note", gettext_lazy("Explain the waiver or cancellation."))
         return data

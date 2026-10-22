@@ -1,26 +1,27 @@
 from django.db import models
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from core.models import Archivable, Imported, TimeStamped
 
 
 class Organization(TimeStamped, Archivable, Imported):
     TYPE_CHOICES = [
-        ("client_entity", "Client entity"),
-        ("ownership_entity", "Ownership entity"),
-        ("brokerage", "Brokerage"),
-        ("title_company", "Title company"),
-        ("lender", "Lender"),
-        ("law_firm", "Law firm"),
-        ("surveyor", "Surveying firm"),
-        ("inspection", "Inspection firm"),
-        ("environmental", "Environmental consultant"),
-        ("insurance", "Insurance agency"),
-        ("appraisal", "Appraisal firm"),
-        ("property_manager", "Property manager"),
-        ("government", "Government / utility"),
-        ("business", "Operating business"),
-        ("other", "Other"),
+        ("client_entity", _("Client entity")),
+        ("ownership_entity", _("Ownership entity")),
+        ("brokerage", _("Brokerage")),
+        ("title_company", _("Title company")),
+        ("lender", _("Lender")),
+        ("law_firm", _("Law firm")),
+        ("surveyor", _("Surveying firm")),
+        ("inspection", _("Inspection firm")),
+        ("environmental", _("Environmental consultant")),
+        ("insurance", _("Insurance agency")),
+        ("appraisal", _("Appraisal firm")),
+        ("property_manager", _("Property manager")),
+        ("government", _("Government / utility")),
+        ("business", _("Operating business")),
+        ("other", _("Other")),
     ]
 
     name = models.CharField(max_length=255)

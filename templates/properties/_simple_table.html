@@ -1,12 +1,12 @@
-<div class="card"><div class="card-head"><h2>{% if kind == 'parcel' %}Parcels{% elif kind == 'space' %}Spaces / suites{% elif kind == 'rentroll' %}Tenants & rent roll{% elif kind == 'asking' %}Asking price & rent history{% else %}Rent and operating charges{% endif %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'property_sub' p.pk kind %}">Add</a>{% endif %}</div>
+{% load i18n %}<div class="card"><div class="card-head"><h2>{% if kind == 'parcel' %}{% translate "Parcels" %}{% elif kind == 'space' %}{% translate "Spaces / suites" %}{% elif kind == 'rentroll' %}{% translate "Tenants & rent roll" %}{% elif kind == 'asking' %}{% translate "Asking price & rent history" %}{% else %}{% translate "Rent and operating charges" %}{% endif %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'property_sub' p.pk kind %}">{% translate "Add" %}</a>{% endif %}</div>
 <div class="card-body flush table-wrap"><table class="t">
 <tbody>
 {% for r in rows %}<tr>
   {% if kind == 'parcel' %}<td><strong>{{ r.parcel_id }}</strong></td><td>{{ r.county }}</td><td class="num">{{ r.land_area_sf|sf }}</td><td><small>{{ r.legal_description|truncatechars:120 }}</small></td>
-  {% elif kind == 'space' %}<td><strong>Suite {{ r.suite }}</strong></td><td class="num">{{ r.area_sf|sf }}</td><td>{{ r.get_status_display }}</td><td>{{ r.get_condition_display }}</td>
+  {% elif kind == 'space' %}<td><strong>{% translate "Suite" %} {{ r.suite }}</strong></td><td class="num">{{ r.area_sf|sf }}</td><td>{{ r.get_status_display }}</td><td>{{ r.get_condition_display }}</td>
   {% elif kind == 'rentroll' %}<td><strong>{{ r.tenant_name }}</strong></td><td>{{ r.space.suite|default:"—" }}</td><td>{{ r.lease_start|d }}</td><td>{{ r.lease_end|d }}</td><td class="num">{{ r.rent_amount|rate:r.rent_unit }}</td><td><small>{{ r.as_of|d }} {{ r.source }}</small></td>
-  {% elif kind == 'asking' %}<td>{{ r.get_kind_display }}{% if r.space %} · Suite {{ r.space.suite }}{% endif %}</td><td class="num">{{ r.amount|rate:r.unit }}</td><td>{{ r.effective_date|d }}</td><td><small>{{ r.source }}</small></td>
-  {% else %}<td>{{ r.get_charge_type_display }}{% if r.space %} · Suite {{ r.space.suite }}{% endif %}</td><td class="num">{{ r.amount|rate:r.unit }}</td><td>{% if r.is_estimate %}Estimate{% else %}Actual{% endif %}</td><td>{% pill r.verification r.get_verification_display %}</td><td><small>{{ r.as_of|d }} {{ r.source }}</small></td>{% endif %}
-  <td class="num">{% if can.edit %}<a class="btn btn-sm" href="{% url 'property_sub_edit' p.pk kind r.pk %}">Edit</a>{% endif %}</td>
-</tr>{% empty %}<tr><td><div class="empty">None recorded.</div></td></tr>{% endfor %}
+  {% elif kind == 'asking' %}<td>{{ r.get_kind_display }}{% if r.space %} · {% translate "Suite" %} {{ r.space.suite }}{% endif %}</td><td class="num">{{ r.amount|rate:r.unit }}</td><td>{{ r.effective_date|d }}</td><td><small>{{ r.source }}</small></td>
+  {% else %}<td>{{ r.get_charge_type_display }}{% if r.space %} · {% translate "Suite" %} {{ r.space.suite }}{% endif %}</td><td class="num">{{ r.amount|rate:r.unit }}</td><td>{% if r.is_estimate %}{% translate "Estimate" %}{% else %}{% translate "Actual" %}{% endif %}</td><td>{% pill r.verification r.get_verification_display %}</td><td><small>{{ r.as_of|d }} {{ r.source }}</small></td>{% endif %}
+  <td class="num">{% if can.edit %}<a class="btn btn-sm" href="{% url 'property_sub_edit' p.pk kind r.pk %}">{% translate "Edit" %}</a>{% endif %}</td>
+</tr>{% empty %}<tr><td><div class="empty">{% translate "None recorded." %}</div></td></tr>{% endfor %}
 </tbody></table></div></div>

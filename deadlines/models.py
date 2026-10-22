@@ -2,61 +2,62 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core.choices import TIME_ZONES
 
 User = settings.AUTH_USER_MODEL
 
 CATEGORIES = [
-    ("contract", "Contract / effective date"),
-    ("earnest_money", "Earnest money & deposits"),
-    ("feasibility", "Feasibility / due diligence"),
-    ("title", "Title"),
-    ("survey", "Survey"),
-    ("financing", "Financing"),
-    ("closing", "Closing"),
-    ("lease", "Lease"),
-    ("notice", "Notice"),
-    ("commission", "Commission"),
-    ("internal", "Internal target"),
-    ("other", "Other"),
+    ("contract", _("Contract / effective date")),
+    ("earnest_money", _("Earnest money & deposits")),
+    ("feasibility", _("Feasibility / due diligence")),
+    ("title", _("Title")),
+    ("survey", _("Survey")),
+    ("financing", _("Financing")),
+    ("closing", _("Closing")),
+    ("lease", _("Lease")),
+    ("notice", _("Notice")),
+    ("commission", _("Commission")),
+    ("internal", _("Internal target")),
+    ("other", _("Other")),
 ]
 
 RULE_TYPES = [
-    ("fixed", "Fixed date"),
-    ("fixed_term", "Fixed date from approved contract term"),
-    ("offset", "Days after a trigger event"),
-    ("later_of", "Days after the later of several events"),
-    ("earlier_of", "Days after the earlier of several events"),
+    ("fixed", _("Fixed date")),
+    ("fixed_term", _("Fixed date from approved contract term")),
+    ("offset", _("Days after a trigger event")),
+    ("later_of", _("Days after the later of several events")),
+    ("earlier_of", _("Days after the earlier of several events")),
 ]
 
-DAY_BASIS = [("calendar", "Calendar days"), ("business", "Business days")]
+DAY_BASIS = [("calendar", _("Calendar days")), ("business", _("Business days"))]
 
 WEEKEND_RULES = [
-    ("none", "No adjustment (none established)"),
-    ("next_business_day", "Move to next business day (per contract)"),
-    ("previous_business_day", "Move to previous business day (per contract)"),
+    ("none", _("No adjustment (none established)")),
+    ("next_business_day", _("Move to next business day (per contract)")),
+    ("previous_business_day", _("Move to previous business day (per contract)")),
 ]
 
 COMPUTATION = [
-    ("computed", "Computed"),
-    ("awaiting_trigger", "Awaiting Trigger"),
-    ("needs_review", "Needs Review"),
+    ("computed", _("Computed")),
+    ("awaiting_trigger", _("Awaiting Trigger")),
+    ("needs_review", _("Needs Review")),
 ]
 
 STATES = [
-    ("open", "Open"),
-    ("satisfied", "Satisfied / performed"),
-    ("waived", "Waived"),
-    ("expired", "Passed without action"),
-    ("superseded", "Superseded"),
-    ("cancelled", "Cancelled"),
+    ("open", _("Open")),
+    ("satisfied", _("Satisfied / performed")),
+    ("waived", _("Waived")),
+    ("expired", _("Passed without action")),
+    ("superseded", _("Superseded")),
+    ("cancelled", _("Cancelled")),
 ]
 
 CONFIRMATION = [
-    ("unconfirmed", "Rule not yet confirmed"),
-    ("confirmed", "Rule confirmed against contract"),
-    ("needs_review", "Needs review"),
+    ("unconfirmed", _("Rule not yet confirmed")),
+    ("confirmed", _("Rule confirmed against contract")),
+    ("needs_review", _("Needs review")),
 ]
 
 
@@ -179,12 +180,12 @@ class DeadlineRevision(models.Model):
 
 class Reminder(models.Model):
     STATUSES = [
-        ("scheduled", "Scheduled"),
-        ("delivered", "Delivered"),
-        ("failed", "Delivery failed"),
-        ("cancelled", "Cancelled"),
+        ("scheduled", _("Scheduled")),
+        ("delivered", _("Delivered")),
+        ("failed", _("Delivery failed")),
+        ("cancelled", _("Cancelled")),
     ]
-    CHANNELS = [("in_app", "In-app"), ("email", "Email")]
+    CHANNELS = [("in_app", _("In-app")), ("email", _("Email"))]
 
     deadline = models.ForeignKey(Deadline, null=True, blank=True, on_delete=models.CASCADE, related_name="reminders")
     checklist_item = models.ForeignKey(

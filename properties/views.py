@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit, diff, snapshot
 from core.choices import PROPERTY_TYPES
@@ -22,20 +23,20 @@ def property_list(request):
     listing = Listing(
         request, qs, area="properties",
         columns=[
-            Column("name", "Property", lambda p: p.name, sort="name"),
-            Column("address", "Address", lambda p: p.address, sort="street"),
-            Column("type", "Type", lambda p: p.get_property_type_display(), sort="property_type"),
-            Column("county", "County", lambda p: p.county or "—", sort="county", default=False),
-            Column("building", "Building SF", lambda p: f"{p.building_area_sf:,.0f}" if p.building_area_sf else "—", sort="building_area_sf", cls="num"),
-            Column("land", "Land SF", lambda p: f"{p.land_area_sf:,.0f}" if p.land_area_sf else "—", sort="land_area_sf", cls="num", default=False),
-            Column("owner", "Owner", lambda p: p.ownership_entity or p.owner or "—", default=False),
-            Column("deals", "Deals", lambda p: p.deal_links.count(), cls="num"),
-            Column("updated", "Updated", lambda p: timezone.localtime(p.updated_at).strftime("%b %-d, %Y"), sort="updated_at"),
+            Column("name", gettext_lazy("Property"), lambda p: p.name, sort="name"),
+            Column("address", gettext_lazy("Address"), lambda p: p.address, sort="street"),
+            Column("type", gettext_lazy("Type"), lambda p: p.get_property_type_display(), sort="property_type"),
+            Column("county", gettext_lazy("County"), lambda p: p.county or "—", sort="county", default=False),
+            Column("building", gettext_lazy("Building SF"), lambda p: f"{p.building_area_sf:,.0f}" if p.building_area_sf else "—", sort="building_area_sf", cls="num"),
+            Column("land", gettext_lazy("Land SF"), lambda p: f"{p.land_area_sf:,.0f}" if p.land_area_sf else "—", sort="land_area_sf", cls="num", default=False),
+            Column("owner", gettext_lazy("Owner"), lambda p: p.ownership_entity or p.owner or "—", default=False),
+            Column("deals", gettext_lazy("Deals"), lambda p: p.deal_links.count(), cls="num"),
+            Column("updated", gettext_lazy("Updated"), lambda p: timezone.localtime(p.updated_at).strftime("%b %-d, %Y"), sort="updated_at"),
         ],
         search_fields=["name", "street", "city", "county", "parcels__parcel_id", "ownership_entity", "notes"],
         filters=[
-            Filter("type", "Type", PROPERTY_TYPES, lambda qs, v: qs.filter(property_type=v)),
-            Filter("city", "City", [(c, c) for c in Property.objects.values_list("city", flat=True).distinct().order_by("city")],
+            Filter("type", gettext_lazy("Type"), PROPERTY_TYPES, lambda qs, v: qs.filter(property_type=v)),
+            Filter("city", gettext_lazy("City"), [(c, c) for c in Property.objects.values_list("city", flat=True).distinct().order_by("city")],
                    lambda qs, v: qs.filter(city=v)),
         ],
         default_sort="name",
@@ -43,8 +44,8 @@ def property_list(request):
     if request.GET.get("export") == "csv":
         return listing.export_csv("properties")
     actions = [("New property", reverse("property_create"))] if has_perm(request.user, "edit") else []
-    return render(request, "core/list_page.html", {"listing": listing, "title": "Properties", "actions": actions,
-                                                   "subtitle": "Every property evaluated, marketed, negotiated, leased, purchased, sold or closed. History is kept when deals end."})
+    return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Properties"), "actions": actions,
+                                                   "subtitle": gettext_lazy("Every property evaluated, marketed, negotiated, leased, purchased, sold or closed. History is kept when deals end.")})
 
 
 @require_edit_on_post
@@ -57,7 +58,7 @@ def property_form(request, pk=None):
     if request.method == "POST" and form.is_valid():
         obj = form.save()
         audit(request.user, "property.updated" if prop else "property.created", obj, diff(obj, before, TRACKED) if prop else None)
-        messages.success(request, "Property saved.")
+        messages.success(request, gettext_lazy("Property saved."))
         return redirect(obj)
     return render(request, "form.html", {"form": form, "title": f"Edit {prop}" if prop else "New property",
                                          "back_url": prop.get_absolute_url() if prop else reverse("property_list")})
@@ -140,8 +141,8 @@ def property_archive(request, pk):
         messages.success(request, f"{prop} archived. Its deals and history are unchanged and it can be restored from Settings.")
         return redirect("property_list")
     return render(request, "confirm.html", {"title": f"Archive {prop}", "back_url": prop.get_absolute_url(),
-                                            "message": "Archiving hides the property from active lists. Deal history, documents and facts are preserved and the property can be restored.",
-                                            "reason_required": True, "submit_label": "Archive"})
+                                            "message": gettext_lazy("Archiving hides the property from active lists. Deal history, documents and facts are preserved and the property can be restored."),
+                                            "reason_required": True, "submit_label": gettext_lazy("Archive")})
 
 
 def property_link(p):

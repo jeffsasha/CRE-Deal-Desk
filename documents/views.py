@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit
 from core.jobs import run_job
@@ -57,23 +58,23 @@ def document_list(request):
     listing = Listing(
         request, qs, area="documents",
         columns=[
-            Column("title", "Document", lambda d: d.title, sort="title"),
-            Column("category", "Category", lambda d: d.get_category_display(), sort="category"),
-            Column("type", "Type", lambda d: d.get_doc_type_display() + ("" if d.doc_type_confirmed else " (suggested)"), sort="doc_type"),
-            Column("linked", "Linked to", lambda d: ", ".join(str(l.target) for l in d.links.all()[:3]) or "—"),
-            Column("exec", "Execution", lambda d: d.current_version.get_execution_status_display() if d.current_version else "—"),
-            Column("ocr", "Text / OCR", lambda d: d.current_version.get_text_status_display() if d.current_version else "—", default=False),
-            Column("versions", "Versions", lambda d: d.versions.count(), cls="num", default=False),
-            Column("tags", "Tags", lambda d: d.tags or "", default=False),
-            Column("access", "Access", lambda d: "Confidential" if d.access_level == "confidential" else "", default=False),
-            Column("updated", "Updated", lambda d: timezone.localtime(d.updated_at).strftime("%b %-d, %Y"), sort="updated_at"),
+            Column("title", gettext_lazy("Document"), lambda d: d.title, sort="title"),
+            Column("category", gettext_lazy("Category"), lambda d: d.get_category_display(), sort="category"),
+            Column("type", gettext_lazy("Type"), lambda d: d.get_doc_type_display() + ("" if d.doc_type_confirmed else " (suggested)"), sort="doc_type"),
+            Column("linked", gettext_lazy("Linked to"), lambda d: ", ".join(str(l.target) for l in d.links.all()[:3]) or "—"),
+            Column("exec", gettext_lazy("Execution"), lambda d: d.current_version.get_execution_status_display() if d.current_version else "—"),
+            Column("ocr", gettext_lazy("Text / OCR"), lambda d: d.current_version.get_text_status_display() if d.current_version else "—", default=False),
+            Column("versions", gettext_lazy("Versions"), lambda d: d.versions.count(), cls="num", default=False),
+            Column("tags", gettext_lazy("Tags"), lambda d: d.tags or "", default=False),
+            Column("access", gettext_lazy("Access"), lambda d: "Confidential" if d.access_level == "confidential" else "", default=False),
+            Column("updated", gettext_lazy("Updated"), lambda d: timezone.localtime(d.updated_at).strftime("%b %-d, %Y"), sort="updated_at"),
         ],
         search_fields=["title", "tags", "description", "versions__full_text", "versions__original_filename"],
         filters=[
-            Filter("category", "Category", CATEGORIES, lambda qs, v: qs.filter(category=v)),
-            Filter("type", "Type", DOC_TYPES, lambda qs, v: qs.filter(doc_type=v)),
-            Filter("execution", "Execution", EXECUTION_STATUSES, lambda qs, v: qs.filter(versions__execution_status=v)),
-            Filter("summary", "Origin", [("original", "Originals"), ("generated", "Generated summaries")],
+            Filter("category", gettext_lazy("Category"), CATEGORIES, lambda qs, v: qs.filter(category=v)),
+            Filter("type", gettext_lazy("Type"), DOC_TYPES, lambda qs, v: qs.filter(doc_type=v)),
+            Filter("execution", gettext_lazy("Execution"), EXECUTION_STATUSES, lambda qs, v: qs.filter(versions__execution_status=v)),
+            Filter("summary", gettext_lazy("Origin"), [("original", "Originals"), ("generated", "Generated summaries")],
                    lambda qs, v: qs.filter(is_generated_summary=(v == "generated"))),
         ],
         default_sort="-updated_at",
@@ -83,8 +84,8 @@ def document_list(request):
     actions = [("Review queue", reverse("review_queue"))]
     if has_perm(request.user, "edit"):
         actions.append(("Upload", reverse("document_upload")))
-    return render(request, "core/list_page.html", {"listing": listing, "title": "Documents", "actions": actions,
-                                                   "subtitle": "Search covers titles, tags and the full text of uploaded documents (including OCR)."})
+    return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Documents"), "actions": actions,
+                                                   "subtitle": gettext_lazy("Search covers titles, tags and the full text of uploaded documents (including OCR).")})
 
 
 def _process(request, version, extract):
@@ -122,16 +123,16 @@ def document_upload(request):
             version.refresh_from_db()
             run = version.extraction_runs.first()
             if run and run.status == "succeeded" and run.fields.exists():
-                messages.success(request, "Uploaded. Proposed terms are ready for your review.")
+                messages.success(request, gettext_lazy("Uploaded. Proposed terms are ready for your review."))
                 return redirect("extraction_review", run.pk)
             if run and run.status == "failed":
                 messages.error(request, f"Extraction failed: {run.error}. The file is stored; enter terms manually.")
             elif job.status == "failed":
-                messages.error(request, "Processing failed; the original file is stored safely. You can retry or work manually.")
+                messages.error(request, gettext_lazy("Processing failed; the original file is stored safely. You can retry or work manually."))
             else:
-                messages.success(request, "Uploaded.")
+                messages.success(request, gettext_lazy("Uploaded."))
             return redirect(version.document)
-    return render(request, "form.html", {"form": form, "title": "Upload document", "back_url": reverse("document_list"),
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Upload document"), "back_url": reverse("document_list"),
                                          "subtitle": f"Extraction engine: {extraction_engine_label()}. Uploaded files are never treated as executed until you confirm execution."})
 
 
@@ -157,11 +158,11 @@ def document_file(request, token):
     try:
         data = read_token(token)
     except signing.SignatureExpired:
-        raise PermissionDenied("This download link has expired. Open the document again for a new link.")
+        raise PermissionDenied(gettext_lazy("This download link has expired. Open the document again for a new link."))
     except signing.BadSignature:
         raise Http404
     if not request.user.is_authenticated or request.user.pk != data["u"]:
-        raise PermissionDenied("This link was issued to a different user.")
+        raise PermissionDenied(gettext_lazy("This link was issued to a different user."))
     version = get_object_or_404(DocumentVersion.objects.select_related("document"), pk=data["v"])
     _check_access(request.user, version.document)
     if version.document.archived_at and not has_perm(request.user, "document.archive"):
@@ -193,7 +194,7 @@ def document_new_version(request, pk):
         _process(request, version, d["extract"])
         messages.success(request, f"Version {version.version} uploaded. Earlier versions are preserved.")
     else:
-        messages.error(request, "Choose a file to upload.")
+        messages.error(request, gettext_lazy("Choose a file to upload."))
     return redirect(doc)
 
 
@@ -274,14 +275,14 @@ def document_archive(request, pk):
     if request.method == "POST":
         if doc.archived_at:
             services.restore_document(doc, request.user)
-            messages.success(request, "Document restored.")
+            messages.success(request, gettext_lazy("Document restored."))
         else:
             services.archive_document(doc, request.user, request.POST.get("reason", ""))
-            messages.success(request, "Document archived. The file and its history are retained and can be restored.")
+            messages.success(request, gettext_lazy("Document archived. The file and its history are retained and can be restored."))
         return redirect(doc)
     return render(request, "confirm.html", {"title": f"Archive {doc}", "back_url": doc.get_absolute_url(),
-                                            "message": "Archiving hides the document. The original file, versions and extraction history are kept; nothing is deleted.",
-                                            "reason_required": True, "submit_label": "Archive document", "danger": True})
+                                            "message": gettext_lazy("Archiving hides the document. The original file, versions and extraction history are kept; nothing is deleted."),
+                                            "reason_required": True, "submit_label": gettext_lazy("Archive document"), "danger": True})
 
 
 # --- Review ---------------------------------------------------------------------
@@ -380,7 +381,7 @@ def manual_field(request, version_pk):
         except ValidationError as exc:
             messages.error(request, " ".join(exc.messages))
     else:
-        messages.error(request, "Enter a field and a value.")
+        messages.error(request, gettext_lazy("Enter a field and a value."))
     run = version.extraction_runs.first()
     return redirect("extraction_review", run.pk) if run else redirect(version.document)
 
@@ -476,7 +477,7 @@ def deal_notes(request, pk):
         from .processing import read_text
 
         read_text(version)
-        messages.success(request, "Notes stored as an original text document and linked to the deal.")
+        messages.success(request, gettext_lazy("Notes stored as an original text document and linked to the deal."))
         return redirect(f"{deal.get_absolute_url()}?tab=documents")
     return render(request, "form.html", {"form": form, "title": f"Paste historical notes — {deal.name}",
                                          "back_url": f"{deal.get_absolute_url()}?tab=documents"})

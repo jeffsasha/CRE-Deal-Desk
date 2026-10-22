@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Checklist templates{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Checklist templates" %}{% endblock %}
 {% block content %}
-<div class="crumbs"><a href="{% url 'settings_index' %}">← Settings</a></div>
-<div class="page-head"><div><h1>Checklist templates</h1><div class="sub">Editable. Items with a condition become Not Applicable (with a reason) when the condition does not apply to a deal.</div></div></div>
+<div class="crumbs"><a href="{% url 'settings_index' %}">← {% translate "Settings" %}</a></div>
+<div class="page-head"><div><h1>{% translate "Checklist templates" %}</h1><div class="sub">{% translate "Editable. Items with a condition become Not Applicable (with a reason) when the condition does not apply to a deal." %}</div></div></div>
 {% for t in templates %}
-<div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ t.name }}</h2><div class="actions"><small class="muted">{{ t.transaction_types|join:", " }}</small>{% if can.settings_manage %}<a class="btn btn-sm" href="{% url 'template_item_create' t.pk %}">Add item</a>{% endif %}</div></div>
-<details><summary style="padding:8px 14px;cursor:pointer">{{ t.items.all|length }} items</summary>
-<div class="card-body flush table-wrap"><table class="t"><tbody>{% regroup t.items.all by category as cats %}{% for c in cats %}<tr><td colspan="3"><strong>{{ c.grouper }}</strong></td></tr>{% for i in c.list %}<tr><td style="padding-left:24px">{% if can.settings_manage %}<a href="{% url 'template_item_edit' t.pk i.pk %}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}</td><td>{% if i.condition %}<span class="tag">if: {{ i.get_condition_display }}</span>{% endif %}</td><td class="num"><small class="muted">{{ i.order }}</small></td></tr>{% endfor %}{% endfor %}</tbody></table></div></details></div>
+<div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ t.name }}</h2><div class="actions"><small class="muted">{{ t.transaction_types|join:", " }}</small>{% if can.settings_manage %}<a class="btn btn-sm" href="{% url 'template_item_create' t.pk %}">{% translate "Add item" %}</a>{% endif %}</div></div>
+<details><summary style="padding:8px 14px;cursor:pointer">{{ t.items.all|length }} {% translate "items" %}</summary>
+<div class="card-body flush table-wrap"><table class="t"><tbody>{% regroup t.items.all by category as cats %}{% for c in cats %}<tr><td colspan="3"><strong>{{ c.grouper }}</strong></td></tr>{% for i in c.list %}<tr><td style="padding-left:24px">{% if can.settings_manage %}<a href="{% url 'template_item_edit' t.pk i.pk %}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}</td><td>{% if i.condition %}<span class="tag">{% translate "if" %}: {{ i.get_condition_display }}</span>{% endif %}</td><td class="num"><small class="muted">{{ i.order }}</small></td></tr>{% endfor %}{% endfor %}</tbody></table></div></details></div>
 {% endfor %}
 {% endblock %}

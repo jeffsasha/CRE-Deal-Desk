@@ -1,11 +1,11 @@
-<div class="actions" style="margin-bottom:10px">{% if can.commission_edit %}<a class="btn btn-primary" href="{% url 'commission_create' %}?deal={{ deal.pk }}">New commission agreement</a>{% endif %}</div>
+{% load i18n %}<div class="actions" style="margin-bottom:10px">{% if can.commission_edit %}<a class="btn btn-primary" href="{% url 'commission_create' %}?deal={{ deal.pk }}">{% translate "New commission agreement" %}</a>{% endif %}</div>
 {% for a, s in agreements %}
-<div class="card" style="margin-bottom:12px"><div class="card-head"><h2><a href="{{ a.get_absolute_url }}">{{ a.title }}</a></h2>{% pill "active" s.status %}</div>
+<div class="card" style="margin-bottom:12px"><div class="card-head"><h2><a href="{{ a.get_absolute_url }}">{{ a.title }}</a></h2>{% pill "active" s.status|tr %}</div>
 <div class="card-body"><div class="grid grid-4">
-  <div class="metric"><div class="label">Gross commission</div><div class="value sm">{{ s.gross|money }}</div></div>
-  <div class="metric"><div class="label">SKW share</div><div class="value sm">{{ s.skw_share|money }}</div></div>
-  <div class="metric"><div class="label">Cash received by SKW</div><div class="value sm">{{ s.received|money }}</div></div>
-  <div class="metric"><div class="label">Designated broker paid / allocated</div><div class="value sm">{{ s.designated_broker_paid|money }}</div><div class="note">of {{ s.designated_broker_allocated|money }}</div></div>
+  <div class="metric"><div class="label">{% translate "Gross commission" %}</div><div class="value sm">{{ s.gross|money }}</div></div>
+  <div class="metric"><div class="label">{% translate "SKW share" %}</div><div class="value sm">{{ s.skw_share|money }}</div></div>
+  <div class="metric"><div class="label">{% translate "Cash received by SKW" %}</div><div class="value sm">{{ s.received|money }}</div></div>
+  <div class="metric"><div class="label">{% translate "Designated broker paid / allocated" %}</div><div class="value sm">{{ s.designated_broker_paid|money }}</div><div class="note">{% translate "of" %} {{ s.designated_broker_allocated|money }}</div></div>
 </div>
-{% for w in s.warnings %}<div class="notice notice-warn" style="margin-top:10px">{{ w }}</div>{% endfor %}</div></div>
-{% empty %}<div class="card"><div class="empty">No commission agreement recorded. The commission for this deal is <strong>unknown</strong> — not zero.</div></div>{% endfor %}
+{% for w in s.warnings %}<div class="notice notice-warn" style="margin-top:10px">{{ w|tr }}</div>{% endfor %}</div></div>
+{% empty %}<div class="card"><div class="empty">{% translate "No commission agreement recorded. The commission for this deal is" %} <strong>{% translate "unknown" %}</strong> — {% translate "not zero." %}</div></div>{% endfor %}

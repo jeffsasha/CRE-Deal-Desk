@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit
 from deals.catalog import term_label
@@ -64,9 +65,9 @@ EXECUTION_USER_CHOICES = {"draft", "partially_signed", "confirmed_executed", "no
 @transaction.atomic
 def set_execution_status(version, status, actor, evidence=""):
     if status not in EXECUTION_USER_CHOICES:
-        raise ValidationError("Choose a valid execution status.")
+        raise ValidationError(gettext_lazy("Choose a valid execution status."))
     if status == "confirmed_executed" and not evidence.strip():
-        raise ValidationError("Describe how execution was confirmed (e.g. 'fully signed copy received from title 3/4').")
+        raise ValidationError(gettext_lazy("Describe how execution was confirmed (e.g. 'fully signed copy received from title 3/4')."))
     old = version.execution_status
     version.execution_status = status
     version.execution_evidence = evidence
@@ -86,13 +87,13 @@ def set_execution_status(version, status, actor, evidence=""):
 
 def review_field(field, actor, action, value="", note=""):
     if field.published_at:
-        raise ValidationError("This value is already published. Changes go through an amendment or a new term.")
+        raise ValidationError(gettext_lazy("This value is already published. Changes go through an amendment or a new term."))
     if action == "reject":
         field.review_status = "rejected"
     elif action in {"accept", "edit"}:
         candidate = value if action == "edit" else field.proposed_value
         if not (candidate or "").strip():
-            raise ValidationError("A value is required. Enter the value from the document or reject the proposal.")
+            raise ValidationError(gettext_lazy("A value is required. Enter the value from the document or reject the proposal."))
         try:
             if field.key == "effective_date":
                 parse_date(candidate)
@@ -109,7 +110,7 @@ def review_field(field, actor, action, value="", note=""):
     elif action == "needs_review":
         field.review_status = "needs_review"
     else:
-        raise ValidationError("Unknown review action.")
+        raise ValidationError(gettext_lazy("Unknown review action."))
     field.review_note = note
     field.reviewer = actor
     field.reviewed_at = timezone.now()
@@ -144,16 +145,16 @@ def publish(run, deal, actor, replace_conflicts=False):
     version = run.version
     doc = version.document
     if not _deal_linked(version, deal):
-        raise ValidationError("Link this document to the deal before publishing.")
+        raise ValidationError(gettext_lazy("Link this document to the deal before publishing."))
     if doc.doc_type in AMENDING_DOC_TYPES:
-        raise ValidationError("This is an amendment or extension. Use 'Prepare amendment' to compare and apply it.")
+        raise ValidationError(gettext_lazy("This is an amendment or extension. Use 'Prepare amendment' to compare and apply it."))
     if doc.doc_type not in CONTRACT_DOC_TYPES:
         raise ValidationError(
             f"{doc.get_doc_type_display()} values are not contract terms. Confirm the document type if it is a contract."
         )
     if not version.is_executed:
         raise ValidationError(
-            "Execution of this document has not been confirmed. Its terms remain proposals and are not published."
+            gettext_lazy("Execution of this document has not been confirmed. Its terms remain proposals and are not published.")
         )
     fields = list(run.fields.filter(review_status__in=["accepted", "edited"], published_at__isnull=True))
     pending = run.fields.filter(review_status__in=["pending", "needs_review"]).count()
@@ -197,12 +198,12 @@ def prepare_amendment(run, deal, actor):
     version = run.version
     doc = version.document
     if not _deal_linked(version, deal):
-        raise ValidationError("Link this document to the deal first.")
+        raise ValidationError(gettext_lazy("Link this document to the deal first."))
     if doc.doc_type not in AMENDING_DOC_TYPES:
-        raise ValidationError("Only amendment or extension documents can be prepared as amendments.")
+        raise ValidationError(gettext_lazy("Only amendment or extension documents can be prepared as amendments."))
     fields = list(run.fields.filter(review_status__in=["accepted", "edited"]))
     if not fields:
-        raise ValidationError("Accept or edit at least one proposed change before preparing the amendment.")
+        raise ValidationError(gettext_lazy("Accept or edit at least one proposed change before preparing the amendment."))
     active = deal.active_terms()
     changes, overrides = [], {}
     for f in fields:
@@ -245,7 +246,7 @@ def refresh_preview(amendment):
 @transaction.atomic
 def apply_amendment(amendment, actor):
     if amendment.status != "proposed":
-        raise ValidationError("This amendment is not pending.")
+        raise ValidationError(gettext_lazy("This amendment is not pending."))
     version = DocumentVersion.objects.get(pk=amendment.version_id)
     if not version.is_executed:
         raise ValidationError(

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
@@ -12,10 +13,10 @@ class User(AbstractUser):
     ROLE_COORDINATOR = "coordinator"
     ROLE_READ_ONLY = "read_only"
     ROLE_CHOICES = [
-        (ROLE_ADMIN, "Administrator"),
-        (ROLE_BROKER, "Broker"),
-        (ROLE_COORDINATOR, "Coordinator"),
-        (ROLE_READ_ONLY, "Read-only"),
+        (ROLE_ADMIN, _("Administrator")),
+        (ROLE_BROKER, _("Broker")),
+        (ROLE_COORDINATOR, _("Coordinator")),
+        (ROLE_READ_ONLY, _("Read-only")),
     ]
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_READ_ONLY)

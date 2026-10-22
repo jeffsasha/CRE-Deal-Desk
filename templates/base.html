@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}DealDesk{% endblock %} · SKW DealDesk</title>
+  <title>{% block title %}DealDesk{% endblock %} · {% translate "SKW DealDesk" %}</title>
   {% include "partials/theme_head.html" %}
   <link rel="stylesheet" href="{% asset 'css/app.css' %}">
 </head>
@@ -38,7 +38,7 @@
     <header class="topbar">
       <button class="icon-btn menu-toggle" data-toggle-nav aria-label="{% translate "Menu" %}">{% icon "menu" %}</button>
       <button class="search-trigger" type="button" data-cmdk-open aria-label="{% translate "Search and commands" %}">
-        {% icon "search" %}<span>{% translate "Search or jump to…" %}</span><span class="kbd">⌘K</span>
+        {% icon "search" %}<span>{% translate "Search or jump to…" %}</span><span class="kbd">{% translate "⌘K" %}</span>
       </button>
       <div class="spacer"></div>
       {% include "partials/lang_switch.html" %}

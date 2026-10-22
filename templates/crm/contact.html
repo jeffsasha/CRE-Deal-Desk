@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}{{ c.full_name }}{% endblock %}
 {% block content %}
-<div class="crumbs"><a href="{% url 'contact_list' %}">Contacts</a> / {{ c.full_name }}</div>
+<div class="crumbs"><a href="{% url 'contact_list' %}">{% translate "Contacts" %}</a> / {{ c.full_name }}</div>
 <div class="page-head"><div><h1>{{ c.full_name }}</h1><div class="sub">{{ c.title }}{% if c.organization %} · <a href="{{ c.organization.get_absolute_url }}">{{ c.organization }}</a>{% endif %}{% if c.roles %} · {{ c.roles }}{% endif %}</div></div>
-{% if can.edit %}<div class="actions"><a class="btn" href="{% url 'contact_edit' c.pk %}">Edit</a><a class="btn btn-danger" href="{% url 'archive_party' 'contact' c.pk %}">Archive</a></div>{% endif %}</div>
-<div class="split"><div class="card"><div class="card-head"><h2>Deals</h2></div><div class="card-body flush"><table class="t"><tbody>
-{% for p in parties %}<tr><td><a href="{{ p.deal.get_absolute_url }}">{{ p.deal }}</a></td><td>{{ p.get_role_display }}</td><td>{% pill p.deal.stage.category p.deal.stage.name %}</td></tr>{% empty %}<tr><td><div class="empty">Not a party on any deal.</div></td></tr>{% endfor %}
+{% if can.edit %}<div class="actions"><a class="btn" href="{% url 'contact_edit' c.pk %}">{% translate "Edit" %}</a><a class="btn btn-danger" href="{% url 'archive_party' 'contact' c.pk %}">{% translate "Archive" %}</a></div>{% endif %}</div>
+<div class="split"><div class="card"><div class="card-head"><h2>{% translate "Deals" %}</h2></div><div class="card-body flush"><table class="t"><tbody>
+{% for p in parties %}<tr><td><a href="{{ p.deal.get_absolute_url }}">{{ p.deal }}</a></td><td>{{ p.get_role_display }}</td><td>{% pill p.deal.stage.category p.deal.stage.name %}</td></tr>{% empty %}<tr><td><div class="empty">{% translate "Not a party on any deal." %}</div></td></tr>{% endfor %}
 </tbody></table></div></div>
-<div class="card"><div class="card-head"><h2>Contact details</h2>{% if c.is_confidential_client %}<span class="tag">Client</span>{% endif %}</div><div class="card-body">
-{% if show %}<table class="kv"><tr><th>Email</th><td>{% if c.email %}<a href="mailto:{{ c.email }}">{{ c.email }}</a>{% else %}—{% endif %}</td></tr><tr><th>Phone</th><td>{{ c.phone|default:"—" }}</td></tr><tr><th>Mobile</th><td>{{ c.mobile|default:"—" }}</td></tr><tr><th>Address</th><td>{{ c.street }} {{ c.city }} {{ c.state }} {{ c.postal_code }}</td></tr></table>{% if c.notes %}<hr><div style="white-space:pre-wrap">{{ c.notes }}</div>{% endif %}
-{% else %}<div class="notice notice-info">{% icon "lock" %} Client contact details are restricted for your role.</div>{% endif %}
+<div class="card"><div class="card-head"><h2>{% translate "Contact details" %}</h2>{% if c.is_confidential_client %}<span class="tag">{% translate "Client" %}</span>{% endif %}</div><div class="card-body">
+{% if show %}<table class="kv"><tr><th>{% translate "Email" %}</th><td>{% if c.email %}<a href="mailto:{{ c.email }}">{{ c.email }}</a>{% else %}—{% endif %}</td></tr><tr><th>{% translate "Phone" %}</th><td>{{ c.phone|default:"—" }}</td></tr><tr><th>{% translate "Mobile" %}</th><td>{{ c.mobile|default:"—" }}</td></tr><tr><th>{% translate "Address" %}</th><td>{{ c.street }} {{ c.city }} {{ c.state }} {{ c.postal_code }}</td></tr></table>{% if c.notes %}<hr><div style="white-space:pre-wrap">{{ c.notes }}</div>{% endif %}
+{% else %}<div class="notice notice-info">{% icon "lock" %} {% translate "Client contact details are restricted for your role." %}</div>{% endif %}
 </div></div></div>
 {% endblock %}

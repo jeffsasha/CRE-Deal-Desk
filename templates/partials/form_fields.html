@@ -3,8 +3,8 @@
 <div class="form-grid">
 {% for f in form.visible_fields %}
   <div class="field {% if f.field.widget.input_type == 'checkbox' %}check{% endif %} {% if f.field.widget.attrs.full or f.field.widget.input_type == 'textarea' or f.name in form.full_width %}full{% endif %}">
-    {% if f.field.widget.input_type == 'checkbox' %}{{ f }}<label for="{{ f.id_for_label }}">{{ f.label }}</label>
-    {% else %}<label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} *{% endif %}</label>{{ f }}{% endif %}
+    {% if f.field.widget.input_type == 'checkbox' %}{{ f }}<label for="{{ f.id_for_label }}">{{ f.label|tr }}</label>
+    {% else %}<label for="{{ f.id_for_label }}">{{ f.label|tr }}{% if f.field.required %} *{% endif %}</label>{{ f }}{% endif %}
     {% if f.help_text %}<div class="help">{{ f.help_text|safe }}</div>{% endif %}
     {% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}
   </div>

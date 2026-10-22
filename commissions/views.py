@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext, gettext_lazy
 
 from core.audit import audit, diff, snapshot
 from core.listing import Column, Filter, Listing
@@ -31,20 +32,20 @@ def commission_list(request):
     listing = Listing(
         request, qs, area="commissions",
         columns=[
-            Column("title", "Agreement", lambda a: a.title, sort="title"),
-            Column("deal", "Deal", lambda a: a.deal.name, sort="deal__name"),
-            Column("side", "Side", lambda a: a.get_represented_side_display(), sort="represented_side"),
-            Column("gross", "Gross", lambda a: format_cents(s(a).gross), cls="num"),
-            Column("skw", "SKW share", lambda a: format_cents(s(a).skw_share), cls="num"),
-            Column("earned", "Earned", lambda a: s(a).earned.display() if s(a).earned.count else "—", cls="num"),
-            Column("received", "Received", lambda a: format_cents(s(a).received), cls="num"),
-            Column("outstanding", "Outstanding", lambda a: format_cents(s(a).outstanding), cls="num"),
-            Column("db", "Designated broker paid", lambda a: format_cents(s(a).designated_broker_paid), cls="num", default=False),
-            Column("status", "Status", lambda a: s(a).status),
-            Column("dist", "Distributions", lambda a: s(a).distribution_status, default=False),
+            Column("title", gettext_lazy("Agreement"), lambda a: a.title, sort="title"),
+            Column("deal", gettext_lazy("Deal"), lambda a: a.deal.name, sort="deal__name"),
+            Column("side", gettext_lazy("Side"), lambda a: a.get_represented_side_display(), sort="represented_side"),
+            Column("gross", gettext_lazy("Gross"), lambda a: format_cents(s(a).gross), cls="num"),
+            Column("skw", gettext_lazy("SKW share"), lambda a: format_cents(s(a).skw_share), cls="num"),
+            Column("earned", gettext_lazy("Earned"), lambda a: s(a).earned.display() if s(a).earned.count else "—", cls="num"),
+            Column("received", gettext_lazy("Received"), lambda a: format_cents(s(a).received), cls="num"),
+            Column("outstanding", gettext_lazy("Outstanding"), lambda a: format_cents(s(a).outstanding), cls="num"),
+            Column("db", gettext_lazy("Designated broker paid"), lambda a: format_cents(s(a).designated_broker_paid), cls="num", default=False),
+            Column("status", gettext_lazy("Status"), lambda a: gettext(s(a).status)),
+            Column("dist", gettext_lazy("Distributions"), lambda a: gettext(s(a).distribution_status), default=False),
         ],
         search_fields=["title", "deal__name", "payer_name", "payer__name"],
-        filters=[Filter("status", "Agreement", CommissionAgreement.STATUSES, lambda qs, v: qs.filter(status=v))],
+        filters=[Filter("status", gettext_lazy("Agreement"), CommissionAgreement.STATUSES, lambda qs, v: qs.filter(status=v))],
         default_sort="-created_at",
     )
     if request.GET.get("export") == "csv":
@@ -58,25 +59,25 @@ def ledger_list(request):
     listing = Listing(
         request, qs, area="ledger",
         columns=[
-            Column("date", "Date", lambda e: e.entry_date.strftime("%Y-%m-%d"), sort="entry_date"),
-            Column("type", "Type", lambda e: e.get_entry_type_display().split(" —")[0], sort="entry_type"),
-            Column("amount", "Amount", lambda e: format_cents(e.amount_cents), cls="num", sort="amount_cents"),
-            Column("deal", "Deal", lambda e: e.agreement.deal.name),
-            Column("recipient", "Recipient", lambda e: e.allocation.recipient_name if e.allocation else ""),
-            Column("reference", "Reference", lambda e: e.reference),
-            Column("rev", "Reversal", lambda e: f"Reverses #{e.reverses_id}" if e.reverses_id else ("Reversed" if e.is_reversed else "")),
-            Column("by", "Entered by", lambda e: e.created_by or "Import", default=False),
+            Column("date", gettext_lazy("Date"), lambda e: e.entry_date.strftime("%Y-%m-%d"), sort="entry_date"),
+            Column("type", gettext_lazy("Type"), lambda e: e.get_entry_type_display().split(" —")[0], sort="entry_type"),
+            Column("amount", gettext_lazy("Amount"), lambda e: format_cents(e.amount_cents), cls="num", sort="amount_cents"),
+            Column("deal", gettext_lazy("Deal"), lambda e: e.agreement.deal.name),
+            Column("recipient", gettext_lazy("Recipient"), lambda e: e.allocation.recipient_name if e.allocation else ""),
+            Column("reference", gettext_lazy("Reference"), lambda e: e.reference),
+            Column("rev", gettext_lazy("Reversal"), lambda e: f"Reverses #{e.reverses_id}" if e.reverses_id else ("Reversed" if e.is_reversed else "")),
+            Column("by", gettext_lazy("Entered by"), lambda e: e.created_by or "Import", default=False),
             Column("id", "#", lambda e: e.pk, default=False),
         ],
         search_fields=["reference", "notes", "agreement__deal__name", "allocation__recipient_name"],
-        filters=[Filter("type", "Type", LedgerEntry.TYPES, lambda qs, v: qs.filter(entry_type=v))],
+        filters=[Filter("type", gettext_lazy("Type"), LedgerEntry.TYPES, lambda qs, v: qs.filter(entry_type=v))],
         default_sort="-entry_date",
         row_url=lambda e: e.agreement.get_absolute_url(),
     )
     if request.GET.get("export") == "csv":
         return listing.export_csv("commission-ledger")
-    return render(request, "core/list_page.html", {"listing": listing, "title": "Commission ledger",
-                                                   "subtitle": "Every cash movement. Entries are never edited; corrections are reversals.",
+    return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Commission ledger"),
+                                                   "subtitle": gettext_lazy("Every cash movement. Entries are never edited; corrections are reversals."),
                                                    "actions": [("Agreements", reverse("commission_list"))]})
 
 
@@ -90,9 +91,9 @@ def agreement_form(request, pk=None):
         a = form.save()
         audit(request.user, "commission.agreement_saved", a, diff(a, before, AGREEMENT_TRACKED) if obj else {"created": a.title})
         if not obj:
-            messages.info(request, "Agreement saved. Next, record the division of the gross commission (including SKW's share) and the installments.")
+            messages.info(request, gettext_lazy("Agreement saved. Next, record the division of the gross commission (including SKW's share) and the installments."))
         return redirect(a)
-    return render(request, "form.html", {"form": form, "title": "Edit commission agreement" if obj else "New commission agreement",
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit commission agreement") if obj else "New commission agreement",
                                          "back_url": obj.get_absolute_url() if obj else reverse("commission_list")})
 
 
@@ -148,7 +149,7 @@ def entry_create(request, pk):
             services.record_entry(a, request.user, entry_type=d["entry_type"], amount_cents=d["amount"],
                                   entry_date=d["entry_date"], installment=d["installment"], allocation=d["allocation"],
                                   reference=d["reference"], proof_document=d["proof_document"], notes=d["notes"])
-            messages.success(request, "Ledger entry recorded.")
+            messages.success(request, gettext_lazy("Ledger entry recorded."))
             return redirect(a)
         except ValidationError as exc:
             form.add_error(None, " ".join(exc.messages))
@@ -162,7 +163,7 @@ def entry_reverse(request, pk):
     if request.method == "POST" and form.is_valid():
         try:
             services.reverse_entry(entry, request.user, form.cleaned_data["entry_date"], form.cleaned_data["reason"])
-            messages.success(request, "Reversal recorded. The original entry is unchanged.")
+            messages.success(request, gettext_lazy("Reversal recorded. The original entry is unchanged."))
             return redirect(entry.agreement)
         except ValidationError as exc:
             form.add_error(None, " ".join(exc.messages))
@@ -180,4 +181,4 @@ def agreement_archive(request, pk):
         audit(request.user, "commission.agreement_archived", a, note=request.POST.get("reason", ""))
         return redirect("commission_list")
     return render(request, "confirm.html", {"title": f"Archive {a}", "back_url": a.get_absolute_url(), "reason_required": True,
-                                            "message": "Archived agreements are excluded from reports but kept with their ledger; they can be restored."})
+                                            "message": gettext_lazy("Archived agreements are excluded from reports but kept with their ledger; they can be restored.")})

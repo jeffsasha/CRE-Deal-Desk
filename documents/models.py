@@ -6,79 +6,80 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core.models import Archivable, TimeStamped
 
 User = settings.AUTH_USER_MODEL
 
 CATEGORIES = [
-    ("contract", "Contract"),
-    ("amendment", "Amendment / extension"),
-    ("loi", "LOI"),
-    ("lease", "Lease"),
-    ("commission_agreement", "Commission agreement"),
-    ("title", "Title"),
-    ("survey", "Survey"),
-    ("inspection", "Inspection / physical"),
-    ("environmental", "Environmental"),
-    ("insurance", "Property insurance"),
-    ("financing", "Financing"),
-    ("closing", "Closing"),
-    ("correspondence", "Correspondence"),
-    ("marketing", "Marketing / brochure"),
-    ("photo", "Photo"),
-    ("floor_plan", "Floor plan"),
-    ("report", "Report"),
-    ("historical_notes", "Historical notes"),
-    ("entity", "Entity / authority"),
-    ("other", "Other"),
+    ("contract", _("Contract")),
+    ("amendment", _("Amendment / extension")),
+    ("loi", _("LOI")),
+    ("lease", _("Lease")),
+    ("commission_agreement", _("Commission agreement")),
+    ("title", _("Title")),
+    ("survey", _("Survey")),
+    ("inspection", _("Inspection / physical")),
+    ("environmental", _("Environmental")),
+    ("insurance", _("Property insurance")),
+    ("financing", _("Financing")),
+    ("closing", _("Closing")),
+    ("correspondence", _("Correspondence")),
+    ("marketing", _("Marketing / brochure")),
+    ("photo", _("Photo")),
+    ("floor_plan", _("Floor plan")),
+    ("report", _("Report")),
+    ("historical_notes", _("Historical notes")),
+    ("entity", _("Entity / authority")),
+    ("other", _("Other")),
 ]
 
 DOC_TYPES = [
-    ("unknown", "Unknown"),
-    ("purchase_contract", "Purchase and sale contract"),
-    ("lease", "Lease"),
-    ("loi", "Letter of intent"),
-    ("amendment", "Amendment"),
-    ("extension", "Extension"),
-    ("commission_agreement", "Commission agreement"),
-    ("title_commitment", "Title commitment"),
-    ("owner_title_policy", "Owner's title insurance policy"),
-    ("lender_title_policy", "Lender's title insurance policy"),
-    ("survey", "Survey"),
-    ("inspection_report", "Inspection report"),
-    ("environmental_report", "Environmental report"),
-    ("insurance", "Property / casualty insurance"),
-    ("closing_statement", "Closing statement"),
-    ("deed", "Deed"),
-    ("correspondence", "Correspondence"),
-    ("other", "Other"),
+    ("unknown", _("Unknown")),
+    ("purchase_contract", _("Purchase and sale contract")),
+    ("lease", _("Lease")),
+    ("loi", _("Letter of intent")),
+    ("amendment", _("Amendment")),
+    ("extension", _("Extension")),
+    ("commission_agreement", _("Commission agreement")),
+    ("title_commitment", _("Title commitment")),
+    ("owner_title_policy", _("Owner's title insurance policy")),
+    ("lender_title_policy", _("Lender's title insurance policy")),
+    ("survey", _("Survey")),
+    ("inspection_report", _("Inspection report")),
+    ("environmental_report", _("Environmental report")),
+    ("insurance", _("Property / casualty insurance")),
+    ("closing_statement", _("Closing statement")),
+    ("deed", _("Deed")),
+    ("correspondence", _("Correspondence")),
+    ("other", _("Other")),
 ]
 CONTRACT_DOC_TYPES = {"purchase_contract", "lease", "amendment", "extension", "commission_agreement"}
 AMENDING_DOC_TYPES = {"amendment", "extension"}
 
 EXECUTION_STATUSES = [
-    ("unknown", "Unknown"),
-    ("draft", "Draft / unsigned"),
-    ("partially_signed", "Partially signed"),
-    ("appears_executed", "Appears executed (not confirmed)"),
-    ("confirmed_executed", "Execution confirmed by user"),
-    ("not_applicable", "Not applicable"),
+    ("unknown", _("Unknown")),
+    ("draft", _("Draft / unsigned")),
+    ("partially_signed", _("Partially signed")),
+    ("appears_executed", _("Appears executed (not confirmed)")),
+    ("confirmed_executed", _("Execution confirmed by user")),
+    ("not_applicable", _("Not applicable")),
 ]
 
 TEXT_STATUSES = [
-    ("pending", "Pending"),
-    ("text_layer", "Text extracted"),
-    ("ocr_complete", "OCR complete"),
-    ("partial_ocr", "Partially OCR'd"),
-    ("ocr_unavailable", "Scanned — OCR engine unavailable"),
-    ("failed", "Failed"),
-    ("not_applicable", "Not applicable"),
+    ("pending", _("Pending")),
+    ("text_layer", _("Text extracted")),
+    ("ocr_complete", _("OCR complete")),
+    ("partial_ocr", _("Partially OCR'd")),
+    ("ocr_unavailable", _("Scanned — OCR engine unavailable")),
+    ("failed", _("Failed")),
+    ("not_applicable", _("Not applicable")),
 ]
 
 
 class Document(TimeStamped, Archivable):
-    ACCESS = [("standard", "Standard"), ("confidential", "Confidential (brokers and admins)")]
+    ACCESS = [("standard", _("Standard")), ("confidential", _("Confidential (brokers and admins)"))]
 
     title = models.CharField(max_length=255)
     category = models.CharField(max_length=30, choices=CATEGORIES, default="other")
@@ -192,15 +193,15 @@ class DocumentVersion(models.Model):
 
 class ExtractionRun(models.Model):
     ENGINES = [
-        ("claude", "Claude (AI extraction)"),
-        ("pattern", "Offline pattern extractor"),
-        ("manual", "Manual entry"),
+        ("claude", _("Claude (AI extraction)")),
+        ("pattern", _("Offline pattern extractor")),
+        ("manual", _("Manual entry")),
     ]
     STATUSES = [
-        ("queued", "Queued"),
-        ("running", "Running"),
-        ("succeeded", "Proposals ready for review"),
-        ("failed", "Failed"),
+        ("queued", _("Queued")),
+        ("running", _("Running")),
+        ("succeeded", _("Proposals ready for review")),
+        ("failed", _("Failed")),
     ]
 
     version = models.ForeignKey(DocumentVersion, on_delete=models.CASCADE, related_name="extraction_runs")
@@ -227,14 +228,14 @@ class ExtractionRun(models.Model):
 
 class ExtractedField(models.Model):
     REVIEW = [
-        ("pending", "Pending review"),
-        ("needs_review", "Needs review"),
-        ("accepted", "Accepted"),
-        ("edited", "Accepted with edits"),
-        ("rejected", "Rejected"),
+        ("pending", _("Pending review")),
+        ("needs_review", _("Needs review")),
+        ("accepted", _("Accepted")),
+        ("edited", _("Accepted with edits")),
+        ("rejected", _("Rejected")),
     ]
-    CONFIDENCE = [("high", "High"), ("medium", "Medium"), ("low", "Low")]
-    BASIS = [("explicit", "Explicit in document"), ("calculated", "Calculated / inferred")]
+    CONFIDENCE = [("high", _("High")), ("medium", _("Medium")), ("low", _("Low"))]
+    BASIS = [("explicit", _("Explicit in document")), ("calculated", _("Calculated / inferred"))]
 
     run = models.ForeignKey(ExtractionRun, on_delete=models.CASCADE, related_name="fields")
     key = models.CharField(max_length=60)
@@ -278,9 +279,9 @@ class Amendment(TimeStamped):
     applies it."""
 
     STATUSES = [
-        ("proposed", "Proposed — not effective"),
-        ("applied", "Applied"),
-        ("rejected", "Rejected / withdrawn"),
+        ("proposed", _("Proposed — not effective")),
+        ("applied", _("Applied")),
+        ("rejected", _("Rejected / withdrawn")),
     ]
 
     deal = models.ForeignKey("deals.Deal", on_delete=models.CASCADE, related_name="amendments")

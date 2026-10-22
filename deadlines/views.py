@@ -6,6 +6,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit
 from core.listing import Column, Filter, Listing
@@ -47,25 +48,25 @@ def deadline_list(request):
     listing = Listing(
         request, qs, area="deadlines",
         columns=[
-            Column("name", "Deadline", lambda d: d.name, sort="name"),
-            Column("deal", "Deal", lambda d: format_html('<a href="{}">{}</a>', d.deal.get_absolute_url(), d.deal.name), sort="deal__name"),
-            Column("date", "Date", lambda d: d.current_date.strftime("%a %b %-d, %Y") if d.current_date else d.get_computation_display(), sort="current_date"),
-            Column("time", "Time", lambda d: f"{d.due_time:%-I:%M %p} {d.time_zone}" if d.due_time else "", default=False),
-            Column("category", "Category", lambda d: d.get_category_display(), sort="category"),
-            Column("kind", "Kind", lambda d: "Contractual" if d.is_contractual else "Internal target"),
-            Column("rule", "Rule", lambda d: d.computation_note[:120], default=False),
-            Column("confirmation", "Rule", lambda d: d.get_confirmation_display()),
-            Column("responsible", "Responsible", lambda d: d.responsible_user or d.responsible_party or "—"),
-            Column("state", "Status", lambda d: d.get_state_display() if d.state != "open" else d.get_computation_display(), sort="state"),
+            Column("name", gettext_lazy("Deadline"), lambda d: d.name, sort="name"),
+            Column("deal", gettext_lazy("Deal"), lambda d: format_html('<a href="{}">{}</a>', d.deal.get_absolute_url(), d.deal.name), sort="deal__name"),
+            Column("date", gettext_lazy("Date"), lambda d: d.current_date.strftime("%a %b %-d, %Y") if d.current_date else d.get_computation_display(), sort="current_date"),
+            Column("time", gettext_lazy("Time"), lambda d: f"{d.due_time:%-I:%M %p} {d.time_zone}" if d.due_time else "", default=False),
+            Column("category", gettext_lazy("Category"), lambda d: d.get_category_display(), sort="category"),
+            Column("kind", gettext_lazy("Kind"), lambda d: "Contractual" if d.is_contractual else "Internal target"),
+            Column("rule", gettext_lazy("Rule"), lambda d: d.computation_note[:120], default=False),
+            Column("confirmation", gettext_lazy("Rule"), lambda d: d.get_confirmation_display()),
+            Column("responsible", gettext_lazy("Responsible"), lambda d: d.responsible_user or d.responsible_party or "—"),
+            Column("state", gettext_lazy("Status"), lambda d: d.get_state_display() if d.state != "open" else d.get_computation_display(), sort="state"),
         ],
         search_fields=["name", "deal__name", "deal__internal_id", "source_clause"],
         filters=[
-            Filter("bucket", "Show", BUCKETS, lambda qs, v: _bucket(qs, v)),
-            Filter("category", "Category", CATEGORIES, lambda qs, v: qs.filter(category=v)),
-            Filter("computation", "Computation", COMPUTATION, lambda qs, v: qs.filter(computation=v)),
-            Filter("responsible", "Responsible", [(str(u.pk), u.display_name) for u in User.objects.exclude(role="read_only")],
+            Filter("bucket", gettext_lazy("Show"), BUCKETS, lambda qs, v: _bucket(qs, v)),
+            Filter("category", gettext_lazy("Category"), CATEGORIES, lambda qs, v: qs.filter(category=v)),
+            Filter("computation", gettext_lazy("Computation"), COMPUTATION, lambda qs, v: qs.filter(computation=v)),
+            Filter("responsible", gettext_lazy("Responsible"), [(str(u.pk), u.display_name) for u in User.objects.exclude(role="read_only")],
                    lambda qs, v: qs.filter(responsible_user_id=v)),
-            Filter("kind", "Kind", [("contract", "Contractual"), ("internal", "Internal targets")],
+            Filter("kind", gettext_lazy("Kind"), [("contract", "Contractual"), ("internal", "Internal targets")],
                    lambda qs, v: qs.filter(is_contractual=(v == "contract"))),
         ],
         default_sort="current_date",
@@ -145,7 +146,7 @@ def deadline_form(request, pk=None):
             from .reminders import sync_reminders
 
             sync_reminders(obj)
-        messages.success(request, "Deadline saved and recomputed.")
+        messages.success(request, gettext_lazy("Deadline saved and recomputed."))
         return redirect(obj)
     return render(request, "deadlines/form.html", {"form": form, "dl": dl, "deal": deal})
 

@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Commissions{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Commissions" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Commissions</h1><div class="sub">Status is derived from agreements, installments and ledger activity — never a checkbox. Unknown amounts stay unknown.</div></div>
-<div class="actions"><a class="btn" href="{% url 'ledger_list' %}">Ledger entries</a><a class="btn" href="{% url 'report_index' %}">Reports</a>{% if can.commission_edit %}<a class="btn btn-primary" href="{% url 'commission_create' %}">New agreement</a>{% endif %}</div></div>
+<div class="page-head"><div><h1>{% translate "Commissions" %}</h1><div class="sub">{% translate "Status is derived from agreements, installments and ledger activity — never a checkbox. Unknown amounts stay unknown." %}</div></div>
+<div class="actions"><a class="btn" href="{% url 'ledger_list' %}">{% translate "Ledger entries" %}</a><a class="btn" href="{% url 'report_index' %}">{% translate "Reports" %}</a>{% if can.commission_edit %}<a class="btn btn-primary" href="{% url 'commission_create' %}">{% translate "New agreement" %}</a>{% endif %}</div></div>
 {% include "partials/listing.html" %}
 {% endblock %}

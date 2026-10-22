@@ -1,0 +1,22 @@
+"""Simplified Chinese translations (batch 5: catalog names)."""
+ZH = {
+    "Access / curb cuts": "通道/路缘开口", "Appraisal received": "已收到估价报告", "Building permit issued": "已获建筑许可",
+    "Certificate of occupancy": "入住许可证", "Clear height": "净高", "Closing occurred": "已交割", "Construction type": "结构类型",
+    "Deed restrictions": "地契限制", "Delivery condition": "交付状态", "Dock-high doors": "码头高度装卸门",
+    "Effective date (as defined in the contract)": "生效日期（按合同定义）", "FEMA flood zone": "FEMA 洪泛区", "FIRM panel": "FIRM 图幅",
+    "Feasibility termination notice delivered": "已送达可行性期终止通知", "Financing approval received": "已获融资批准",
+    "Grade-level doors": "地平装卸门", "Grease trap / interceptor": "隔油池", "Hood": "排烟罩", "Known flood history": "已知淹水记录",
+    "Landlord consent received": "已获业主同意", "Lease fully executed": "租约已全部签署", "Loading doors (total)": "装卸门（总数）",
+    "Map effective date": "地图生效日期", "Parking": "停车", "Parking spaces": "停车位", "Power": "电力", "Premises delivered": "物业已交付",
+    "Roof type / age": "屋顶类型/年限", "Seller due diligence documents delivered": "卖方已交付尽调文件", "Shell vs. second-generation": "毛坯/二手装修",
+    "Signage": "招牌", "Sprinklers": "喷淋系统", "Survey received": "已收到测量报告", "Tenant improvement needs": "装修需求",
+    "Tenant occupancy / opening": "租户入住/开业", "Title / survey objection notice delivered": "已送达产权/测量异议通知",
+    "Title commitment received": "已收到产权承诺书", "Title exception documents received": "已收到产权例外文件",
+    "Truck access / turning radius": "卡车通道/转弯半径", "Utilities (gas, water, electric)": "公用设施（燃气、水、电）",
+    "Water / sewer provider": "供水/排污服务商", "Yard space": "场地面积", "Year built": "建成年份",
+    "Zoning (Houston has no conventional zoning; record the applicable regime)": "分区（休斯顿无传统分区制度；请记录适用规定）",
+    "Contract extraction": "合同提取", "OCR for scanned documents": "扫描件 OCR", "Configured (SMTP)": "已配置（SMTP）",
+    "Not configured — in-app reminders only": "未配置——仅应用内提醒", "Calendar export": "日历导出", "Database": "数据库",
+    "Offline pattern extractor (no AI credential configured)": "离线规则提取器（未配置 AI 凭据）", "macOS Vision (offline)": "macOS Vision（离线）",
+    "Tesseract (offline)": "Tesseract（离线）", "Not available": "不可用",
+}

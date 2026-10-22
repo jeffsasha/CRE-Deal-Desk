@@ -173,3 +173,27 @@ class AcceptanceFlows(DeskTestCase):
         resp = self.client.get(reverse("dashboard"))
         self.assertContains(resp, 'role="progressbar"')
         self.assertContains(resp, "step 7 of 9")
+
+    def test_all_main_pages_render_in_chinese(self):
+        self.client.post(reverse("set_language"), {"language": "zh-hans", "next": "/"})
+        d = Deal.objects.get(name="SAMPLE Gessner warehouse acquisition")
+        p = Property.objects.get(name="SAMPLE 1200 Example Industrial Pkwy")
+        doc = d.document_links.first().document
+        urls = [reverse(n) for n in ["dashboard", "property_list", "deal_list", "deal_board", "deadline_list", "deadline_calendar",
+                                     "checklist_list", "document_list", "review_queue", "contact_list", "commission_list",
+                                     "ledger_list", "report_index", "settings_index", "notifications", "audit_log",
+                                     "import_list", "deal_create", "document_upload", "holiday_list", "template_list"]]
+        urls += [reverse("deal_detail", args=[d.pk]) + f"?tab={t}" for t in
+                 ["overview", "parties", "contract", "checklist", "documents", "issues", "activity", "commissions", "closing"]]
+        urls += [reverse("property_detail", args=[p.pk]) + f"?tab={t}" for t in ["overview", "facts", "pricing", "parcels"]]
+        urls += [reverse("deal_edit", args=[d.pk]), reverse("deal_event", args=[d.pk]), reverse("deal_term", args=[d.pk]),
+                 doc.get_absolute_url(), d.deadlines.first().get_absolute_url(), d.amendments.first().get_absolute_url(),
+                 reverse("commission_detail", args=[d.commission_agreements.first().pk]),
+                 reverse("report_detail", args=["sales"]), reverse("report_detail", args=["outstanding"])]
+        for u in urls:
+            resp = self.client.get(u)
+            self.assertEqual(resp.status_code, 200, u)
+        self.assertContains(self.client.get(reverse("deal_detail", args=[d.pk]) + "?tab=contract"), "已批准的合同条款")
+        self.assertContains(self.client.get(reverse("commission_list")), "佣金")
+        self.assertContains(self.client.get(reverse("deal_edit", args=[d.pk])), "融资状态")  # form label
+        self.assertContains(self.client.get(reverse("deal_detail", args=[d.pk])), "尽职调查")  # stage name

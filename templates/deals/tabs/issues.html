@@ -1,8 +1,8 @@
-<div class="card"><div class="card-head"><h2>Issue register</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'issue_create' %}?deal={{ deal.pk }}">Record issue</a>{% endif %}</div>
+{% load i18n %}<div class="card"><div class="card-head"><h2>{% translate "Issue register" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'issue_create' %}?deal={{ deal.pk }}">{% translate "Record issue" %}</a>{% endif %}</div>
 <div class="card-body flush table-wrap"><table class="t">
-<thead><tr><th>Issue</th><th>Severity</th><th>Status</th><th>Requested remedy</th><th class="num">Requested credit</th><th>Resolution</th><th>Disclosure</th></tr></thead>
+<thead><tr><th>{% translate "Issue" %}</th><th>{% translate "Severity" %}</th><th>{% translate "Status" %}</th><th>{% translate "Requested remedy" %}</th><th class="num">{% translate "Requested credit" %}</th><th>{% translate "Resolution" %}</th><th>{% translate "Disclosure" %}</th></tr></thead>
 <tbody>{% for i in issues %}<tr class="{% if not i.is_open %}row-muted{% endif %}">
-  <td><a href="{{ i.get_absolute_url }}">{{ i.title }}</a><br><small class="muted">{{ i.get_category_display }} · {{ i.discovered_on|d }} · {{ i.statements.all|length }} statement{{ i.statements.all|length|pluralize }}</small></td>
+  <td><a href="{{ i.get_absolute_url }}">{{ i.title }}</a><br><small class="muted">{{ i.get_category_display }} · {{ i.discovered_on|d }} · {{ i.statements.all|length }} {% translate "statement" %}{{ i.statements.all|length|pluralize }}</small></td>
   <td>{% pill i.severity i.get_severity_display %}</td><td>{{ i.get_status_display }}</td><td><small>{{ i.requested_remedy|truncatechars:80 }}</small></td>
   <td class="num">{{ i.requested_credit_cents|money:"—" }}</td><td>{% pill i.resolution_status i.get_resolution_status_display tone="amber" %}</td><td><small>{{ i.get_disclosure_finding_display }}</small></td></tr>
-{% empty %}<tr><td colspan="7"><div class="empty">No issues recorded.</div></td></tr>{% endfor %}</tbody></table></div></div>
+{% empty %}<tr><td colspan="7"><div class="empty">{% translate "No issues recorded." %}</div></td></tr>{% endfor %}</tbody></table></div></div>

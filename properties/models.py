@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from core.choices import PROPERTY_TYPES, RATE_UNITS, VERIFICATION_CHOICES
 from core.models import Archivable, Imported, TimeStamped
@@ -67,12 +68,12 @@ class Parcel(models.Model):
 
 
 class Space(models.Model):
-    STATUS = [("vacant", "Vacant"), ("leased", "Leased"), ("owner_occupied", "Owner-occupied"), ("unknown", "Unknown")]
+    STATUS = [("vacant", _("Vacant")), ("leased", _("Leased")), ("owner_occupied", _("Owner-occupied")), ("unknown", _("Unknown"))]
     CONDITION = [
-        ("unknown", "Unknown"),
-        ("shell", "Shell"),
-        ("second_generation", "Second-generation"),
-        ("built_out", "Built out"),
+        ("unknown", _("Unknown")),
+        ("shell", _("Shell")),
+        ("second_generation", _("Second-generation")),
+        ("built_out", _("Built out")),
     ]
 
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="spaces")
@@ -109,7 +110,7 @@ class RentRollEntry(models.Model):
 class AskingPrice(models.Model):
     """Historical asking price or asking rent. Every change is a new row."""
 
-    KIND = [("asking_price", "Asking price"), ("asking_rent", "Asking rent")]
+    KIND = [("asking_price", _("Asking price")), ("asking_rent", _("Asking rent"))]
 
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="asking_history")
     space = models.ForeignKey(Space, null=True, blank=True, on_delete=models.SET_NULL)
@@ -126,13 +127,13 @@ class AskingPrice(models.Model):
 
 class OperatingCharge(models.Model):
     TYPES = [
-        ("base_rent", "Base rent"),
-        ("nnn", "NNN (combined)"),
-        ("cam", "CAM"),
-        ("taxes", "Taxes"),
-        ("insurance", "Insurance"),
-        ("utilities", "Utilities"),
-        ("other", "Other"),
+        ("base_rent", _("Base rent")),
+        ("nnn", _("NNN (combined)")),
+        ("cam", _("CAM")),
+        ("taxes", _("Taxes")),
+        ("insurance", _("Insurance")),
+        ("utilities", _("Utilities")),
+        ("other", _("Other")),
     ]
 
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="charges")
@@ -151,13 +152,13 @@ class OperatingCharge(models.Model):
 
 
 FACT_CATEGORIES = [
-    ("physical", "Physical"),
-    ("industrial", "Industrial"),
-    ("restaurant_retail", "Restaurant & retail"),
-    ("zoning_use", "Zoning, use & restrictions"),
-    ("flood", "Flood"),
-    ("utilities", "Utilities & access"),
-    ("other", "Other"),
+    ("physical", _("Physical")),
+    ("industrial", _("Industrial")),
+    ("restaurant_retail", _("Restaurant & retail")),
+    ("zoning_use", _("Zoning, use & restrictions")),
+    ("flood", _("Flood")),
+    ("utilities", _("Utilities & access")),
+    ("other", _("Other")),
 ]
 
 # Suggested facts. Users may record any other key as well.
