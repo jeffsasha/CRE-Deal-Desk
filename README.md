@@ -35,13 +35,6 @@ In a second terminal, run the worker (document processing and reminders):
 
 Configuration is read from environment variables; see `.env.example`. For production, set `DJANGO_DEBUG=false`, `DATABASE_URL`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS`, serve over HTTPS behind a reverse proxy, run `collectstatic`, and schedule `manage.py backup` daily.
 
-## Production hosting
-
-For a production deployment with PostgreSQL and persistent private uploads, see
-[Deploy on Render](docs/DEPLOY_RENDER.md). The repository includes a Dockerfile and
-`render.yaml`; creating the cloud resources requires a connected Render account
-and approval of its paid resource charges.
-
 ## Demo mode
 
 ```bash
@@ -103,5 +96,5 @@ See [REQUIREMENTS.md](REQUIREMENTS.md) for the requirements checklist, and [docs
 
 - **Claude extraction** needs an `ANTHROPIC_API_KEY`. The integration is implemented against the current SDK (structured outputs, PDF input, refusal fallback) but has **not been exercised against the live API** here. Until a key is set, the offline extractor runs.
 - **Email reminders** need SMTP settings. Until then they are recorded as failed delivery, and in-app reminders still go out.
-- **Hosting:** production configuration is provided for Render; the cloud resources, initial administrator, live verification and daily off-service backups still need to be set up.
+- **Hosting:** a production server (HTTPS, PostgreSQL, worker process, daily backups) is not yet set up.
 - **Real data:** your actual transaction records have not been loaded. Use Settings → Historical imports or manual entry.
