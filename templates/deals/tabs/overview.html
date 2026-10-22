@@ -1,5 +1,13 @@
 {% load i18n %}<div class="split">
   <div class="stack">
+    {% if listing.show %}
+    <div class="card"><div class="card-head"><h2>{% translate "Listing" %}</h2>{% if can.edit %}<a class="btn btn-sm {% if not deal.listing_date %}btn-primary{% endif %}" href="{% url 'deal_listing' deal.pk %}">{% if deal.listing_date or deal.asking_price_cents is not None %}{% translate "Edit listing" %}{% else %}{% translate "Enter listing details" %}{% endif %}</a>{% endif %}</div>
+      <div class="card-body"><div class="cm-figures">
+        <div><div class="k">{% translate "Asking" %}</div><div class="v">{{ listing.asking|default:"—" }}</div></div>
+        <div><div class="k">{% translate "Listed on" %}</div><div class="v">{{ deal.listing_date|d }}</div>{% if listing.dom is not None and not listing.contract %}<small class="muted">{% blocktranslate count n=listing.dom %}{{ n }} day on market{% plural %}{{ n }} days on market{% endblocktranslate %}</small>{% endif %}</div>
+        <div><div class="k">{% translate "Listing agreement expires" %}</div><div class="v">{{ deal.listing_expires_on|d }}</div>{% if deal.listing_expires_on and not listing.contract %}<small class="muted">{{ deal.listing_expires_on|relday }}</small>{% endif %}</div>
+      </div></div></div>
+    {% endif %}
     <div class="card"><div class="card-head"><h2>{% translate "Key dates" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_key_dates' deal.pk %}">{% if tl.start %}{% translate "Edit key dates" %}{% else %}{% translate "Enter key dates" %}{% endif %}</a>{% endif %}</div>
       <div class="card-body">
         {% include "partials/timeline.html" %}

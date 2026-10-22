@@ -10,6 +10,8 @@ Keep this file current so later stages don't silently drop off. It is also shown
 - [x] Commission shown only as SKW's expected and received amount per deal; payments recorded and reversed on the immutable ledger; broker splits hidden
 - [x] Harvard palette (Crimson on parchment; warm charcoal dark mode), never pure white or black
 - [x] Contract upload, OCR and AI extraction removed (no uploaded files existed in the real database)
+- [x] Listings (seller / landlord side, before Under Contract): Listed stage, listing date, asking price or rent with unit, listing agreement expiration as a calendar deadline; dashboard shows Under Contract above Listings
+- [x] Date pickers always use ISO values, so dates are kept when the interface is in Chinese
 
 ## Stage 1 — Foundations
 - [x] Separate entities: Property, Space/Suite, Deal, Organization, Contact, Document (versioned), Deadline, Checklist item, Commission agreement / installment / allocation / ledger entry

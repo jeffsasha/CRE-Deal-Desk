@@ -71,7 +71,7 @@ class AcceptanceFlows(DeskTestCase):
         open_deals = [r["deal"] for r in data["progress"]["rows"]]
         expected = [simple.for_deal(d).expected for d in open_deals]
         self.assertEqual(data["fin"]["expected"], sum(x for x in expected if x is not None))
-        self.assertEqual(data["fin"]["expected_unknown"], 1)
+        self.assertEqual(data["fin"]["expected_unknown"], 3)  # Harbor Cafe, Memorial lease, medical search
         receipts = sum(c for e, kind, c, _a in effective_entries(LedgerEntry.objects.all())
                        if kind == "receipt" and e.entry_date.year == self.today.year)
         self.assertEqual(data["fin"]["received_year"], receipts)
@@ -130,3 +130,76 @@ class AcceptanceFlows(DeskTestCase):
         self.assertContains(self.client.get(reverse("deal_key_dates", args=[d.pk])), "关键日期")
         self.assertContains(self.client.get(reverse("deal_edit", args=[d.pk])), "融资状态")  # form label
         self.assertContains(self.client.get(reverse("deal_detail", args=[d.pk])), "尽职调查")  # stage name
+
+
+class ListingTests(DeskTestCase):
+    def setUp(self):
+        from datetime import date
+
+        from deals.models import Representation
+
+        self.date = date
+        self.broker = self.user("broker")
+        self.client.force_login(self.broker)
+        self.listing = self.deal("Listing deal", stage="listed", transaction_type="sale", actor=self.broker)
+        Representation.objects.create(deal=self.listing, side="seller", is_skw=True)
+        self.buyer = self.deal("Buyer search", stage="touring", transaction_type="purchase", actor=self.broker)
+        Representation.objects.create(deal=self.buyer, side="buyer", is_skw=True)
+        self.contract = self.deal("Contract deal", stage="under_contract", transaction_type="sale", actor=self.broker)
+        Representation.objects.create(deal=self.contract, side="seller", is_skw=True)
+
+    def test_sections(self):
+        p = dashboard.deal_progress()
+        self.assertEqual([r["deal"].name for r in p["contract"]], ["Contract deal"])
+        self.assertEqual([r["deal"].name for r in p["listings"]], ["Listing deal"])
+        self.assertEqual([r["deal"].name for r in p["searches"]], ["Buyer search"])
+        html = self.client.get(reverse("dashboard")).content.decode()
+        self.assertLess(html.index("Under Contract"), html.index("Listings"))  # listings sit below
+
+    def test_listing_form_creates_expiration_deadline(self):
+        url = reverse("deal_listing", args=[self.listing.pk])
+        resp = self.client.post(url, {"listing_date": "2026-03-01", "listing_expires_on": "2026-02-01",
+                                      "asking_price": "", "asking_price_unit": "usd_total"})
+        self.assertContains(resp, "cannot expire before it was listed")
+        self.client.post(url, {"listing_date": "2026-03-01", "listing_expires_on": "2026-09-01",
+                               "asking_price": "2,450,000", "asking_price_unit": "usd_total"})
+        self.listing.refresh_from_db()
+        self.assertEqual(self.listing.asking_price_cents, 245_000_000)
+        dl = self.listing.deadlines.get(template_key="listing_expiration")
+        self.assertEqual((dl.current_date, dl.state), (self.date(2026, 9, 1), "open"))
+        self.assertTrue(self.listing.price_events.filter(kind="asking", amount_cents=245_000_000).exists())
+        # Moving the expiration recomputes the same deadline; clearing it cancels (keeps) it.
+        self.client.post(url, {"listing_date": "2026-03-01", "listing_expires_on": "2026-12-01",
+                               "asking_price": "2,450,000", "asking_price_unit": "usd_total"})
+        dl.refresh_from_db()
+        self.assertEqual(dl.current_date, self.date(2026, 12, 1))
+        self.client.post(url, {"listing_date": "2026-03-01", "listing_expires_on": "",
+                               "asking_price": "28.50", "asking_price_unit": "usd_sf_year"})
+        dl.refresh_from_db()
+        self.assertEqual(dl.state, "cancelled")
+        from deals import listing
+
+        self.listing.refresh_from_db()
+        self.assertEqual(listing.asking_display(self.listing), "$28.50/SF/yr")
+
+    def test_going_under_contract_moves_section(self):
+        from deals.models import Stage
+
+        self.listing.stage = Stage.objects.get(key="under_contract")
+        self.listing.save()
+        p = dashboard.deal_progress()
+        self.assertIn("Listing deal", [r["deal"].name for r in p["contract"]])
+        self.assertNotIn("Listing deal", [r["deal"].name for r in p["listings"]])
+
+    def test_dates_survive_chinese_interface(self):
+        """Date pickers need ISO values in every language, or saving clears the date."""
+        from deals import keydates
+
+        self.client.post(reverse("set_language"), {"language": "zh-hans", "next": "/"})
+        self.listing.listing_date = self.date(2026, 3, 1)
+        self.listing.save()
+        keydates.save(self.contract, {"effective_date": self.date(2026, 3, 4), "feasibility_days": 30,
+                                      "closing_mode": "days", "closing_days": 60}, self.broker)
+        self.assertContains(self.client.get(reverse("deal_listing", args=[self.listing.pk])), 'value="2026-03-01"')
+        self.assertContains(self.client.get(reverse("deal_key_dates", args=[self.contract.pk])), 'value="2026-03-04"')
+        self.assertContains(self.client.get(reverse("deal_close", args=[self.contract.pk])), 'type="date"')

@@ -4,7 +4,8 @@ A private commercial real estate transaction workspace for SKW Realty LLC. It ke
 
 How it works day to day:
 
-- **Dashboard:** one timeline per open deal — Effective Date → Feasibility Period → Closing Date (Commencement Date for leases) — with today's position, the next milestone and SKW's expected / received Commission.
+- **Dashboard, top to bottom:** **Under Contract** — one timeline per deal (Effective Date → Feasibility Period → Closing Date, or Commencement Date for leases) with today's position, the next milestone and SKW's Commission; **Listings** — every property SKW has on the market for a seller or landlord, with asking price, days on market and listing expiration (red within 30 days); then buyer / tenant searches not yet under contract.
+- **Listings:** a deal where SKW represents the seller or landlord and that is not yet Under Contract (new stage **Listed**). Enter the listing date, asking price or rent and the listing agreement expiration; the expiration goes on the calendar with reminders. When the deal goes Under Contract it moves up to the timeline section.
 - **Key dates:** on each deal, enter the Effective Date and the contract periods by hand (Feasibility Period in days; Closing Date as a fixed date or days after the Effective Date). The rule engine calculates the dates: calendar days, the Effective Date itself not counted, weekends and holidays moved only when you tick that the contract says so. Changes keep their history.
 - **Commission:** per deal, only SKW's expected amount and the payments received. A wrong payment is reversed, never deleted.
 
@@ -74,7 +75,7 @@ Demo mode uses its own database and storage (`var-demo/`). It loads a handful of
 .venv/bin/python manage.py test tests
 ```
 
-There are 94 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), SKW Commission entry and reversal, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
+There are 98 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), SKW Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
 
 ## Languages (中 / EN)
 

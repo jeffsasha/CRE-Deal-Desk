@@ -1,8 +1,9 @@
 from django import forms
 from django.utils.translation import gettext_lazy
 
+from core.choices import RATE_UNITS
 from core.fields import MoneyField, MoneyModelFormMixin
-from core.forms import LocalizedForm, StyledModelForm
+from core.forms import DateInput, LocalizedForm, StyledModelForm
 from core.models import User
 from crm.models import Contact, Organization
 from properties.models import Property
@@ -272,7 +273,7 @@ class DraftForm(StyledModelForm):
 
 
 class CloseDealForm(LocalizedForm):
-    actual_closing_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
+    actual_closing_date = forms.DateField(widget=DateInput())
     total = MoneyField(label="Actual total consideration (deal level)",
                        help_text="Counted once in volume reports, regardless of how many properties or sides. Blank = unknown.")
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}),
@@ -369,16 +370,16 @@ class NewDealForm(LocalizedForm):
 class KeyDatesForm(LocalizedForm):
     """Effective Date plus contract periods; deadlines are computed from these."""
 
-    effective_date = forms.DateField(label="Effective Date", required=False, widget=forms.DateInput(attrs={"type": "date"}),
+    effective_date = forms.DateField(label="Effective Date", required=False, widget=DateInput(),
                                      help_text="As defined in the executed contract.")
     feasibility_days = forms.IntegerField(label="Feasibility Period (days)", required=False, min_value=0,
                                           help_text="Calendar days after the Effective Date.")
     closing_mode = forms.ChoiceField(label="Closing Date is", initial="days", widget=forms.RadioSelect,
                                      choices=[("days", "Days after the Effective Date"), ("date", "A fixed date")])
     closing_days = forms.IntegerField(label="Closing (days after Effective Date)", required=False, min_value=0)
-    closing_date = forms.DateField(label="Closing Date", required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    closing_date = forms.DateField(label="Closing Date", required=False, widget=DateInput())
     commencement_date = forms.DateField(label="Commencement Date", required=False,
-                                        widget=forms.DateInput(attrs={"type": "date"}))
+                                        widget=DateInput())
     next_business_day = forms.BooleanField(
         label="Contract moves a deadline on a weekend or holiday to the next business day", required=False)
 
@@ -403,5 +404,21 @@ class SkwCommissionForm(LocalizedForm):
 
 class ReceiptForm(LocalizedForm):
     amount = MoneyField(label="Amount received", required=True)
-    entry_date = forms.DateField(label="Date received", widget=forms.DateInput(attrs={"type": "date"}))
+    entry_date = forms.DateField(label="Date received", widget=DateInput())
     reference = forms.CharField(label="Check / wire reference", required=False, max_length=120)
+
+
+class ListingForm(LocalizedForm):
+    listing_date = forms.DateField(label="Listed on", required=False, widget=DateInput())
+    listing_expires_on = forms.DateField(label="Listing agreement expires", required=False,
+                                         widget=DateInput(),
+                                         help_text="Added to the calendar with reminders.")
+    asking_price = MoneyField(label="Asking price / rent", help_text="Blank = not set.")
+    asking_price_unit = forms.ChoiceField(label="Unit", choices=RATE_UNITS, initial="usd_total")
+
+    def clean(self):
+        data = super().clean()
+        if data.get("listing_date") and data.get("listing_expires_on") and data["listing_expires_on"] < data["listing_date"]:
+            self.add_error("listing_expires_on", gettext_lazy("The listing cannot expire before it was listed."))
+        data["asking_price_cents"] = data.get("asking_price")
+        return data

@@ -7,11 +7,20 @@ from .models import Holiday, User
 
 
 class DateInput(forms.DateInput):
+    """Browser date picker. The value must be ISO (YYYY-MM-DD) whatever the interface
+    language, or the browser shows an empty field and the date is lost on save."""
+
     input_type = "date"
+
+    def __init__(self, attrs=None, format="%Y-%m-%d"):
+        super().__init__(attrs=attrs, format=format)
 
 
 class TimeInput(forms.TimeInput):
     input_type = "time"
+
+    def __init__(self, attrs=None, format="%H:%M"):
+        super().__init__(attrs=attrs, format=format)
 
 
 def localize_fields(form):

@@ -600,3 +600,9 @@ html[lang^="zh"] body { font-family: "Inter", -apple-system, "PingFang SC", "Hir
 .search-trigger { min-width: 0; }
 .search-trigger > span:not(.kbd) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 @media (max-width: 420px) { .topbar { gap: 6px; } .topbar .theme-toggle { display: none; } }
+
+/* Dashboard section counts and listing table */
+.count-badge { display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px; margin-left: 6px; border-radius: 9px; background: var(--surface-3); color: var(--text-2); font-size: 11px; font-weight: 600; vertical-align: 1px; }
+.listing-table td { padding-top: 11px; padding-bottom: 11px; }
+.page-head .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.expires-soon, .expires-soon small { color: var(--red-fg) !important; font-weight: 600; }

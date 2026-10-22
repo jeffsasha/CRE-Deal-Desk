@@ -33,7 +33,7 @@ def deal_progress(kind="all", with_commission=False):
     Feasibility Period → Closing Date, or Commencement for leases) and, if allowed,
     SKW's expected and received commission."""
     from commissions import simple
-    from deals import keydates
+    from deals import keydates, listing
     from deals.models import BUSINESS_TYPES, LEASE_TYPES, SALE_TYPES
 
     path = list(Stage.objects.filter(enabled=True, category__in=[Stage.CATEGORY_ACTIVE, Stage.CATEGORY_CLOSED])
@@ -44,7 +44,7 @@ def deal_progress(kind="all", with_commission=False):
     types = {"sale": SALE_TYPES, "lease": LEASE_TYPES, "business": BUSINESS_TYPES}.get(kind)
     if types:
         deals = deals.filter(transaction_type__in=types)
-    deals = list(deals.select_related("stage"))
+    deals = list(deals.select_related("stage").prefetch_related("representations"))
     today = timezone.localdate()
     key_by_deal = {}
     for d in Deadline.objects.filter(deal__in=deals, state="open", template_key__in=keydates.KEY_TEMPLATES):
@@ -60,10 +60,17 @@ def deal_progress(kind="all", with_commission=False):
             "stage_no": (current + 1) if current is not None else None, "stage_total": len(path),
             "next": nxt, "next_soon": bool(nxt and nxt["days_left"] is not None and nxt["days_left"] <= 7),
             "skw": simple.for_deal(deal) if with_commission else None,
+            "section": listing.section(deal), "property": deal.primary_property,
+            "asking": listing.asking_display(deal), "dom": listing.days_on_market(deal, today),
+            "expires_soon": bool(deal.listing_expires_on and (deal.listing_expires_on - today).days <= 30),
         })
     far = today + timedelta(days=99999)
     rows.sort(key=lambda r: (r["on_hold"], r["next"]["date"] if r["next"] else far, -r["position"]))
-    return {"rows": rows, "path": path, "kinds": PROGRESS_KINDS, "kind": kind}
+    listings = sorted((r for r in rows if r["section"] == "listing"),
+                      key=lambda r: (r["on_hold"], r["deal"].listing_expires_on or far, r["deal"].name))
+    return {"rows": rows, "path": path, "kinds": PROGRESS_KINDS, "kind": kind,
+            "contract": [r for r in rows if r["section"] == "contract"], "listings": listings,
+            "searches": [r for r in rows if r["section"] == "search"]}
 
 
 def build(user, params):

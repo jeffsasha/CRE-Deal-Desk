@@ -13,7 +13,7 @@ from checklists.services import apply_template, template_for
 from commissions import simple
 from core.models import User
 from crm.models import Contact, Organization
-from deals import keydates
+from deals import keydates, listing
 from deals import services as deal_services
 from deals.models import DealParty, Representation, Stage
 from properties.models import Property
@@ -104,4 +104,25 @@ def seed(today=None, log=print):
     deal_services.close_deal(d6, broker, actual_closing_date=ago(35), total_cents=640_000_000)
     simple.record_receipt(d6, 4_800_000, ago(33), broker, reference="Wire SAMPLE-001")
     simple.record_receipt(d6, 4_800_000, ago(5), broker, reference="Check SAMPLE-1042")
+
+    # 7. Listings: on the market, SKW representing the seller / landlord.
+    for n in ["Westheimer Pad Owner", "Memorial Office Partners", "Katy Flex Holdings", "Clinic Group"]:
+        clients[n] = Organization.objects.create(name=f"SAMPLE {n} (Demo)", org_type="client_entity")
+    l1 = _deal(broker, "SAMPLE Westheimer retail pad sale", _prop("SAMPLE 4100 Westheimer Rd", "4100 Westheimer Rd", "retail"),
+               "sale", "listed", "seller", clients["Westheimer Pad Owner"])
+    listing.save(l1, {"listing_date": ago(64), "listing_expires_on": ahead(20), "asking_price_cents": 245_000_000,
+                      "asking_price_unit": "usd_total"}, broker)
+    simple.set_expected(l1, 7_350_000, broker)
+    l2 = _deal(broker, "SAMPLE Memorial office suite lease", _prop("SAMPLE 9 Memorial City Way", "9 Memorial City Way", "office"),
+               "lease", "listed", "landlord", clients["Memorial Office Partners"])
+    listing.save(l2, {"listing_date": ago(21), "listing_expires_on": ahead(160), "asking_price_cents": 2_850,
+                      "asking_price_unit": "usd_sf_year"}, broker)
+    l3 = _deal(broker, "SAMPLE Katy flex building sale", _prop("SAMPLE 2200 Katy Fwy", "2200 Katy Fwy", "industrial"),
+               "sale", "loi", "seller", clients["Katy Flex Holdings"])
+    listing.save(l3, {"listing_date": ago(90), "listing_expires_on": ahead(90), "asking_price_cents": 590_000_000,
+                      "asking_price_unit": "usd_total"}, broker)
+    simple.set_expected(l3, 17_700_000, broker)
+
+    # 8. A buyer search not yet under contract.
+    _deal(broker, "SAMPLE Medical office search", None, "purchase", "touring", "buyer", clients["Clinic Group"])
     log("Sample deals created.")

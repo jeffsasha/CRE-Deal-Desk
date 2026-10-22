@@ -29,6 +29,10 @@ Dates are relative to the day the demo was seeded.
 | SAMPLE Kirby dental suite lease | Lease timeline: Effective Date → Commencement Date |
 | SAMPLE Harbor Cafe business sale | Key dates and Commission not entered yet |
 | SAMPLE Bayou warehouse purchase | On hold (listed last) |
+| SAMPLE Westheimer retail pad sale | Listing: asking $2,450,000, listing expires in 20 days (shown in red) |
+| SAMPLE Memorial office suite lease | Listing for lease: asking rent in $/SF/yr, Commission not entered |
+| SAMPLE Katy flex building sale | Listing at the LOI stage (still a listing until Under Contract) |
+| SAMPLE Medical office search | Buyer search, shown below the listings |
 | SAMPLE Example Industrial sale | Closed; Commission received in two payments (Commissions → Closed); the same property also shows an earlier terminated deal |
 
 Sign in as `demo-viewer` to see the read-only view: no edit controls and no Commission figures.

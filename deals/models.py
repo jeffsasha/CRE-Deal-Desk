@@ -50,6 +50,7 @@ class Stage(models.Model):
 DEFAULT_STAGES = [
     ("lead", "Lead", "active", False),
     ("evaluating", "Evaluating", "active", False),
+    ("listed", "Listed", "active", False),
     ("touring", "Touring", "active", False),
     ("loi", "LOI", "active", False),
     ("negotiating", "Negotiating", "active", False),
@@ -144,6 +145,12 @@ class Deal(TimeStamped, Archivable, Imported):
     blocked_by = models.CharField("Blocked by (party)", max_length=255, blank=True)
     blocker_description = models.TextField(blank=True)
     termination_reason = models.TextField("Termination / lost reason", blank=True)
+
+    # Listing (SKW represents the seller / landlord and the property is on the market).
+    listing_date = models.DateField("Listed on", null=True, blank=True)
+    listing_expires_on = models.DateField("Listing agreement expires", null=True, blank=True)
+    asking_price_cents = models.BigIntegerField("Asking price / rent", null=True, blank=True)
+    asking_price_unit = models.CharField(max_length=20, choices=RATE_UNITS, default="usd_total", blank=True)
 
     class Meta:
         ordering = ["-updated_at"]

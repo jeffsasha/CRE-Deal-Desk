@@ -187,6 +187,11 @@ def deal_create(request):
     form = NewDealForm(request.POST or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         deal = services.create_guided_deal(request.user, form.cleaned_data)
+        from . import listing
+
+        if listing.section(deal) == "listing":
+            messages.success(request, _("Deal %(id)s created. Enter the listing details.") % {"id": deal.internal_id})
+            return redirect("deal_listing", pk=deal.pk)
         messages.success(request, _("Deal %(id)s created. Enter its key dates.") % {"id": deal.internal_id})
         return redirect("deal_key_dates", pk=deal.pk)
     return render(request, "deals/new.html", {
@@ -229,7 +234,7 @@ def deal_detail(request, pk):
     open_items = deal.checklist_items.filter(status__in=["not_started", "requested", "in_progress", "received", "under_review", "blocked"])
     from commissions import simple
 
-    from . import keydates
+    from . import keydates, listing
 
     key = keydates.key_deadlines(deal)
     ctx = {
@@ -239,6 +244,8 @@ def deal_detail(request, pk):
         "tl": keydates.timeline(deal, key, today),
         "other_deadlines": [d for d in deadlines if d.state == "open" and d.template_key not in keydates.KEY_TEMPLATES],
         "skw": simple.for_deal(deal) if has_perm(request.user, "commission.view") else None,
+        "listing": {"show": listing.is_listing_side(deal), "asking": listing.asking_display(deal),
+                    "dom": listing.days_on_market(deal, today), "contract": listing.under_contract(deal)},
         "open_item_count": open_items.count(),
         "blocked_items": open_items.filter(status="blocked"),
         "stage_form": StageChangeForm(initial={"stage": deal.stage}),
@@ -641,3 +648,21 @@ def deal_receipt_reverse(request, pk, entry):
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
     return redirect(deal)
+
+
+@require_edit_on_post
+def deal_listing(request, pk):
+    from . import listing
+    from .forms import ListingForm
+
+    require(request.user, "edit")
+    deal = get_object_or_404(Deal, pk=pk)
+    initial = {"listing_date": deal.listing_date, "listing_expires_on": deal.listing_expires_on,
+               "asking_price": deal.asking_price_cents, "asking_price_unit": deal.asking_price_unit or "usd_total"}
+    form = ListingForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        listing.save(deal, form.cleaned_data, request.user)
+        messages.success(request, gettext_lazy("Listing details saved."))
+        return redirect(deal)
+    return render(request, "form.html", {"form": form, "title": _("Listing details"), "subtitle": deal.name,
+                                         "back_url": deal.get_absolute_url(), "max_width": "640px"})
