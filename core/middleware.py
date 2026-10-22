@@ -1,6 +1,6 @@
 from django.contrib.auth.views import redirect_to_login
 
-OPEN_PATH_PREFIXES = ("/accounts/login", "/static/", "/calendar/feed/")
+OPEN_PATH_PREFIXES = ("/accounts/login", "/static/", "/calendar/feed/", "/i18n/")
 
 
 class LoginRequiredMiddleware:

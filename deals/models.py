@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core.choices import RATE_UNITS, REPRESENTED_SIDES, TIME_ZONES
 from core.money import format_cents
@@ -71,15 +72,15 @@ def ensure_default_stages():
 
 
 TRANSACTION_TYPES = [
-    ("purchase", "Purchase / acquisition"),
-    ("sale", "Sale / listing disposition"),
-    ("land_purchase", "Land acquisition"),
-    ("land_sale", "Land sale"),
-    ("lease", "Commercial lease"),
-    ("lease_renewal", "Lease renewal"),
-    ("lease_expansion", "Lease expansion"),
-    ("lease_assignment", "Lease assignment"),
-    ("business_asset", "Business asset sale"),
+    ("purchase", _("Purchase / acquisition")),
+    ("sale", _("Sale / listing disposition")),
+    ("land_purchase", _("Land acquisition")),
+    ("land_sale", _("Land sale")),
+    ("lease", _("Commercial lease")),
+    ("lease_renewal", _("Lease renewal")),
+    ("lease_expansion", _("Lease expansion")),
+    ("lease_assignment", _("Lease assignment")),
+    ("business_asset", _("Business asset sale")),
 ]
 SALE_TYPES = {"purchase", "sale", "land_purchase", "land_sale"}
 LEASE_TYPES = {"lease", "lease_renewal", "lease_expansion", "lease_assignment"}

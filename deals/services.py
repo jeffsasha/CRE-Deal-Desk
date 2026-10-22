@@ -258,3 +258,75 @@ def create_deal(actor, *, properties=(), **fields):
     audit(actor, "deal.created", deal, {"stage": deal.stage.name, "type": deal.get_transaction_type_display()})
     log_activity(deal, "Deal created", actor=actor)
     return deal
+
+
+SIDE_MAP = {
+    ("sale", "buyer"): ["buyer"], ("sale", "seller"): ["seller"], ("sale", "both"): ["buyer", "seller"],
+    ("lease", "tenant"): ["tenant"], ("lease", "landlord"): ["landlord"], ("lease", "both"): ["tenant", "landlord"],
+    ("business", "buyer"): ["buyer"], ("business", "seller"): ["seller"], ("business", "both"): ["buyer", "seller"],
+}
+
+
+def transaction_type_for(kind, side, lease_type="lease", property_type=None):
+    if kind == "lease":
+        return lease_type or "lease"
+    if kind == "business":
+        return "business_asset"
+    land = property_type == "land"
+    if side == "buyer":
+        return "land_purchase" if land else "purchase"
+    return "land_sale" if land else "sale"
+
+
+@transaction.atomic
+def create_guided_deal(actor, data):
+    """Create a deal from the guided New Deal form: transaction type, property,
+    clients and our representation are derived from a few choices."""
+    from crm.models import Organization
+    from properties.models import Property, Space
+
+    from .models import DealParty, Representation
+
+    kind, side = data["kind"], data["side"]
+    prop = None
+    if data["property_mode"] == "existing":
+        prop = data["property"]
+    elif data["property_mode"] == "new":
+        prop = Property.objects.create(name=data["new_address"], street=data["new_address"],
+                                       city=data.get("new_city") or "Houston", property_type=data.get("new_type") or "other")
+        audit(actor, "property.created", prop)
+    ttype = transaction_type_for(kind, side, data.get("lease_type"), prop.property_type if prop else None)
+    sides = SIDE_MAP[(kind, side)]
+    role_pairs = list(zip(sides, [data.get("client_a"), data.get("client_b")]))
+    clients = []
+    for role, name in role_pairs:
+        name = (name or "").strip()
+        if not name:
+            continue
+        org = Organization.objects.filter(name__iexact=name, archived_at__isnull=True).first()
+        if org is None:
+            org = Organization.objects.create(name=name, org_type="client_entity", is_client=True)
+        clients.append((role, org))
+    from .models import TRANSACTION_TYPES
+
+    type_label = str(dict(TRANSACTION_TYPES)[ttype])
+    name = (data.get("name") or "").strip()
+    if not name:
+        base = prop.name if prop else (clients[0][1].name if clients else "New deal")
+        name = f"{base} — {type_label}"
+    deal = Deal.objects.create(name=name[:255], transaction_type=ttype, stage=data["stage"],
+                               responsible_broker=data.get("responsible_broker"),
+                               client=clients[0][1] if clients else None)
+    if prop:
+        space = None
+        if data.get("suite"):
+            space, _ = Space.objects.get_or_create(property=prop, suite=data["suite"].strip())
+        deal.deal_properties.create(property=prop, space=space, is_primary=True)
+    for role in sides:
+        Representation.objects.create(deal=deal, side=role, is_skw=True, broker_user=data.get("responsible_broker"))
+    for role, org in clients:
+        DealParty.objects.create(deal=deal, role=role, organization=org)
+    represented = " and ".join(sides)
+    audit(actor, "deal.created", deal, {"stage": deal.stage.name, "type": type_label, "represents": represented})
+    log_activity(deal, f"Deal created — SKW represents the {represented}", actor=actor)
+    return deal

@@ -1,24 +1,24 @@
-{% load static %}<!doctype html>
-<html lang="en">
+{% load static i18n %}<!doctype html>
+{% get_current_language as LANG %}<html lang="{{ LANG }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}DealDesk{% endblock %} · SKW DealDesk</title>
   {% include "partials/theme_head.html" %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% asset 'css/app.css' %}">
 </head>
 <body>
 <div class="nprogress" aria-hidden="true"></div>
-{% if DEMO_MODE %}<div class="demo-banner">Demo mode — fictional sample data in an isolated database. Nothing here is SKW transaction history.</div>{% endif %}
+{% if DEMO_MODE %}<div class="demo-banner">{% translate "Demo mode — fictional sample data in an isolated database. Nothing here is SKW transaction history." %}</div>{% endif %}
 <div class="app">
   <aside class="sidebar">
-    <a class="brand" href="{% url 'dashboard' %}" aria-label="SKW DealDesk home">
+    <a class="brand" href="{% url 'dashboard' %}" aria-label="{% translate "SKW DealDesk home" %}">
       <img class="brand-logo light" src="{% static 'img/skw-logo.png' %}" alt="SKW">
       <img class="brand-logo dark" src="{% static 'img/skw-logo-white.png' %}" alt="SKW">
       <span class="brand-divider"></span>
       <span><span class="brand-name">DealDesk</span><br><span class="brand-sub">{{ FIRM_NAME }}</span></span>
     </a>
-    <nav class="nav" aria-label="Main">
+    <nav class="nav" aria-label="{% translate "Main" %}">
       {% for name, label in nav_items %}
         {% url name as nav_url %}
         {% if request.path == nav_url or nav_url != '/' and nav_url in request.path %}
@@ -30,21 +30,22 @@
     </nav>
     <div class="sidebar-foot">
       <span class="avatar" aria-hidden="true">{{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}</span>
-      <span class="who"><strong>{{ user.display_name }}</strong>{{ user.get_role_display }}</span>
-      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="icon-btn" title="Sign out" aria-label="Sign out">{% icon "logout" %}</button></form>
+      <span class="who"><strong>{{ user.display_name }}</strong>{% translate user.get_role_display %}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="icon-btn" title="{% translate "Sign out" %}" aria-label="{% translate "Sign out" %}">{% icon "logout" %}</button></form>
     </div>
   </aside>
   <div class="main">
     <header class="topbar">
-      <button class="icon-btn menu-toggle" data-toggle-nav aria-label="Menu">{% icon "menu" %}</button>
-      <button class="search-trigger" type="button" data-cmdk-open aria-label="Search and commands">
-        {% icon "search" %}<span>Search or jump to…</span><span class="kbd">⌘K</span>
+      <button class="icon-btn menu-toggle" data-toggle-nav aria-label="{% translate "Menu" %}">{% icon "menu" %}</button>
+      <button class="search-trigger" type="button" data-cmdk-open aria-label="{% translate "Search and commands" %}">
+        {% icon "search" %}<span>{% translate "Search or jump to…" %}</span><span class="kbd">⌘K</span>
       </button>
       <div class="spacer"></div>
-      <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" title="Switch theme">
+      {% include "partials/lang_switch.html" %}
+      <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="{% translate "Switch theme" %}" title="{% translate "Switch theme" %}">
         <span data-theme-icon="light">{% icon "sun" %}</span><span data-theme-icon="dark" hidden>{% icon "moon" %}</span><span data-theme-icon="system" hidden>{% icon "monitor" %}</span>
       </button>
-      <a class="icon-btn" href="{% url 'notifications' %}" aria-label="Notifications" title="Notifications">{% icon "bell" %}{% if unread_notifications %}<span class="badge-dot">{{ unread_notifications }}</span>{% endif %}</a>
+      <a class="icon-btn" href="{% url 'notifications' %}" aria-label="{% translate "Notifications" %}" title="{% translate "Notifications" %}">{% icon "bell" %}{% if unread_notifications %}<span class="badge-dot">{{ unread_notifications }}</span>{% endif %}</a>
     </header>
     <main class="content">
       {% if messages %}<div class="messages">{% for m in messages %}<div class="notice notice-{% if m.tags == 'error' %}error{% elif m.tags == 'warning' %}warn{% elif m.tags == 'success' %}success{% else %}info{% endif %}" {% if m.tags == 'success' or m.tags == 'info' %}data-autohide{% endif %}>{{ m }}</div>{% endfor %}</div>{% endif %}
@@ -54,30 +55,30 @@
 </div>
 
 <div class="cmdk-backdrop" data-cmdk hidden>
-  <div class="cmdk" role="dialog" aria-modal="true" aria-label="Search and commands">
-    <div class="cmdk-input">{% icon "search" %}<input type="text" data-cmdk-input placeholder="Search deals, properties, contacts, documents — or type a command" autocomplete="off" spellcheck="false"><span class="kbd">esc</span></div>
+  <div class="cmdk" role="dialog" aria-modal="true" aria-label="{% translate "Search and commands" %}" data-t-search="{% translate "Search everything for" %}" data-t-empty="{% translate "No matches" %}" data-t-nav="{% translate "Navigate" %}" data-t-sgroup="{% translate "Search" %}">
+    <div class="cmdk-input">{% icon "search" %}<input type="text" data-cmdk-input placeholder="{% translate "Search deals, properties, contacts, documents — or type a command" %}" autocomplete="off" spellcheck="false"><span class="kbd">esc</span></div>
     <div class="cmdk-list" data-cmdk-list role="listbox"></div>
-    <div class="cmdk-foot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> move</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">esc</span> close</span></div>
+    <div class="cmdk-foot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> {% translate "move" %}</span><span><span class="kbd">↵</span> {% translate "open" %}</span><span><span class="kbd">esc</span> {% translate "close" %}</span></div>
   </div>
 </div>
 <script type="application/json" id="cmdk-actions">[
-  {% if can.edit %}{"label": "New deal", "url": "{% url 'deal_create' %}", "group": "Create", "icon": "plus"},
-  {"label": "Upload document", "url": "{% url 'document_upload' %}", "group": "Create", "icon": "plus"},
-  {"label": "New property", "url": "{% url 'property_create' %}", "group": "Create", "icon": "plus"},
-  {"label": "New contact", "url": "{% url 'contact_create' %}", "group": "Create", "icon": "plus"},{% endif %}
-  {"label": "Deal board", "url": "{% url 'deal_board' %}", "group": "Go to", "icon": "deal_list"},
-  {"label": "Deadline calendar", "url": "{% url 'deadline_calendar' %}", "group": "Go to", "icon": "deadline_list"},
-  {"label": "Extractions awaiting review", "url": "{% url 'review_queue' %}", "group": "Go to", "icon": "document_list"},
-  {"label": "Deposits awaiting confirmation", "url": "{% url 'deposit_list' %}", "group": "Go to", "icon": "deal_list"},
-  {"label": "Issues", "url": "{% url 'issue_list' %}", "group": "Go to", "icon": "alert"},
-  {"label": "Notifications", "url": "{% url 'notifications' %}", "group": "Go to", "icon": "bell"},
-  {"label": "Switch to light theme", "theme": "light", "group": "Appearance", "icon": "sun"},
-  {"label": "Switch to dark theme", "theme": "dark", "group": "Appearance", "icon": "moon"},
-  {"label": "Match system theme", "theme": "system", "group": "Appearance", "icon": "monitor"}
+  {% if can.edit %}{"label": "{% filter escapejs %}{% translate "New deal" %}{% endfilter %}", "url": "{% url 'deal_create' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},
+  {"label": "{% filter escapejs %}{% translate "Upload document" %}{% endfilter %}", "url": "{% url 'document_upload' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},
+  {"label": "{% filter escapejs %}{% translate "New property" %}{% endfilter %}", "url": "{% url 'property_create' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},
+  {"label": "{% filter escapejs %}{% translate "New contact" %}{% endfilter %}", "url": "{% url 'contact_create' %}", "group": "{% filter escapejs %}{% translate "Create" %}{% endfilter %}", "icon": "plus"},{% endif %}
+  {"label": "{% filter escapejs %}{% translate "Deal board" %}{% endfilter %}", "url": "{% url 'deal_board' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "deal_list"},
+  {"label": "{% filter escapejs %}{% translate "Deadline calendar" %}{% endfilter %}", "url": "{% url 'deadline_calendar' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "deadline_list"},
+  {"label": "{% filter escapejs %}{% translate "Extractions awaiting review" %}{% endfilter %}", "url": "{% url 'review_queue' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "document_list"},
+  {"label": "{% filter escapejs %}{% translate "Deposits awaiting confirmation" %}{% endfilter %}", "url": "{% url 'deposit_list' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "deal_list"},
+  {"label": "{% filter escapejs %}{% translate "Issues" %}{% endfilter %}", "url": "{% url 'issue_list' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "alert"},
+  {"label": "{% filter escapejs %}{% translate "Notifications" %}{% endfilter %}", "url": "{% url 'notifications' %}", "group": "{% filter escapejs %}{% translate "Go to" %}{% endfilter %}", "icon": "bell"},
+  {"label": "{% filter escapejs %}{% translate "Switch to light theme" %}{% endfilter %}", "theme": "light", "group": "{% filter escapejs %}{% translate "Appearance" %}{% endfilter %}", "icon": "sun"},
+  {"label": "{% filter escapejs %}{% translate "Switch to dark theme" %}{% endfilter %}", "theme": "dark", "group": "{% filter escapejs %}{% translate "Appearance" %}{% endfilter %}", "icon": "moon"},
+  {"label": "{% filter escapejs %}{% translate "Match system theme" %}{% endfilter %}", "theme": "system", "group": "{% filter escapejs %}{% translate "Appearance" %}{% endfilter %}", "icon": "monitor"}
 ]</script>
 <template id="cmdk-icons"><span data-i="search">{% icon "search" %}</span><span data-i="plus">{% icon "plus" %}</span><span data-i="deal_list">{% icon "deal_list" %}</span><span data-i="deadline_list">{% icon "deadline_list" %}</span><span data-i="document_list">{% icon "document_list" %}</span><span data-i="alert">{% icon "alert" %}</span><span data-i="bell">{% icon "bell" %}</span><span data-i="sun">{% icon "sun" %}</span><span data-i="moon">{% icon "moon" %}</span><span data-i="monitor">{% icon "monitor" %}</span><span data-i="arrow">{% icon "arrow" %}</span><span data-i="property_list">{% icon "property_list" %}</span><span data-i="contact_list">{% icon "contact_list" %}</span></template>
 <script type="application/json" id="cmdk-search-url">"{% url 'search' %}"</script>
-<script src="{% static 'js/app.js' %}"></script>
+<script src="{% asset 'js/app.js' %}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

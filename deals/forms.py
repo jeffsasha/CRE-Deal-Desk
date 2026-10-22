@@ -4,7 +4,7 @@ from core.fields import MoneyField, MoneyModelFormMixin
 from core.forms import StyledModelForm
 from core.models import User
 from crm.models import Contact, Organization
-from properties.models import Property, Space
+from properties.models import Property
 
 from .catalog import EVENT_CATALOG, TERM_CATALOG, TERM_CATEGORY_ORDER
 from .models import (
@@ -58,22 +58,6 @@ class DealForm(MoneyModelFormMixin, StyledModelForm):
         if data.get("is_blocked") and not data.get("blocked_by"):
             self.add_error("blocked_by", "Name the party blocking the deal.")
         return data
-
-
-class DealCreateForm(DealForm):
-    stage = forms.ModelChoiceField(queryset=Stage.objects.filter(enabled=True).exclude(category="closed"))
-    properties = forms.ModelMultipleChoiceField(queryset=Property.objects.active(), required=False,
-                                                help_text="A deal may involve several properties or parcels.")
-    space = forms.ModelChoiceField(queryset=Space.objects.all(), required=False, label="Suite (optional)")
-
-    class Meta(DealForm.Meta):
-        fields = ["name", "transaction_type", "stage", "properties", "space"] + [
-            f for f in DealForm.Meta.fields if f not in {"name", "transaction_type"}]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["properties"].widget.attrs["size"] = 5
-        self.fields["stage"].initial = Stage.objects.filter(key="evaluating").first()
 
 
 class StageChangeForm(forms.Form):
@@ -347,3 +331,69 @@ class CloseDealForm(forms.Form):
     def allocations(self):
         return {link.pk: self.cleaned_data.get(name) for name, link in self.allocation_fields
                 if self.cleaned_data.get(name) is not None}
+
+
+# --- Guided "New deal" ----------------------------------------------------------
+from django.utils.translation import gettext_lazy as _  # noqa: E402
+
+from core.choices import PROPERTY_TYPES  # noqa: E402
+
+KIND_CHOICES = [("sale", _("Sale / purchase")), ("lease", _("Lease")), ("business", _("Business"))]
+SIDE_CHOICES = {
+    "sale": [("buyer", _("Buyer")), ("seller", _("Seller")), ("both", _("Both sides"))],
+    "lease": [("tenant", _("Tenant")), ("landlord", _("Landlord")), ("both", _("Both sides"))],
+    "business": [("buyer", _("Buying a business")), ("seller", _("Selling a business")), ("both", _("Both sides"))],
+}
+ALL_SIDES = ["buyer", "seller", "tenant", "landlord", "both"]
+LEASE_TYPES_CHOICES = [("lease", _("New lease")), ("lease_renewal", _("Renewal")), ("lease_expansion", _("Expansion")),
+                       ("lease_assignment", _("Assignment"))]
+# Labels for the client fields, by (kind, side): (first client, second client)
+CLIENT_LABELS = {
+    ("sale", "buyer"): (_("Buyer (our client)"), None),
+    ("sale", "seller"): (_("Seller (our client)"), None),
+    ("sale", "both"): (_("Buyer"), _("Seller")),
+    ("lease", "tenant"): (_("Tenant (our client)"), None),
+    ("lease", "landlord"): (_("Landlord (our client)"), None),
+    ("lease", "both"): (_("Tenant"), _("Landlord")),
+    ("business", "buyer"): (_("Buyer (our client)"), None),
+    ("business", "seller"): (_("Business owner / seller (our client)"), None),
+    ("business", "both"): (_("Buyer"), _("Seller")),
+}
+
+
+class NewDealForm(forms.Form):
+    kind = forms.ChoiceField(choices=KIND_CHOICES, widget=forms.RadioSelect)
+    side = forms.ChoiceField(choices=[(s, s) for s in ALL_SIDES], widget=forms.RadioSelect)
+    lease_type = forms.ChoiceField(choices=LEASE_TYPES_CHOICES, required=False, initial="lease")
+    property_mode = forms.ChoiceField(choices=[("existing", _("Existing property")), ("new", _("New property")),
+                                               ("none", _("No property yet"))], initial="new", widget=forms.RadioSelect)
+    property = forms.ModelChoiceField(queryset=Property.objects.active(), required=False)
+    new_address = forms.CharField(required=False, label=_("Street address"))
+    new_city = forms.CharField(required=False, initial="Houston", label=_("City"))
+    new_type = forms.ChoiceField(choices=PROPERTY_TYPES, required=False, initial="retail", label=_("Property type"))
+    suite = forms.CharField(required=False, label=_("Suite"))
+    client_a = forms.CharField(required=False)
+    client_b = forms.CharField(required=False)
+    responsible_broker = forms.ModelChoiceField(queryset=User.objects.none(), required=False, label=_("Responsible broker"))
+    stage = forms.ModelChoiceField(queryset=Stage.objects.none(), label=_("Stage"))
+    name = forms.CharField(required=False, label=_("Deal name"), help_text=_("Optional — generated from the property and deal type."))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["responsible_broker"].queryset = staff_users()
+        self.fields["stage"].queryset = Stage.objects.filter(enabled=True, category="active")
+        self.fields["stage"].initial = Stage.objects.filter(key="lead").first()
+
+    def clean(self):
+        d = super().clean()
+        kind, side = d.get("kind"), d.get("side")
+        if kind and side and side not in dict(SIDE_CHOICES[kind]):
+            self.add_error("side", _("Choose who we represent for this kind of deal."))
+        mode = d.get("property_mode")
+        if mode == "existing" and not d.get("property"):
+            self.add_error("property", _("Choose the property."))
+        if mode == "new" and not d.get("new_address"):
+            self.add_error("new_address", _("Enter the street address."))
+        if mode == "none" and kind != "business" and not d.get("name"):
+            self.add_error("name", _("Without a property, give the deal a name."))
+        return d

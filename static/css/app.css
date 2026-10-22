@@ -532,3 +532,48 @@ html.theme-switching::view-transition-new(root) { animation: 260ms var(--ease) b
 .progress-card .card-head { flex-wrap: wrap; }
 .segmented { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .segmented a { white-space: nowrap; }
+
+/* ---- Guided New Deal ------------------------------------------------------ */
+.new-deal { max-width: 960px; }
+.nd-step { margin-bottom: 22px; animation: rise 320ms var(--ease) both; }
+.nd-step[hidden] { display: none; }
+.nd-step-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.nd-step-head h2 { font-size: 15px; }
+.nd-num { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+.tiles { display: grid; gap: 10px; }
+.tiles-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tiles[hidden], [data-kind-only][hidden], [data-mode-only][hidden], [data-client-b][hidden] { display: none; }
+.tile {
+  position: relative; display: flex; flex-direction: column; gap: 4px; padding: 16px; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); background: var(--surface); cursor: pointer; color: var(--text);
+  transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease), transform var(--t) var(--ease), background-color var(--t) var(--ease);
+}
+.tile:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.tile input { position: absolute; opacity: 0; pointer-events: none; }
+.tile:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+.tile:has(input:focus-visible) { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
+.tile:has(input:checked)::after { content: "✓"; position: absolute; top: 12px; right: 14px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; display: grid; place-items: center; animation: pop-in var(--t) var(--ease-spring); }
+.tile-icon { width: 32px; height: 32px; border-radius: var(--radius); background: var(--surface-3); display: grid; place-items: center; color: var(--text-2); margin-bottom: 6px; }
+.tile:has(input:checked) .tile-icon { background: var(--accent-soft); color: var(--accent); }
+.tile-title { font-weight: 600; font-size: 14px; }
+.tile-sub { font-size: 12.5px; color: var(--text-3); }
+.tile-compact { padding: 12px 14px; }
+.seg-radio label { display: inline-flex; cursor: pointer; font-weight: 500; }
+.seg-radio input { position: absolute; opacity: 0; pointer-events: none; }
+.seg-radio span { padding: 5px 12px; font-size: 12.5px; color: var(--text-3); border-radius: var(--radius-sm); transition: color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
+.seg-radio input:checked + span { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 0 0 1px var(--border); }
+.nd-inline { max-width: 320px; }
+.nd-summary { margin-top: 16px; padding: 10px 14px; border-radius: var(--radius); background: var(--surface-2); border: 1px dashed var(--border-strong); font-size: 13px; color: var(--text-2); }
+.nd-summary:empty { display: none; }
+@media (max-width: 820px) { .tiles-3 { grid-template-columns: minmax(0, 1fr); } }
+
+/* Language switcher */
+.lang-switch { padding: 2px; }
+.lang-switch button { border: 0; background: transparent; font: 600 12px var(--font); color: var(--text-3); padding: 4px 9px; border-radius: var(--radius-sm); cursor: pointer; transition: color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
+.lang-switch button:hover { color: var(--text); }
+.lang-switch button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 0 0 1px var(--border); }
+.login-lang { position: absolute; top: 16px; right: 16px; z-index: 2; }
+html[lang^="zh"] body { font-family: "Inter", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; letter-spacing: 0; }
+.search-trigger { min-width: 0; }
+.search-trigger > span:not(.kbd) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (max-width: 420px) { .topbar { gap: 6px; } .topbar .theme-toggle { display: none; } }

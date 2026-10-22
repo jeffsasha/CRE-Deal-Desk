@@ -1,0 +1,1122 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-22 09:48-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: core/context_processors.py:7 templates/core/dashboard.html:3
+msgid "Dashboard"
+msgstr "仪表盘"
+
+#: core/context_processors.py:8 core/views.py:77
+msgid "Properties"
+msgstr "物业"
+
+#: core/context_processors.py:9 core/views.py:75 templates/deals/detail.html:5
+#: templates/deals/list.html:3 templates/deals/list.html:5
+#: templates/deals/new.html:5
+msgid "Deals"
+msgstr "交易"
+
+#: core/context_processors.py:10
+msgid "Calendar & Deadlines"
+msgstr "日历与期限"
+
+#: core/context_processors.py:11
+msgid "Tasks & Checklists"
+msgstr "任务与清单"
+
+#: core/context_processors.py:12 core/views.py:84 deals/views.py:218
+msgid "Documents"
+msgstr "文件"
+
+#: core/context_processors.py:13
+msgid "Contacts & Companies"
+msgstr "联系人与公司"
+
+#: core/context_processors.py:14 deals/views.py:219
+#: templates/core/dashboard.html:131
+msgid "Commissions"
+msgstr "佣金"
+
+#: core/context_processors.py:15
+msgid "Reports"
+msgstr "报表"
+
+#: core/context_processors.py:16
+msgid "Settings"
+msgstr "设置"
+
+#: core/dashboard.py:18
+msgid "Title"
+msgstr "产权"
+
+#: core/dashboard.py:19
+msgid "Survey"
+msgstr "测量"
+
+#: core/dashboard.py:20
+msgid "Property insurance"
+msgstr "财产保险"
+
+#: core/dashboard.py:21
+msgid "Financing"
+msgstr "融资"
+
+#: core/dashboard.py:22
+msgid "Inspections"
+msgstr "检查"
+
+#: core/dashboard.py:30
+msgid "All"
+msgstr "全部"
+
+#: core/dashboard.py:30
+msgid "Sales & acquisitions"
+msgstr "买卖"
+
+#: core/dashboard.py:30
+msgid "Leases"
+msgstr "租赁"
+
+#: core/dashboard.py:30
+msgid "Business assets"
+msgstr "生意转让"
+
+#: core/i18n_strings.py:7
+msgid "Lead"
+msgstr "潜在客户"
+
+#: core/i18n_strings.py:7
+msgid "Evaluating"
+msgstr "评估中"
+
+#: core/i18n_strings.py:7
+msgid "Touring"
+msgstr "看房中"
+
+#: core/i18n_strings.py:7
+msgid "LOI"
+msgstr "意向书"
+
+#: core/i18n_strings.py:7
+msgid "Negotiating"
+msgstr "谈判中"
+
+#: core/i18n_strings.py:7
+msgid "Under Contract"
+msgstr "已签合同"
+
+#: core/i18n_strings.py:7
+msgid "Due Diligence"
+msgstr "尽职调查"
+
+#: core/i18n_strings.py:8
+msgid "Preparing to Close"
+msgstr "准备交割"
+
+#: core/i18n_strings.py:8
+msgid "Closed"
+msgstr "已成交"
+
+#: core/i18n_strings.py:8
+msgid "On Hold"
+msgstr "暂停"
+
+#: core/i18n_strings.py:8
+msgid "Terminated"
+msgstr "已终止"
+
+#: core/i18n_strings.py:8
+msgid "Lost"
+msgstr "已流失"
+
+#: core/i18n_strings.py:8
+msgid "Archived"
+msgstr "已归档"
+
+#: core/i18n_strings.py:10
+msgid "Administrator"
+msgstr "管理员"
+
+#: core/i18n_strings.py:10 deals/views.py:73 deals/views.py:112
+msgid "Broker"
+msgstr "经纪人"
+
+#: core/i18n_strings.py:10
+msgid "Coordinator"
+msgstr "协调员"
+
+#: core/i18n_strings.py:10
+msgid "Read-only"
+msgstr "只读"
+
+#: core/templatetags/desk.py:123
+msgid "today"
+msgstr "今天"
+
+#: core/templatetags/desk.py:125
+msgid "tomorrow"
+msgstr "明天"
+
+#: core/templatetags/desk.py:127
+msgid "yesterday"
+msgstr "昨天"
+
+#: core/templatetags/desk.py:129
+#, python-format
+msgid "in %(n)d day"
+msgid_plural "in %(n)d days"
+msgstr[0] "%(n)d 天后"
+
+#: core/templatetags/desk.py:130
+#, python-format
+msgid "%(n)d day ago"
+msgid_plural "%(n)d days ago"
+msgstr[0] "%(n)d 天前"
+
+#: core/views.py:79
+msgid "Contacts"
+msgstr "联系人"
+
+#: deals/forms.py:341
+msgid "Sale / purchase"
+msgstr "买卖"
+
+#: deals/forms.py:341
+msgid "Lease"
+msgstr "租赁"
+
+#: deals/forms.py:341
+msgid "Business"
+msgstr "生意转让"
+
+#: deals/forms.py:343 deals/forms.py:354 deals/forms.py:360
+msgid "Buyer"
+msgstr "买方"
+
+#: deals/forms.py:343 deals/forms.py:354 deals/forms.py:360
+msgid "Seller"
+msgstr "卖方"
+
+#: deals/forms.py:343 deals/forms.py:344 deals/forms.py:345
+msgid "Both sides"
+msgstr "双方"
+
+#: deals/forms.py:344 deals/forms.py:357
+msgid "Tenant"
+msgstr "租户"
+
+#: deals/forms.py:344 deals/forms.py:357
+msgid "Landlord"
+msgstr "业主（出租方）"
+
+#: deals/forms.py:345
+msgid "Buying a business"
+msgstr "收购生意"
+
+#: deals/forms.py:345
+msgid "Selling a business"
+msgstr "出售生意"
+
+#: deals/forms.py:348
+msgid "New lease"
+msgstr "新租约"
+
+#: deals/forms.py:348
+msgid "Renewal"
+msgstr "续租"
+
+#: deals/forms.py:348
+msgid "Expansion"
+msgstr "扩租"
+
+#: deals/forms.py:349
+msgid "Assignment"
+msgstr "转租 / 租约转让"
+
+#: deals/forms.py:352 deals/forms.py:358
+msgid "Buyer (our client)"
+msgstr "买方（我方客户）"
+
+#: deals/forms.py:353
+msgid "Seller (our client)"
+msgstr "卖方（我方客户）"
+
+#: deals/forms.py:355
+msgid "Tenant (our client)"
+msgstr "租户（我方客户）"
+
+#: deals/forms.py:356
+msgid "Landlord (our client)"
+msgstr "业主（我方客户）"
+
+#: deals/forms.py:359
+msgid "Business owner / seller (our client)"
+msgstr "生意业主 / 卖方（我方客户）"
+
+#: deals/forms.py:368
+msgid "Existing property"
+msgstr "已有物业"
+
+#: deals/forms.py:368 templates/base.html:67
+msgid "New property"
+msgstr "新物业"
+
+#: deals/forms.py:369
+msgid "No property yet"
+msgstr "暂无物业"
+
+#: deals/forms.py:371 templates/deals/new.html:58
+msgid "Street address"
+msgstr "街道地址"
+
+#: deals/forms.py:372 templates/deals/new.html:59
+msgid "City"
+msgstr "城市"
+
+#: deals/forms.py:373 templates/deals/new.html:60
+msgid "Property type"
+msgstr "物业类型"
+
+#: deals/forms.py:374 templates/deals/new.html:61
+msgid "Suite"
+msgstr "单元号"
+
+#: deals/forms.py:377 templates/deals/detail.html:36
+#: templates/deals/new.html:65
+msgid "Responsible broker"
+msgstr "负责经纪人"
+
+#: deals/forms.py:378 deals/views.py:67 deals/views.py:108
+#: templates/deals/new.html:66
+msgid "Stage"
+msgstr "阶段"
+
+#: deals/forms.py:379 templates/deals/new.html:67
+msgid "Deal name"
+msgstr "交易名称"
+
+#: deals/forms.py:379
+msgid "Optional — generated from the property and deal type."
+msgstr "可选——将根据物业和交易类型自动生成。"
+
+#: deals/forms.py:391
+msgid "Choose who we represent for this kind of deal."
+msgstr "请选择我方在此类交易中代表的一方。"
+
+#: deals/forms.py:394
+msgid "Choose the property."
+msgstr "请选择物业。"
+
+#: deals/forms.py:396
+msgid "Enter the street address."
+msgstr "请输入街道地址。"
+
+#: deals/forms.py:398
+msgid "Without a property, give the deal a name."
+msgstr "没有物业时，请为交易命名。"
+
+#: deals/models.py:75
+msgid "Purchase / acquisition"
+msgstr "购买 / 收购"
+
+#: deals/models.py:76
+msgid "Sale / listing disposition"
+msgstr "出售 / 挂牌出售"
+
+#: deals/models.py:77
+msgid "Land acquisition"
+msgstr "土地收购"
+
+#: deals/models.py:78
+msgid "Land sale"
+msgstr "土地出售"
+
+#: deals/models.py:79
+msgid "Commercial lease"
+msgstr "商业租赁"
+
+#: deals/models.py:80
+msgid "Lease renewal"
+msgstr "续租"
+
+#: deals/models.py:81
+msgid "Lease expansion"
+msgstr "扩租"
+
+#: deals/models.py:82
+msgid "Lease assignment"
+msgstr "租约转让"
+
+#: deals/models.py:83
+msgid "Business asset sale"
+msgstr "生意资产转让"
+
+#: deals/views.py:64 templates/core/dashboard.html:69
+msgid "Deal"
+msgstr "交易"
+
+#: deals/views.py:65
+msgid "ID"
+msgstr "编号"
+
+#: deals/views.py:66 deals/views.py:111
+msgid "Type"
+msgstr "类型"
+
+#: deals/views.py:71 templates/deals/new.html:49
+msgid "Property"
+msgstr "物业"
+
+#: deals/views.py:72 templates/deals/new.html:63
+msgid "Client"
+msgstr "客户"
+
+#: deals/views.py:74 deals/views.py:113
+msgid "Priority"
+msgstr "优先级"
+
+#: deals/views.py:75 templates/deals/detail.html:35
+msgid "Next action"
+msgstr "下一步"
+
+#: deals/views.py:76
+msgid "Blocked by"
+msgstr "阻滞方"
+
+#: deals/views.py:77 deals/views.py:115 deals/views.py:219
+#: templates/deals/board.html:15
+msgid "Closing"
+msgstr "交割"
+
+#: deals/views.py:78
+msgid "Price / consideration"
+msgstr "价格 / 总额"
+
+#: deals/views.py:79
+msgid "Updated"
+msgstr "更新时间"
+
+#: deals/views.py:108
+msgid "All active"
+msgstr "全部进行中"
+
+#: deals/views.py:108
+msgid "All inactive"
+msgstr "全部非进行中"
+
+#: deals/views.py:114 templates/core/dashboard.html:43
+#: templates/deals/board.html:16 templates/deals/detail.html:14
+msgid "Blocked"
+msgstr "受阻"
+
+#: deals/views.py:114
+msgid "Blocked by another party"
+msgstr "被其他方阻滞"
+
+#: deals/views.py:115
+msgid "Closing within 30 days"
+msgstr "30 天内交割"
+
+#: deals/views.py:115
+msgid "Closing within 90 days"
+msgstr "90 天内交割"
+
+#: deals/views.py:191
+#, python-format
+msgid "Deal %(id)s created."
+msgstr "已创建交易 %(id)s。"
+
+#: deals/views.py:217
+msgid "Overview"
+msgstr "概览"
+
+#: deals/views.py:217
+msgid "Parties"
+msgstr "各方"
+
+#: deals/views.py:217
+msgid "Contract & Dates"
+msgstr "合同与日期"
+
+#: deals/views.py:218
+msgid "Checklist"
+msgstr "清单"
+
+#: deals/views.py:218 templates/base.html:73 templates/deals/list.html:7
+msgid "Issues"
+msgstr "问题"
+
+#: deals/views.py:219
+msgid "Activity"
+msgstr "动态"
+
+#: templates/base.html:12
+msgid ""
+"Demo mode — fictional sample data in an isolated database. Nothing here is "
+"SKW transaction history."
+msgstr "演示模式——独立数据库中的虚构示例数据，并非 SKW 的真实交易记录。"
+
+#: templates/base.html:15
+msgid "SKW DealDesk home"
+msgstr "SKW DealDesk 首页"
+
+#: templates/base.html:21
+msgid "Main"
+msgstr "主菜单"
+
+#: templates/base.html:34
+msgid "Sign out"
+msgstr "退出登录"
+
+#: templates/base.html:39
+msgid "Menu"
+msgstr "菜单"
+
+#: templates/base.html:40 templates/base.html:58
+msgid "Search and commands"
+msgstr "搜索与命令"
+
+#: templates/base.html:41
+msgid "Search or jump to…"
+msgstr "搜索或跳转…"
+
+#: templates/base.html:45
+msgid "Switch theme"
+msgstr "切换主题"
+
+#: templates/base.html:48 templates/base.html:74
+msgid "Notifications"
+msgstr "通知"
+
+#: templates/base.html:58
+msgid "Search everything for"
+msgstr "全局搜索"
+
+#: templates/base.html:58
+msgid "No matches"
+msgstr "无匹配结果"
+
+#: templates/base.html:58
+msgid "Navigate"
+msgstr "导航"
+
+#: templates/base.html:58
+msgid "Search"
+msgstr "搜索"
+
+#: templates/base.html:59
+msgid "Search deals, properties, contacts, documents — or type a command"
+msgstr "搜索交易、物业、联系人、文件——或输入命令"
+
+#: templates/base.html:61
+msgid "move"
+msgstr "移动"
+
+#: templates/base.html:61
+msgid "open"
+msgstr "打开"
+
+#: templates/base.html:61
+msgid "close"
+msgstr "关闭"
+
+#: templates/base.html:65 templates/core/dashboard.html:11
+#: templates/deals/list.html:8 templates/deals/new.html:3
+#: templates/deals/new.html:6
+msgid "New deal"
+msgstr "新建交易"
+
+#: templates/base.html:65 templates/base.html:66 templates/base.html:67
+#: templates/base.html:68
+msgid "Create"
+msgstr "新建"
+
+#: templates/base.html:66 templates/core/dashboard.html:11
+msgid "Upload document"
+msgstr "上传文件"
+
+#: templates/base.html:68
+msgid "New contact"
+msgstr "新建联系人"
+
+#: templates/base.html:69 templates/deals/board.html:3
+msgid "Deal board"
+msgstr "交易看板"
+
+#: templates/base.html:69 templates/base.html:70 templates/base.html:71
+#: templates/base.html:72 templates/base.html:73 templates/base.html:74
+msgid "Go to"
+msgstr "前往"
+
+#: templates/base.html:70
+msgid "Deadline calendar"
+msgstr "期限日历"
+
+#: templates/base.html:71
+msgid "Extractions awaiting review"
+msgstr "待审核的合同提取"
+
+#: templates/base.html:72
+msgid "Deposits awaiting confirmation"
+msgstr "待确认的保证金"
+
+#: templates/base.html:75
+msgid "Switch to light theme"
+msgstr "切换到浅色主题"
+
+#: templates/base.html:75 templates/base.html:76 templates/base.html:77
+msgid "Appearance"
+msgstr "外观"
+
+#: templates/base.html:76
+msgid "Switch to dark theme"
+msgstr "切换到深色主题"
+
+#: templates/base.html:77
+msgid "Match system theme"
+msgstr "跟随系统主题"
+
+#: templates/core/dashboard.html:7
+msgid "Today"
+msgstr "今日"
+
+#: templates/core/dashboard.html:8
+msgid ""
+"What needs attention, what could delay a deal, and what documents or money "
+"are still missing."
+msgstr "需要关注的事项、可能延误交易的风险，以及仍缺失的文件或款项。"
+
+#: templates/core/dashboard.html:16
+msgid "Overdue"
+msgstr "已逾期"
+
+#: templates/core/dashboard.html:17
+msgid "Due today"
+msgstr "今日到期"
+
+#: templates/core/dashboard.html:18 templates/core/dashboard.html:66
+msgid "Next 7 days"
+msgstr "未来 7 天"
+
+#: templates/core/dashboard.html:19
+msgid "Next 30 days"
+msgstr "未来 30 天"
+
+#: templates/core/dashboard.html:20
+msgid "No date until the actual event is recorded"
+msgstr "在记录实际发生日期之前不计算日期"
+
+#: templates/core/dashboard.html:20
+msgid "Awaiting trigger"
+msgstr "等待触发"
+
+#: templates/core/dashboard.html:21
+msgid "Needs review"
+msgstr "需审核"
+
+#: templates/core/dashboard.html:22
+msgid "Overdue tasks"
+msgstr "逾期任务"
+
+#: templates/core/dashboard.html:23
+msgid "Extractions to review"
+msgstr "待审核提取"
+
+#: templates/core/dashboard.html:28
+msgid "Deal progress"
+msgstr "交易进度"
+
+#: templates/core/dashboard.html:28
+msgid "Where every open deal stands on the path to closing"
+msgstr "每笔进行中交易距离交割的进度"
+
+#: templates/core/dashboard.html:41
+msgid "On hold"
+msgstr "暂停"
+
+#: templates/core/dashboard.html:41
+#, python-format
+msgid "step %(n)s of %(total)s"
+msgstr "第 %(n)s / %(total)s 步"
+
+#: templates/core/dashboard.html:44
+msgid "Some deadlines are awaiting a trigger or need review"
+msgstr "部分期限正在等待触发或需要审核"
+
+#: templates/core/dashboard.html:44
+msgid "Dates pending"
+msgstr "日期待定"
+
+#: templates/core/dashboard.html:52 templates/deals/board.html:17
+msgid "Next:"
+msgstr "下一项："
+
+#: templates/core/dashboard.html:53
+msgid "No dated deadline"
+msgstr "暂无已定日期的期限"
+
+#: templates/core/dashboard.html:54
+msgid "Checklist items approved, waived or not applicable"
+msgstr "已批准、豁免或不适用的清单项目"
+
+#: templates/core/dashboard.html:54
+#, python-format
+msgid "%(pct)s%% checklist"
+msgstr "清单完成 %(pct)s%%"
+
+#: templates/core/dashboard.html:58
+msgid "No open deals of this type."
+msgstr "暂无此类进行中的交易。"
+
+#: templates/core/dashboard.html:58
+msgid "No open deals."
+msgstr "暂无进行中的交易。"
+
+#: templates/core/dashboard.html:58
+msgid "Create a deal"
+msgstr "新建交易"
+
+#: templates/core/dashboard.html:66 templates/deals/board.html:6
+#: templates/deals/list.html:6
+msgid "Calendar"
+msgstr "日历"
+
+#: templates/core/dashboard.html:69
+msgid "Due"
+msgstr "到期"
+
+#: templates/core/dashboard.html:69
+msgid "Deadline"
+msgstr "期限"
+
+#: templates/core/dashboard.html:69
+msgid "Responsible"
+msgstr "负责人"
+
+#: templates/core/dashboard.html:69
+msgid "Basis"
+msgstr "依据"
+
+#: templates/core/dashboard.html:74
+msgid "Internal"
+msgstr "内部"
+
+#: templates/core/dashboard.html:77
+msgid "Rule confirmed"
+msgstr "规则已确认"
+
+#: templates/core/dashboard.html:77
+msgid "Rule unconfirmed"
+msgstr "规则未确认"
+
+#: templates/core/dashboard.html:79
+msgid "No computed deadlines in the next 7 days."
+msgstr "未来 7 天没有已计算的期限。"
+
+#: templates/core/dashboard.html:86
+msgid "Unresolved diligence items"
+msgstr "未完成的尽调事项"
+
+#: templates/core/dashboard.html:86
+msgid "“Received” stays open until reviewed and approved"
+msgstr "“已收到”在审核并批准前仍视为未完成"
+
+#: templates/core/dashboard.html:94
+msgid "Feasibility periods ending (14 days)"
+msgstr "即将结束的可行性期（14 天内）"
+
+#: templates/core/dashboard.html:97
+msgid "None in the next 14 days."
+msgstr "未来 14 天内没有。"
+
+#: templates/core/dashboard.html:99
+msgid ""
+"Expiration dates do not by themselves determine earnest money refundability."
+msgstr "到期日本身并不能决定保证金是否可退还。"
+
+#: templates/core/dashboard.html:102
+msgid "Upcoming closings (30 days)"
+msgstr "即将交割（30 天内）"
+
+#: templates/core/dashboard.html:104
+msgid "contract"
+msgstr "合同"
+
+#: templates/core/dashboard.html:104
+msgid "internal target"
+msgstr "内部目标"
+
+#: templates/core/dashboard.html:105
+msgid "No closings in the next 30 days."
+msgstr "未来 30 天没有交割。"
+
+#: templates/core/dashboard.html:112
+msgid "Deposits due or awaiting receipt confirmation"
+msgstr "待支付或待确认收款的保证金"
+
+#: templates/core/dashboard.html:113
+msgid "Deals blocked by another party"
+msgstr "被其他方阻滞的交易"
+
+#: templates/core/dashboard.html:115
+msgid "Reminder delivery failures"
+msgstr "提醒发送失败"
+
+#: templates/core/dashboard.html:118
+msgid "Volume"
+msgstr "成交量"
+
+#: templates/core/dashboard.html:119
+msgid "Month"
+msgstr "月"
+
+#: templates/core/dashboard.html:119
+msgid "Quarter"
+msgstr "季度"
+
+#: templates/core/dashboard.html:119
+msgid "Year"
+msgstr "年"
+
+#: templates/core/dashboard.html:123
+msgid "Closed sales volume"
+msgstr "已成交销售额"
+
+#: templates/core/dashboard.html:123
+msgid "by actual closing date"
+msgstr "按实际交割日期"
+
+#: templates/core/dashboard.html:123
+#, python-format
+msgid "%(n)s deal"
+msgid_plural "%(n)s deals"
+msgstr[0] "%(n)s 笔交易"
+
+#: templates/core/dashboard.html:124
+msgid "Executed leases"
+msgstr "已签租约"
+
+#: templates/core/dashboard.html:124
+msgid "separate from sales volume"
+msgstr "不计入销售额"
+
+#: templates/core/dashboard.html:124
+#, python-format
+msgid "%(n)s lease"
+msgid_plural "%(n)s leases"
+msgstr[0] "%(n)s 份租约"
+
+#: templates/core/dashboard.html:124
+msgid "lease consideration"
+msgstr "租约总额"
+
+#: templates/core/dashboard.html:134
+msgid "Expected on active deals"
+msgstr "进行中交易的预期佣金"
+
+#: templates/core/dashboard.html:135
+msgid "Earned (by earned date)"
+msgstr "已赚取（按赚取日期）"
+
+#: templates/core/dashboard.html:136
+msgid "Cash received by SKW"
+msgstr "SKW 实收现金"
+
+#: templates/core/dashboard.html:137
+msgid "Designated broker's actual receipts"
+msgstr "指定经纪人实收金额"
+
+#: templates/core/dashboard.html:138
+msgid "Unpaid receivables (today)"
+msgstr "未收应收款（截至今日）"
+
+#: templates/core/dashboard.html:139
+msgid "Unpaid distributions (today)"
+msgstr "未付分配款（截至今日）"
+
+#: templates/core/dashboard.html:141
+msgid ""
+"Totals are computed from the commission ledger. “+ N unknown” means records "
+"whose amount is not known; they are not counted as zero."
+msgstr "合计由佣金账簿计算。“+ N 未知”表示金额未知的记录，不按零计算。"
+
+#: templates/deals/board.html:5
+msgid "Deals by stage"
+msgstr "按阶段查看交易"
+
+#: templates/deals/board.html:5
+msgid ""
+"Drag a card to change its stage. Closing is done from the deal's Closing "
+"tab."
+msgstr "拖动卡片即可更改阶段。交割请在交易的“交割”标签页完成。"
+
+#: templates/deals/board.html:5
+msgid "Read-only view."
+msgstr "只读视图。"
+
+#: templates/deals/board.html:6
+msgid "Filter…"
+msgstr "筛选…"
+
+#: templates/deals/board.html:6 templates/deals/list.html:6
+msgid "Table"
+msgstr "表格"
+
+#: templates/deals/board.html:6 templates/deals/list.html:6
+msgid "Board"
+msgstr "看板"
+
+#: templates/deals/detail.html:12
+msgid "SKW represents"
+msgstr "SKW 代表"
+
+#: templates/deals/detail.html:12
+msgid "Representation not recorded"
+msgstr "未记录代理关系"
+
+#: templates/deals/detail.html:21
+msgid "Reason (required for Terminated/Lost)"
+msgstr "原因（终止/流失时必填）"
+
+#: templates/deals/detail.html:22
+msgid "Change stage"
+msgstr "更改阶段"
+
+#: templates/deals/detail.html:24
+msgid "Upload"
+msgstr "上传"
+
+#: templates/deals/detail.html:25
+msgid "Edit"
+msgstr "编辑"
+
+#: templates/deals/detail.html:31
+msgid "Lease consideration"
+msgstr "租约总额"
+
+#: templates/deals/detail.html:31
+msgid "Executed contract price"
+msgstr "合同成交价"
+
+#: templates/deals/detail.html:31
+msgid "Not approved"
+msgstr "未批准"
+
+#: templates/deals/detail.html:32
+msgid "Effective date"
+msgstr "生效日期"
+
+#: templates/deals/detail.html:32
+msgid "Not confirmed"
+msgstr "未确认"
+
+#: templates/deals/detail.html:33
+msgid "Contract closing date"
+msgstr "合同交割日期"
+
+#: templates/deals/detail.html:34
+msgid "Internal target"
+msgstr "内部目标日期"
+
+#: templates/deals/detail.html:35
+msgid "Actual closing"
+msgstr "实际交割"
+
+#: templates/deals/list.html:5
+msgid ""
+"Sales, acquisitions, leases, renewals, assignments and business asset "
+"transactions."
+msgstr "出售、收购、租赁、续租、转租及生意资产交易。"
+
+#: templates/deals/list.html:7
+msgid "Deposits"
+msgstr "保证金"
+
+#: templates/deals/new.html:6
+msgid "Three quick choices. Everything else can be added on the deal page."
+msgstr "三个快速选择，其他信息可稍后在交易页面补充。"
+
+#: templates/deals/new.html:12
+msgid "What kind of deal?"
+msgstr "交易类型？"
+
+#: templates/deals/new.html:19
+msgid "Buying or selling real estate, including land"
+msgstr "买卖房地产（含土地）"
+
+#: templates/deals/new.html:19
+msgid "New lease, renewal, expansion or assignment"
+msgstr "新租约、续租、扩租或租约转让"
+
+#: templates/deals/new.html:19
+msgid "Buying or selling an operating business"
+msgstr "收购或出售经营中的生意"
+
+#: templates/deals/new.html:27
+msgid "Who do we represent?"
+msgstr "我方代表哪一方？"
+
+#: templates/deals/new.html:34
+msgid "Dual representation — both sides"
+msgstr "双边代理——同时代表双方"
+
+#: templates/deals/new.html:34
+msgid "SKW represents this side"
+msgstr "SKW 代表此方"
+
+#: templates/deals/new.html:41
+msgid "Lease type"
+msgstr "租约类型"
+
+#: templates/deals/new.html:46
+msgid "Deal details"
+msgstr "交易信息"
+
+#: templates/deals/new.html:57
+msgid "Choose property"
+msgstr "选择物业"
+
+#: templates/deals/new.html:63
+msgid ""
+"A company or person. Matched to an existing company when the name is the "
+"same."
+msgstr "公司或个人。名称相同时会匹配已有公司。"
+
+#: templates/deals/new.html:64
+msgid "Other client"
+msgstr "另一方客户"
+
+#: templates/deals/new.html:70
+msgid "Create deal"
+msgstr "创建交易"
+
+#: templates/deals/new.html:70 templates/form.html:14
+msgid "Cancel"
+msgstr "取消"
+
+#: templates/form.html:5
+msgid "Back"
+msgstr "返回"
+
+#: templates/form.html:13
+msgid "Save"
+msgstr "保存"
+
+#: templates/form.html:15
+msgid "Remove this record? The removal is recorded in the activity log."
+msgstr "确定删除此记录？删除操作会记入活动日志。"
+
+#: templates/form.html:15
+msgid "Remove"
+msgstr "删除"
+
+#: templates/partials/listing.html:3
+msgid "Search…"
+msgstr "搜索…"
+
+#: templates/partials/listing.html:6
+msgid "all"
+msgstr "全部"
+
+#: templates/partials/listing.html:13
+msgid "Apply"
+msgstr "应用"
+
+#: templates/partials/listing.html:14
+msgid "Clear"
+msgstr "清除"
+
+#: templates/partials/listing.html:16
+#, python-format
+msgid "%(n)s record"
+msgid_plural "%(n)s records"
+msgstr[0] "%(n)s 条记录"
+
+#: templates/partials/listing.html:18
+msgid "Saved views"
+msgstr "已保存视图"
+
+#: templates/partials/listing.html:22
+msgid "Columns"
+msgstr "列"
+
+#: templates/partials/listing.html:25
+msgid "Show columns"
+msgstr "显示列"
+
+#: templates/partials/listing.html:28
+msgid "Save view"
+msgstr "保存视图"
+
+#: templates/partials/listing.html:29
+msgid "Name"
+msgstr "名称"
+
+#: templates/partials/listing.html:30
+msgid "Save current filters"
+msgstr "保存当前筛选"
+
+#: templates/partials/listing.html:32
+msgid "Export CSV"
+msgstr "导出 CSV"
+
+#: templates/partials/listing.html:43
+msgid "No records match."
+msgstr "没有匹配的记录。"
+
+#: templates/partials/listing.html:50
+msgid "Previous"
+msgstr "上一页"
+
+#: templates/partials/listing.html:51
+#, python-format
+msgid "Page %(p)s of %(t)s"
+msgstr "第 %(p)s / %(t)s 页"
+
+#: templates/partials/listing.html:52
+msgid "Next"
+msgstr "下一页"
+
+#: templates/registration/login.html:3 templates/registration/login.html:18
+msgid "Sign in"
+msgstr "登录"
+
+#: templates/registration/login.html:5
+msgid "Demo mode — fictional sample data in an isolated database."
+msgstr "演示模式——独立数据库中的虚构示例数据。"
+
+#: templates/registration/login.html:11
+msgid "Sign in to DealDesk"
+msgstr "登录 DealDesk"
+
+#: templates/registration/login.html:12
+msgid "private workspace"
+msgstr "私有工作区"
+
+#: templates/registration/login.html:13
+msgid "The username or password is incorrect."
+msgstr "用户名或密码不正确。"
+
+#: templates/registration/login.html:15
+msgid "Username"
+msgstr "用户名"
+
+#: templates/registration/login.html:16
+msgid "Password"
+msgstr "密码"

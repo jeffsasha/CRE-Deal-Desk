@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from checklists.models import OPEN_STATUSES, ChecklistItem
 from core.permissions import has_perm
@@ -14,11 +15,11 @@ from documents.models import ExtractionRun
 from reports import services as reports
 
 TOPICS = {
-    "title": ("Title", Q(category__iexact="Title")),
-    "survey": ("Survey", Q(category__iexact="Survey")),
-    "insurance": ("Property insurance", Q(title__icontains="property insurance")),
-    "financing": ("Financing", Q(category__iexact="Financing and insurance") & ~Q(title__icontains="insurance")),
-    "inspection": ("Inspections", Q(category__iexact="Physical and environmental diligence")),
+    "title": (_("Title"), Q(category__iexact="Title")),
+    "survey": (_("Survey"), Q(category__iexact="Survey")),
+    "insurance": (_("Property insurance"), Q(title__icontains="property insurance")),
+    "financing": (_("Financing"), Q(category__iexact="Financing and insurance") & ~Q(title__icontains="insurance")),
+    "inspection": (_("Inspections"), Q(category__iexact="Physical and environmental diligence")),
 }
 
 
@@ -26,7 +27,7 @@ def topic_filter(topic):
     return TOPICS[topic][1]
 
 
-PROGRESS_KINDS = [("all", "All"), ("sale", "Sales & acquisitions"), ("lease", "Leases"), ("business", "Business assets")]
+PROGRESS_KINDS = [("all", _("All")), ("sale", _("Sales & acquisitions")), ("lease", _("Leases")), ("business", _("Business assets"))]
 
 
 def deal_progress(kind="all"):

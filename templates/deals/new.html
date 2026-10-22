@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "New deal" %}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'deal_list' %}">← {% translate "Deals" %}</a></div>
+<div class="page-head"><div><h1>{% translate "New deal" %}</h1><div class="sub">{% translate "Three quick choices. Everything else can be added on the deal page." %}</div></div></div>
+
+<form method="post" class="new-deal" data-new-deal>{% csrf_token %}
+  {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+
+  <section class="nd-step">
+    <div class="nd-step-head"><span class="nd-num">1</span><h2>{% translate "What kind of deal?" %}</h2></div>
+    <div class="tiles tiles-3">
+      {% for value, label in kinds %}
+      <label class="tile">
+        <input type="radio" name="kind" value="{{ value }}" {% if kind == value %}checked{% endif %} required>
+        <span class="tile-icon">{% if value == "sale" %}{% icon "property_list" %}{% elif value == "lease" %}{% icon "deal_list" %}{% else %}{% icon "commission_list" %}{% endif %}</span>
+        <span class="tile-title">{{ label }}</span>
+        <span class="tile-sub">{% if value == "sale" %}{% translate "Buying or selling real estate, including land" %}{% elif value == "lease" %}{% translate "New lease, renewal, expansion or assignment" %}{% else %}{% translate "Buying or selling an operating business" %}{% endif %}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% for e in form.kind.errors %}<div class="err">{{ e }}</div>{% endfor %}
+  </section>
+
+  <section class="nd-step" data-needs-kind>
+    <div class="nd-step-head"><span class="nd-num">2</span><h2>{% translate "Who do we represent?" %}</h2></div>
+    {% for k, options in sides.items %}
+    <div class="tiles tiles-3" data-kind-only="{{ k }}">
+      {% for value, label in options %}
+      <label class="tile tile-compact">
+        <input type="radio" name="side" value="{{ value }}" {% if kind == k and side == value %}checked{% endif %}>
+        <span class="tile-title">{{ label }}</span>
+        <span class="tile-sub">{% if value == "both" %}{% translate "Dual representation — both sides" %}{% else %}{% translate "SKW represents this side" %}{% endif %}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    {% for e in form.side.errors %}<div class="err">{{ e }}</div>{% endfor %}
+    <div class="field nd-inline" data-kind-only="lease" style="margin-top:12px">
+      <label for="id_lease_type">{% translate "Lease type" %}</label>{{ form.lease_type }}
+    </div>
+  </section>
+
+  <section class="nd-step" data-needs-side>
+    <div class="nd-step-head"><span class="nd-num">3</span><h2>{% translate "Deal details" %}</h2></div>
+    <div class="card"><div class="card-body">
+      <div class="field">
+        <label>{% translate "Property" %}</label>
+        <div class="segmented seg-radio">
+          {% for value, label in form.property_mode.field.choices %}
+          <label><input type="radio" name="property_mode" value="{{ value }}" {% if property_mode == value %}checked{% endif %}><span>{{ label }}</span></label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:14px">
+        <div class="field full" data-mode-only="existing"><label for="id_property">{% translate "Choose property" %}</label>{{ form.property }}{% for e in form.property.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        <div class="field" data-mode-only="new"><label for="id_new_address">{% translate "Street address" %}</label>{{ form.new_address }}{% for e in form.new_address.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        <div class="field" data-mode-only="new"><label for="id_new_city">{% translate "City" %}</label>{{ form.new_city }}</div>
+        <div class="field" data-mode-only="new"><label for="id_new_type">{% translate "Property type" %}</label>{{ form.new_type }}</div>
+        <div class="field" data-kind-only="lease"><label for="id_suite">{% translate "Suite" %}</label>{{ form.suite }}</div>
+
+        <div class="field"><label for="id_client_a" data-client-label="a">{% translate "Client" %}</label>{{ form.client_a }}<div class="help">{% translate "A company or person. Matched to an existing company when the name is the same." %}</div></div>
+        <div class="field" data-client-b><label for="id_client_b" data-client-label="b">{% translate "Other client" %}</label>{{ form.client_b }}</div>
+        <div class="field"><label for="id_responsible_broker">{% translate "Responsible broker" %}</label>{{ form.responsible_broker }}</div>
+        <div class="field"><label for="id_stage">{% translate "Stage" %}</label>{{ form.stage }}</div>
+        <div class="field full"><label for="id_name">{% translate "Deal name" %}</label>{{ form.name }}<div class="help">{{ form.name.help_text }}</div>{% for e in form.name.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+      </div>
+      <div class="nd-summary" data-summary></div>
+      <div class="form-actions"><button class="btn btn-primary">{% translate "Create deal" %}</button><a class="btn" href="{% url 'deal_list' %}">{% translate "Cancel" %}</a></div>
+    </div></div>
+  </section>
+</form>
+<script type="application/json" id="client-labels">{
+{% for key, labels in client_labels.items %}"{{ key.0 }}:{{ key.1 }}": ["{{ labels.0|escapejs }}", "{% if labels.1 %}{{ labels.1|escapejs }}{% endif %}"]{% if not forloop.last %},{% endif %}
+{% endfor %}}</script>
+{% endblock %}

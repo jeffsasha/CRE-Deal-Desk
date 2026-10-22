@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Deals{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Deals" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Deals</h1><div class="sub">Sales, acquisitions, leases, renewals, assignments and business asset transactions.</div></div>
-<div class="actions"><div class="segmented"><a class="on" href="{% url 'deal_list' %}">Table</a><a href="{% url 'deal_board' %}">Board</a><a href="{% url 'deadline_calendar' %}">Calendar</a></div>
-<a class="btn" href="{% url 'issue_list' %}">Issues</a><a class="btn" href="{% url 'deposit_list' %}">Deposits</a>
-{% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}New deal</a>{% endif %}</div></div>
+<div class="page-head"><div><h1>{% translate "Deals" %}</h1><div class="sub">{% translate "Sales, acquisitions, leases, renewals, assignments and business asset transactions." %}</div></div>
+<div class="actions"><div class="segmented"><a class="on" href="{% url 'deal_list' %}">{% translate "Table" %}</a><a href="{% url 'deal_board' %}">{% translate "Board" %}</a><a href="{% url 'deadline_calendar' %}">{% translate "Calendar" %}</a></div>
+<a class="btn" href="{% url 'issue_list' %}">{% translate "Issues" %}</a><a class="btn" href="{% url 'deposit_list' %}">{% translate "Deposits" %}</a>
+{% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div></div>
 {% include "partials/listing.html" %}
 {% endblock %}

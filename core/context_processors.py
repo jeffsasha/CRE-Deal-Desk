@@ -1,18 +1,19 @@
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 from .permissions import PERMISSIONS, has_perm
 
 NAV = [
-    ("dashboard", "Dashboard", "view"),
-    ("property_list", "Properties", "view"),
-    ("deal_list", "Deals", "view"),
-    ("deadline_list", "Calendar & Deadlines", "view"),
-    ("checklist_list", "Tasks & Checklists", "view"),
-    ("document_list", "Documents", "view"),
-    ("contact_list", "Contacts & Companies", "view"),
-    ("commission_list", "Commissions", "commission.view"),
-    ("report_index", "Reports", "view"),
-    ("settings_index", "Settings", "view"),
+    ("dashboard", _("Dashboard"), "view"),
+    ("property_list", _("Properties"), "view"),
+    ("deal_list", _("Deals"), "view"),
+    ("deadline_list", _("Calendar & Deadlines"), "view"),
+    ("checklist_list", _("Tasks & Checklists"), "view"),
+    ("document_list", _("Documents"), "view"),
+    ("contact_list", _("Contacts & Companies"), "view"),
+    ("commission_list", _("Commissions"), "commission.view"),
+    ("report_index", _("Reports"), "view"),
+    ("settings_index", _("Settings"), "view"),
 ]
 
 

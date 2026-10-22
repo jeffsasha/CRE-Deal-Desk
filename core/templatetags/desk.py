@@ -11,6 +11,29 @@ from core.permissions import has_perm
 
 register = template.Library()
 
+_ASSET_VERSIONS = {}
+
+
+@register.simple_tag
+def asset(path):
+    """Static URL with a content-based version so browsers never use a stale copy."""
+    import hashlib
+    from pathlib import Path
+
+    from django.conf import settings
+    from django.templatetags.static import static
+
+    src = Path(settings.BASE_DIR) / "static" / path
+    try:
+        mtime = src.stat().st_mtime
+    except OSError:
+        return static(path)
+    cached = _ASSET_VERSIONS.get(path)
+    if not cached or cached[0] != mtime:
+        cached = (mtime, hashlib.sha1(src.read_bytes()).hexdigest()[:10])
+        _ASSET_VERSIONS[path] = cached
+    return f"{static(path)}?v={cached[1]}"
+
 
 @register.filter
 def money(cents, unknown="Unknown"):
@@ -39,17 +62,41 @@ def can(user, perm):
     return has_perm(user, perm)
 
 
+def _zh():
+    from django.utils.translation import get_language
+
+    return (get_language() or "").startswith("zh")
+
+
+WEEKDAYS_ZH = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+
+
 @register.filter
 def d(value):
-    """Compact date: 'Mar 4, 2026'."""
+    """Compact date: 'Mar 4, 2026' (EN) or '2026年3月4日' (中)."""
     if not value:
         return "—"
     if isinstance(value, datetime):
         value = timezone.localtime(value)
+        if _zh():
+            return f"{value.year}年{value.month}月{value.day}日 {value:%H:%M}"
         return f"{value:%b} {value.day}, {value.year} {value:%-I:%M %p}"
     if isinstance(value, date):
+        if _zh():
+            return f"{value.year}年{value.month}月{value.day}日"
         return f"{value:%b} {value.day}, {value.year}"
     return value
+
+
+@register.filter
+def longdate(value):
+    """'Thursday, October 22, 2026' (EN) or '2026年10月22日 星期四' (中)."""
+    if not value:
+        return ""
+    if _zh():
+        names = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+        return f"{value.year}年{value.month}月{value.day}日 {names[value.weekday()]}"
+    return f"{value:%A}, {value:%B} {value.day}, {value.year}"
 
 
 @register.filter
@@ -58,23 +105,29 @@ def dshort(value):
         return "—"
     if isinstance(value, datetime):
         value = timezone.localtime(value).date()
+    if _zh():
+        return f"{value.month}月{value.day}日 {WEEKDAYS_ZH[value.weekday()]}"
     return f"{value:%a} {value:%b} {value.day}"
 
 
 @register.filter
 def relday(value):
+    from django.utils.translation import gettext as _, ngettext
+
     if not value:
         return ""
     if isinstance(value, datetime):
         value = timezone.localtime(value).date()
     delta = (value - timezone.localdate()).days
     if delta == 0:
-        return "today"
+        return _("today")
     if delta == 1:
-        return "tomorrow"
+        return _("tomorrow")
     if delta == -1:
-        return "yesterday"
-    return f"in {delta} days" if delta > 0 else f"{-delta} days ago"
+        return _("yesterday")
+    if delta > 0:
+        return ngettext("in %(n)d day", "in %(n)d days", delta) % {"n": delta}
+    return ngettext("%(n)d day ago", "%(n)d days ago", -delta) % {"n": -delta}
 
 
 PILL_TONES = {

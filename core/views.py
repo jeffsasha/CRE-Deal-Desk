@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from crm.models import Contact, Organization
@@ -71,16 +72,16 @@ def quick_search(request):
     out = []
     if len(q) >= 2:
         for d in Deal.objects.active().filter(Q(name__icontains=q) | Q(internal_id__icontains=q)).select_related("stage")[:6]:
-            out.append({"group": "Deals", "label": d.name, "hint": f"{d.internal_id} · {d.stage.name}", "url": d.get_absolute_url(), "icon": "deal_list"})
+            out.append({"group": str(_("Deals")), "label": d.name, "hint": f"{d.internal_id} · {d.stage.name}", "url": d.get_absolute_url(), "icon": "deal_list"})
         for p in Property.objects.active().filter(Q(name__icontains=q) | Q(street__icontains=q))[:5]:
-            out.append({"group": "Properties", "label": p.name, "hint": p.city, "url": p.get_absolute_url(), "icon": "property_list"})
+            out.append({"group": str(_("Properties")), "label": p.name, "hint": p.city, "url": p.get_absolute_url(), "icon": "property_list"})
         for c in Contact.objects.active().filter(Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(organization__name__icontains=q)).select_related("organization")[:5]:
-            out.append({"group": "Contacts", "label": c.full_name, "hint": c.organization.name if c.organization_id else "", "url": c.get_absolute_url(), "icon": "contact_list"})
+            out.append({"group": str(_("Contacts")), "label": c.full_name, "hint": c.organization.name if c.organization_id else "", "url": c.get_absolute_url(), "icon": "contact_list"})
         docs = Document.objects.active().filter(Q(title__icontains=q) | Q(tags__icontains=q))
         if not has_perm(request.user, "document.confidential"):
             docs = docs.exclude(access_level="confidential")
         for doc in docs[:5]:
-            out.append({"group": "Documents", "label": doc.title, "hint": doc.get_doc_type_display(), "url": doc.get_absolute_url(), "icon": "document_list"})
+            out.append({"group": str(_("Documents")), "label": doc.title, "hint": doc.get_doc_type_display(), "url": doc.get_absolute_url(), "icon": "document_list"})
     return JsonResponse({"results": out})
 
 

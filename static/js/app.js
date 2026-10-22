@@ -193,13 +193,14 @@
   if (palette) {
     var input = palette.querySelector("[data-cmdk-input]");
     var list = palette.querySelector("[data-cmdk-list]");
+    var box = palette.querySelector(".cmdk");
     var icons = {};
     var tpl = document.getElementById("cmdk-icons");
     if (tpl) tpl.content.querySelectorAll("[data-i]").forEach(function (s) { icons[s.getAttribute("data-i")] = s.innerHTML; });
     var searchUrl = JSON.parse(document.getElementById("cmdk-search-url").textContent);
     var staticItems = [];
     document.querySelectorAll(".sidebar .nav a").forEach(function (a) {
-      staticItems.push({ label: a.textContent.trim(), url: a.getAttribute("href"), group: "Navigate", svg: (a.querySelector("svg") || {}).outerHTML });
+      staticItems.push({ label: a.textContent.trim(), url: a.getAttribute("href"), group: box.getAttribute("data-t-nav") || "Navigate", svg: (a.querySelector("svg") || {}).outerHTML });
     });
     try { staticItems = staticItems.concat(JSON.parse(document.getElementById("cmdk-actions").textContent)); } catch (e) {}
     var results = [], active = 0, remote = [], timer = null, seq = 0;
@@ -221,7 +222,7 @@
         .sort(function (a, b) { return b[0] - a[0]; })
         .map(function (p) { return p[1]; });
       results = remote.concat(local);
-      if (q) results.push({ label: "Search everything for “" + input.value.trim() + "”", url: searchUrl + "?q=" + encodeURIComponent(input.value.trim()), group: "Search", icon: "search" });
+      if (q) results.push({ label: (box.getAttribute("data-t-search") || "Search everything for") + " “" + input.value.trim() + "”", url: searchUrl + "?q=" + encodeURIComponent(input.value.trim()), group: box.getAttribute("data-t-sgroup") || "Search", icon: "search" });
       if (active >= results.length) active = Math.max(0, results.length - 1);
       var html = "", group = null;
       results.forEach(function (it, i) {
@@ -230,7 +231,7 @@
         html += '<div class="cmdk-item' + (i === active ? " active" : "") + '" role="option" data-i="' + i + '">' + icon +
           "<span>" + esc(it.label) + "</span>" + (it.hint ? '<span class="hint">' + esc(it.hint) + "</span>" : "") + "</div>";
       });
-      list.innerHTML = html || '<div class="empty">No matches</div>';
+      list.innerHTML = html || '<div class="empty">' + esc(box.getAttribute("data-t-empty") || "No matches") + "</div>";
       var el = list.querySelector(".cmdk-item.active");
       if (el) el.scrollIntoView({ block: "nearest" });
     }
@@ -285,4 +286,38 @@
       }
     });
   }
+})();
+
+// ---- Guided New Deal: reveal the questions that apply ------------------------
+(function () {
+  var form = document.querySelector("[data-new-deal]");
+  if (!form) return;
+  var labels = {};
+  try { labels = JSON.parse(document.getElementById("client-labels").textContent); } catch (e) {}
+  var summary = form.querySelector("[data-summary]");
+  function val(name) { var el = form.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ""; }
+  function sync() {
+    var kind = val("kind"), mode = val("property_mode");
+    form.querySelectorAll("[data-kind-only]").forEach(function (el) {
+      var on = el.getAttribute("data-kind-only") === kind;
+      el.hidden = !on;
+      el.querySelectorAll('input[name="side"]').forEach(function (i) { i.disabled = !on; if (!on) i.checked = false; });
+    });
+    var side = val("side");
+    form.querySelector("[data-needs-kind]").hidden = !kind;
+    form.querySelector("[data-needs-side]").hidden = !(kind && side);
+    form.querySelectorAll("[data-mode-only]").forEach(function (el) { el.hidden = el.getAttribute("data-mode-only") !== mode; });
+    var pair = labels[kind + ":" + side] || ["", ""];
+    var a = form.querySelector('[data-client-label="a"]'), b = form.querySelector('[data-client-label="b"]');
+    if (a && pair[0]) a.textContent = pair[0];
+    if (b) b.textContent = pair[1];
+    form.querySelector("[data-client-b]").hidden = !pair[1];
+    if (summary) {
+      var k = form.querySelector('input[name="kind"]:checked'), s = form.querySelector('input[name="side"]:checked');
+      summary.textContent = k && s ? "✓ " + k.closest(".tile").querySelector(".tile-title").textContent + " · " +
+        s.closest(".tile").querySelector(".tile-title").textContent : "";
+    }
+  }
+  form.addEventListener("change", sync);
+  sync();
 })();

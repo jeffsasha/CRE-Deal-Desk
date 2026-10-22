@@ -5,9 +5,10 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from checklists.models import CONDITIONS, ChecklistTemplate
@@ -25,7 +26,6 @@ from .catalog import TERM_CATALOG, TERM_CATEGORY_ORDER, event_label
 from .forms import (
     ActivityForm,
     CloseDealForm,
-    DealCreateForm,
     DealForm,
     DealLinkForm,
     DepositForm,
@@ -61,22 +61,22 @@ TRACKED = ["name", "transaction_type", "priority", "responsible_broker", "target
 
 def _deal_columns():
     return [
-        Column("name", "Deal", lambda d: d.name, sort="name"),
-        Column("id", "ID", lambda d: d.internal_id, sort="internal_id"),
-        Column("type", "Type", lambda d: d.get_transaction_type_display(), sort="transaction_type"),
-        Column("stage", "Stage", lambda d: format_html('<span class="pill pill-{}">{}</span>',
+        Column("name", gettext_lazy("Deal"), lambda d: d.name, sort="name"),
+        Column("id", gettext_lazy("ID"), lambda d: d.internal_id, sort="internal_id"),
+        Column("type", gettext_lazy("Type"), lambda d: d.get_transaction_type_display(), sort="transaction_type"),
+        Column("stage", gettext_lazy("Stage"), lambda d: format_html('<span class="pill pill-{}">{}</span>',
                                                        {"active": "blue", "closed": "green", "on_hold": "amber",
-                                                        "terminated": "red"}.get(d.stage.category, "gray"), d.stage.name),
+                                                        "terminated": "red"}.get(d.stage.category, "gray"), _(d.stage.name)),
                sort="stage__order"),
-        Column("property", "Property", lambda d: d.primary_property or "—"),
-        Column("client", "Client", lambda d: d.client or "—", sort="client__name", default=False),
-        Column("broker", "Broker", lambda d: d.responsible_broker or "—", sort="responsible_broker__first_name"),
-        Column("priority", "Priority", lambda d: d.get_priority_display(), sort="priority", default=False),
-        Column("next", "Next action", lambda d: d.next_action or "—"),
-        Column("blocked", "Blocked by", lambda d: d.blocked_by if d.is_blocked else "", default=False),
-        Column("closing", "Closing", lambda d: _closing_label(d), sort="contractual_closing_date"),
-        Column("price", "Price / consideration", lambda d: _price_label(d), cls="num", default=False),
-        Column("updated", "Updated", lambda d: timezone.localtime(d.updated_at).strftime("%b %-d"), sort="updated_at", default=False),
+        Column("property", gettext_lazy("Property"), lambda d: d.primary_property or "—"),
+        Column("client", gettext_lazy("Client"), lambda d: d.client or "—", sort="client__name", default=False),
+        Column("broker", gettext_lazy("Broker"), lambda d: d.responsible_broker or "—", sort="responsible_broker__first_name"),
+        Column("priority", gettext_lazy("Priority"), lambda d: d.get_priority_display(), sort="priority", default=False),
+        Column("next", gettext_lazy("Next action"), lambda d: d.next_action or "—"),
+        Column("blocked", gettext_lazy("Blocked by"), lambda d: d.blocked_by if d.is_blocked else "", default=False),
+        Column("closing", gettext_lazy("Closing"), lambda d: _closing_label(d), sort="contractual_closing_date"),
+        Column("price", gettext_lazy("Price / consideration"), lambda d: _price_label(d), cls="num", default=False),
+        Column("updated", gettext_lazy("Updated"), lambda d: timezone.localtime(d.updated_at).strftime("%b %-d"), sort="updated_at", default=False),
     ]
 
 
@@ -101,18 +101,18 @@ def _price_label(d):
 
 
 def _deal_filters():
-    stages = [(s.key, s.name) for s in Stage.objects.filter(enabled=True)]
+    stages = [(s.key, _(s.name)) for s in Stage.objects.filter(enabled=True)]
     brokers = [(str(u.pk), u.display_name) for u in User.objects.exclude(role="read_only")]
     today = timezone.localdate()
     return [
-        Filter("stage", "Stage", stages + [("_active", "All active"), ("_inactive", "All inactive")],
+        Filter("stage", gettext_lazy("Stage"), stages + [("_active", _("All active")), ("_inactive", _("All inactive"))],
                lambda qs, v: qs.filter(stage__category="active") if v == "_active" else (
                    qs.exclude(stage__category="active") if v == "_inactive" else qs.filter(stage__key=v))),
-        Filter("type", "Type", TRANSACTION_TYPES, lambda qs, v: qs.filter(transaction_type=v)),
-        Filter("broker", "Broker", brokers, lambda qs, v: qs.filter(Q(responsible_broker_id=v) | Q(team__id=v))),
-        Filter("priority", "Priority", PRIORITIES, lambda qs, v: qs.filter(priority=v)),
-        Filter("blocked", "Blocked", [("1", "Blocked by another party")], lambda qs, v: qs.filter(is_blocked=True)),
-        Filter("closing", "Closing", [("30", "Closing within 30 days"), ("90", "Closing within 90 days")],
+        Filter("type", gettext_lazy("Type"), TRANSACTION_TYPES, lambda qs, v: qs.filter(transaction_type=v)),
+        Filter("broker", gettext_lazy("Broker"), brokers, lambda qs, v: qs.filter(Q(responsible_broker_id=v) | Q(team__id=v))),
+        Filter("priority", gettext_lazy("Priority"), PRIORITIES, lambda qs, v: qs.filter(priority=v)),
+        Filter("blocked", gettext_lazy("Blocked"), [("1", _("Blocked by another party"))], lambda qs, v: qs.filter(is_blocked=True)),
+        Filter("closing", gettext_lazy("Closing"), [("30", _("Closing within 30 days")), ("90", _("Closing within 90 days"))],
                lambda qs, v: qs.filter(stage__category="active").filter(
                    Q(contractual_closing_date__gte=today, contractual_closing_date__lte=today + timedelta(days=int(v)))
                    | Q(contractual_closing_date__isnull=True, target_closing_date__gte=today,
@@ -179,27 +179,23 @@ def deposit_list(request):
 
 @require_edit_on_post
 def deal_create(request):
+    from .forms import CLIENT_LABELS, KIND_CHOICES, NewDealForm, SIDE_CHOICES
+
     require(request.user, "edit")
-    initial = {}
+    initial = {"responsible_broker": request.user if request.user.role in {"admin", "broker"} else None}
     if request.GET.get("property"):
-        initial["properties"] = [request.GET["property"]]
-    initial["responsible_broker"] = request.user if request.user.role in {"admin", "broker"} else None
-    form = DealCreateForm(request.POST or None, initial=initial)
+        initial.update({"property_mode": "existing", "property": request.GET["property"]})
+    form = NewDealForm(request.POST or None, initial=initial)
     if request.method == "POST" and form.is_valid():
-        data = form.cleaned_data
-        deal = form.save(commit=False)
-        deal.stage = data["stage"]
-        deal.save()
-        form.save_m2m()
-        for i, prop in enumerate(data["properties"]):
-            space = data["space"] if data["space"] and data["space"].property_id == prop.pk else None
-            deal.deal_properties.create(property=prop, space=space, is_primary=(i == 0))
-        audit(request.user, "deal.created", deal, {"stage": deal.stage.name, "type": deal.get_transaction_type_display()})
-        log_activity(deal, "Deal created", actor=request.user)
-        messages.success(request, f"Deal {deal.internal_id} created.")
+        deal = services.create_guided_deal(request.user, form.cleaned_data)
+        messages.success(request, _("Deal %(id)s created.") % {"id": deal.internal_id})
         return redirect(deal)
-    return render(request, "form.html", {"form": form, "title": "New deal", "back_url": reverse("deal_list"),
-                                         "subtitle": "One property may have many deals over time; a deal may involve several properties."})
+    return render(request, "deals/new.html", {
+        "form": form, "kinds": KIND_CHOICES, "sides": SIDE_CHOICES, "client_labels": CLIENT_LABELS,
+        "kind": form.data.get("kind") or form.initial.get("kind") or "",
+        "side": form.data.get("side") or "",
+        "property_mode": form.data.get("property_mode") or form.initial.get("property_mode") or "new",
+    })
 
 
 @require_edit_on_post
@@ -218,9 +214,9 @@ def deal_edit(request, pk):
     return render(request, "form.html", {"form": form, "title": f"Edit {deal.name}", "back_url": deal.get_absolute_url()})
 
 
-TABS = [("overview", "Overview"), ("parties", "Parties"), ("contract", "Contract & Dates"), ("checklist", "Checklist"),
-        ("documents", "Documents"), ("issues", "Issues"), ("activity", "Activity"), ("commissions", "Commissions"),
-        ("closing", "Closing")]
+TABS = [("overview", gettext_lazy("Overview")), ("parties", gettext_lazy("Parties")), ("contract", gettext_lazy("Contract & Dates")),
+        ("checklist", gettext_lazy("Checklist")), ("documents", gettext_lazy("Documents")), ("issues", gettext_lazy("Issues")),
+        ("activity", gettext_lazy("Activity")), ("commissions", gettext_lazy("Commissions")), ("closing", gettext_lazy("Closing"))]
 
 
 @require_perm("view")

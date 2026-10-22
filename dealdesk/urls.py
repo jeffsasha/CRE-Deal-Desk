@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.urls import path
+from django.urls import include, path
 
 from checklists import views as checklists
 from commissions import views as commissions
@@ -13,6 +13,7 @@ from properties import views as properties
 from reports import views as reports
 
 urlpatterns = [
+    path("i18n/", include("django.conf.urls.i18n")),
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("", core.dashboard, name="dashboard"),

@@ -1,10 +1,16 @@
 from datetime import date, datetime
 from decimal import Decimal
 
+from django.utils.functional import Promise
+
 from .models import AuditLog
 
 
 def _plain(value):
+    if isinstance(value, Promise):  # lazy translated labels
+        return str(value)
+    if isinstance(value, (list, tuple)):
+        return [_plain(v) for v in value]
     if isinstance(value, (date, datetime)):
         return value.isoformat()
     if isinstance(value, Decimal):

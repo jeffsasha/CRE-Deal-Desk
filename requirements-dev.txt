@@ -1,0 +1,2 @@
+polib==1.2.0  # locale/fill_zh.py
+pyflakes==4.0.3
