@@ -112,3 +112,39 @@ class LedgerReconciliationTests(DeskTestCase):
         resp = self.client.get(reverse("report_detail", args=["receipts"]) + f"?year={today.year}")
         self.assertContains(resp, "$3,500.00")
         self.assertEqual(len(resp.context["result"]["rows"]), 3)  # two receipts and one reversal
+
+
+class ClosedTotalsTests(DeskTestCase):
+    """Deals page header: sales and lease consideration kept apart, each deal once,
+    commission on the deals that closed in the period."""
+
+    def test_totals_by_year(self):
+        from commissions import simple
+        from deals import stats
+
+        broker = self.user("broker")
+        sale = self.deal("Sale 2025", stage="under_contract", transaction_type="sale")
+        close_deal(sale, broker, actual_closing_date=date(2025, 8, 19), total_cents=400_000_000)
+        simple.set_expected(sale, 16_000_000, broker)
+        simple.record_receipt(sale, 16_000_000, date(2025, 8, 19), broker)
+        lease = self.deal("Lease 2025", stage="under_contract", transaction_type="lease")
+        close_deal(lease, broker, actual_closing_date=date(2025, 9, 16), total_cents=15_459_100)
+        simple.set_expected(lease, 309_182, broker)
+        unknown = self.deal("Unknown price 2026", stage="under_contract", transaction_type="sale")
+        close_deal(unknown, broker, actual_closing_date=date(2026, 1, 5), total_cents=None)
+        self.deal("Open deal", stage="under_contract", transaction_type="sale")
+
+        t = stats.totals(2025)
+        self.assertEqual((t.count, t.sales, t.leases), (2, 400_000_000, 15_459_100))
+        self.assertEqual((t.commission, t.received, t.commission_unknown), (16_309_182, 16_000_000, 0))
+        t = stats.totals(None)
+        self.assertEqual((t.count, t.sales, t.sales_unknown, t.commission_unknown), (3, 400_000_000, 1, 1))
+        self.assertEqual(t.years, [2026, 2025])
+
+        self.client.force_login(broker)
+        resp = self.client.get(reverse("deal_list") + "?period=2025")
+        self.assertContains(resp, 'data-odo="400000000"')
+        self.assertContains(resp, "$163,092")
+        resp = self.client.get(reverse("deal_detail", args=[sale.pk]))
+        self.assertContains(resp, "SKW commission earned")
+        self.assertContains(resp, "$4,000,000")

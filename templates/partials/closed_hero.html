@@ -1,0 +1,27 @@
+{% load i18n %}{# Closed-deal totals with rolling numbers. Expects `totals`, `period`, `years`. #}
+<section class="hero-band" aria-label="{% translate "Closed deals" %}">
+  <div class="hero-head">
+    <div><div class="hero-title">{% translate "Closed" %}</div><div class="hero-sub">{% blocktranslate count n=totals.count %}{{ n }} closed deal, by actual closing date{% plural %}{{ n }} closed deals, by actual closing date{% endblocktranslate %}</div></div>
+    <div class="segmented">{% for y in years %}<a class="{% if period == y|stringformat:'s' %}on{% endif %}" href="?period={{ y }}">{{ y }}</a>{% endfor %}<a class="{% if period == 'all' %}on{% endif %}" href="?period=all">{% translate "All time" %}</a></div>
+  </div>
+  <div class="hero-grid">
+    <div class="hero-stat">
+      <div class="k">{% translate "Sales volume" %}</div>
+      <div class="v odo" data-odo="{{ totals.sales }}">{{ totals.sales|money0 }}</div>
+      <div class="n">{% blocktranslate count n=totals.sales_count %}{{ n }} sale{% plural %}{{ n }} sales{% endblocktranslate %}{% if totals.sales_unknown %} · {% blocktranslate with n=totals.sales_unknown %}{{ n }} price unknown{% endblocktranslate %}{% endif %}</div>
+    </div>
+    <div class="hero-stat">
+      <div class="k">{% translate "Lease consideration" %}</div>
+      <div class="v odo" data-odo="{{ totals.leases }}">{{ totals.leases|money0 }}</div>
+      <div class="n">{% blocktranslate count n=totals.lease_count %}{{ n }} lease{% plural %}{{ n }} leases{% endblocktranslate %}{% if totals.lease_unknown %} · {% blocktranslate with n=totals.lease_unknown %}{{ n }} total unknown{% endblocktranslate %}{% endif %}</div>
+    </div>
+    {% if can.commission_view %}
+    <div class="hero-stat accent">
+      <div class="k">{% translate "SKW commission" %}</div>
+      <div class="v odo" data-odo="{{ totals.commission }}">{{ totals.commission|money0 }}</div>
+      <div class="n">{% translate "Received" %} {{ totals.received|money0 }}{% if totals.commission_unknown %} · {% blocktranslate with n=totals.commission_unknown %}{{ n }} not entered{% endblocktranslate %}{% endif %}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% if totals.business_count %}<div class="hero-foot">{% translate "Business asset sales" %}: {{ totals.business|money0 }} · {% blocktranslate count n=totals.business_count %}{{ n }} sale{% plural %}{{ n }} sales{% endblocktranslate %}</div>{% endif %}
+</section>

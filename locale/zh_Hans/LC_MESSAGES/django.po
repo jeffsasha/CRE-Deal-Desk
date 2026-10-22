@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-22 16:12-0500\n"
+"POT-Creation-Date: 2026-10-22 18:08-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,8 +33,9 @@ msgstr "进行中"
 
 #: checklists/models.py:12 checklists/views.py:36 core/i18n_generated.py:459
 #: templates/commissions/list.html:10 templates/commissions/list.html:15
-#: templates/deals/tabs/checklist.html:22
-#: templates/deals/tabs/overview.html:35 templates/reports/detail.html:29
+#: templates/deals/detail.html:42 templates/deals/tabs/checklist.html:22
+#: templates/deals/tabs/overview.html:35
+#: templates/partials/closed_hero.html:22 templates/reports/detail.html:29
 msgid "Received"
 msgstr "已收"
 
@@ -116,7 +117,7 @@ msgstr "事项"
 
 #: checklists/views.py:29 commissions/views.py:54 core/i18n_generated.py:148
 #: core/views.py:246 deadlines/views.py:52 deals/views.py:63
-#: deals/views.py:154 templates/commissions/list.html:15
+#: deals/views.py:161 templates/commissions/list.html:15
 #: templates/properties/detail.html:43 templates/properties/detail.html:90
 #: templates/reports/detail.html:10 templates/reports/detail.html:17
 #: templates/reports/detail.html:21 templates/reports/detail.html:25
@@ -125,14 +126,14 @@ msgid "Deal"
 msgstr "交易"
 
 #: checklists/views.py:30 core/i18n_generated.py:81 deadlines/views.py:55
-#: deadlines/views.py:65 deals/views.py:562 deals/views.py:571
+#: deadlines/views.py:65 deals/views.py:569 deals/views.py:578
 #: templates/core/stages.html:8
 msgid "Category"
 msgstr "类别"
 
 #: checklists/views.py:31 checklists/views.py:43 core/i18n_generated.py:555
 #: core/views.py:252 core/views.py:256 deadlines/views.py:60
-#: deals/views.py:160 deals/views.py:163 deals/views.py:564 deals/views.py:570
+#: deals/views.py:167 deals/views.py:170 deals/views.py:571 deals/views.py:577
 #: templates/commissions/list.html:15 templates/core/jobs.html:8
 #: templates/core/users.html:8 templates/deadlines/detail.html:44
 #: templates/deals/tabs/checklist.html:22
@@ -151,7 +152,7 @@ msgstr "负责人"
 msgid "Outside party"
 msgstr "外部相关方"
 
-#: checklists/views.py:34 deals/views.py:158
+#: checklists/views.py:34 deals/views.py:165
 #: templates/deadlines/detail.html:19
 msgid "Due"
 msgstr "到期"
@@ -429,7 +430,7 @@ msgstr "日期"
 msgid "Type"
 msgstr "类型"
 
-#: commissions/views.py:53 core/i18n_generated.py:24 deals/views.py:156
+#: commissions/views.py:53 core/i18n_generated.py:24 deals/views.py:163
 #: templates/commissions/detail.html:27 templates/deals/tabs/overview.html:48
 #: templates/reports/detail.html:21 templates/reports/detail.html:25
 msgid "Amount"
@@ -987,7 +988,8 @@ msgid "Client entity"
 msgstr "客户实体"
 
 #: core/i18n_generated.py:93 core/i18n_strings.py:8
-#: templates/commissions/list.html:6
+#: templates/commissions/list.html:6 templates/deals/detail.html:30
+#: templates/partials/closed_hero.html:4
 msgid "Closed"
 msgstr "已成交"
 
@@ -996,7 +998,7 @@ msgid "Closed — no action"
 msgstr "已关闭——无需处理"
 
 #: core/i18n_generated.py:95 deadlines/models.py:18 deals/views.py:76
-#: deals/views.py:114 deals/views.py:222 documents/models.py:27
+#: deals/views.py:114 deals/views.py:229 documents/models.py:27
 #: templates/deals/board.html:15 templates/properties/detail.html:43
 msgid "Closing"
 msgstr "交割"
@@ -1010,7 +1012,7 @@ msgid "Closing (days after effective date)"
 msgstr "交割（生效日后天数）"
 
 #: core/i18n_generated.py:98 deals/keydates.py:24
-#: templates/deals/detail.html:32
+#: templates/deals/detail.html:51
 msgid "Closing Date"
 msgstr "Closing Date"
 
@@ -1039,7 +1041,7 @@ msgid "Comma-separated, e.g. Escrow officer, Surveyor, Attorney."
 msgstr "用逗号分隔，例如：托管专员、测量师、律师。"
 
 #: core/i18n_generated.py:105 deals/keydates.py:25
-#: templates/deals/detail.html:32
+#: templates/deals/detail.html:51
 msgid "Commencement Date"
 msgstr "Commencement Date"
 
@@ -1249,7 +1251,7 @@ msgstr "方向"
 msgid "Disclosed (see source)"
 msgstr "已披露（见来源）"
 
-#: core/i18n_generated.py:162 deals/views.py:567
+#: core/i18n_generated.py:162 deals/views.py:574
 msgid "Disclosure finding"
 msgstr "披露结论"
 
@@ -1306,7 +1308,7 @@ msgstr "赚取状态"
 msgid "Earnest money"
 msgstr "保证金（定金）"
 
-#: core/i18n_generated.py:182 deadlines/models.py:13 deals/views.py:175
+#: core/i18n_generated.py:182 deadlines/models.py:13 deals/views.py:182
 msgid "Earnest money & deposits"
 msgstr "保证金与押金"
 
@@ -1334,7 +1336,7 @@ msgstr "赚取条件"
 msgid "Economics"
 msgstr "经济条款"
 
-#: core/i18n_generated.py:190 templates/deals/detail.html:31
+#: core/i18n_generated.py:190 templates/deals/detail.html:50
 #: templates/partials/timeline.html:9
 msgid "Effective Date"
 msgstr "Effective Date"
@@ -1730,7 +1732,7 @@ msgstr "是否为估算"
 msgid "Is notice recipient"
 msgstr "是否为通知接收方"
 
-#: core/i18n_generated.py:294 deals/views.py:560
+#: core/i18n_generated.py:294 deals/views.py:567
 #: templates/properties/detail.html:90
 msgid "Issue"
 msgstr "问题"
@@ -2170,7 +2172,7 @@ msgstr "停车"
 msgid "Parking spaces"
 msgstr "停车位"
 
-#: core/i18n_generated.py:417 deals/views.py:221
+#: core/i18n_generated.py:417 deals/views.py:228
 msgid "Parties"
 msgstr "各方"
 
@@ -2349,7 +2351,7 @@ msgstr "收款用户"
 msgid "Referral broker"
 msgstr "推荐经纪人"
 
-#: core/i18n_generated.py:471 deals/views.py:161
+#: core/i18n_generated.py:471 deals/views.py:168
 msgid "Refundability"
 msgstr "可退还性"
 
@@ -2409,7 +2411,7 @@ msgstr "由我方代理"
 msgid "Represented side"
 msgstr "代表方"
 
-#: core/i18n_generated.py:487 deals/views.py:566 templates/deals/issue.html:24
+#: core/i18n_generated.py:487 deals/views.py:573 templates/deals/issue.html:24
 msgid "Requested credit"
 msgstr "请求折让"
 
@@ -2595,7 +2597,7 @@ msgstr "汇出日期"
 msgid "Sequence"
 msgstr "顺序"
 
-#: core/i18n_generated.py:538 deals/views.py:563
+#: core/i18n_generated.py:538 deals/views.py:570
 #: templates/properties/detail.html:90
 msgid "Severity"
 msgstr "严重程度"
@@ -3064,7 +3066,6 @@ msgid "Evaluating"
 msgstr "评估中"
 
 #: core/i18n_strings.py:7
-#| msgid "Listed on"
 msgid "Listed"
 msgstr "已挂牌"
 
@@ -3567,7 +3568,7 @@ msgstr "请先填写交易总额，再分配到各物业。"
 msgid "ID"
 msgstr "编号"
 
-#: deals/views.py:75 templates/deals/detail.html:36
+#: deals/views.py:75 templates/deals/detail.html:55
 msgid "Blocked by"
 msgstr "阻滞方"
 
@@ -3599,140 +3600,140 @@ msgstr "30 天内交割"
 msgid "Closing within 90 days"
 msgstr "90 天内交割"
 
-#: deals/views.py:155
+#: deals/views.py:162
 msgid "Deposit"
 msgstr "保证金"
 
-#: deals/views.py:157
+#: deals/views.py:164
 msgid "Held by"
 msgstr "托管方"
 
-#: deals/views.py:176
+#: deals/views.py:183
 msgid ""
 "Deposits on active deals not yet confirmed received by the holder. "
 "Refundability is never inferred from a feasibility date."
 msgstr "进行中交易中尚未经托管方确认收到的保证金。可退还性不会仅凭可行性期限推断。"
 
-#: deals/views.py:193
+#: deals/views.py:200
 #, python-format
 msgid "Deal %(id)s created. Enter the listing details."
 msgstr "Deal %(id)s 已创建，请填写 Listing 信息。"
 
-#: deals/views.py:195
+#: deals/views.py:202
 #, python-format
 msgid "Deal %(id)s created. Enter its key dates."
 msgstr "Deal %(id)s 已创建，请填写关键日期。"
 
-#: deals/views.py:221 templates/properties/detail.html:29
+#: deals/views.py:228 templates/properties/detail.html:29
 msgid "Overview"
 msgstr "概览"
 
-#: deals/views.py:221
+#: deals/views.py:228
 msgid "Checklist"
 msgstr "清单"
 
-#: deals/views.py:222 templates/properties/detail.html:36
+#: deals/views.py:229 templates/properties/detail.html:36
 msgid "Activity"
 msgstr "动态"
 
-#: deals/views.py:312
+#: deals/views.py:319
 msgid "Deal closed."
 msgstr "交易已完成。"
 
-#: deals/views.py:318
+#: deals/views.py:325
 msgid ""
 "Closing records the actual date and deal-level consideration. A proposed or "
 "scheduled closing is not a closed transaction."
 msgstr "交割会记录实际日期和交易层面的成交金额。拟定或排期中的交割不算已成交。"
 
-#: deals/views.py:319 templates/deals/tabs/closing.html:15
+#: deals/views.py:326 templates/deals/tabs/closing.html:15
 msgid "Close deal"
 msgstr "完成交易"
 
-#: deals/views.py:331
+#: deals/views.py:338
 msgid "Deal archived. It can be restored from Settings → Archived records."
 msgstr "交易已归档，可在“设置 → 已归档记录”中恢复。"
 
-#: deals/views.py:334
+#: deals/views.py:341
 msgid ""
 "Archived deals are hidden from lists and excluded from reports. Nothing is "
 "deleted; you can restore it."
 msgstr "已归档的交易不在列表中显示，也不计入报表。不会删除任何内容，可随时恢复。"
 
-#: deals/views.py:335 templates/deals/tabs/overview.html:67
+#: deals/views.py:342 templates/deals/tabs/overview.html:67
 msgid "Archive deal"
 msgstr "归档交易"
 
-#: deals/views.py:368
+#: deals/views.py:375
 msgid "History records cannot be deleted."
 msgstr "历史记录不能删除。"
 
-#: deals/views.py:412
+#: deals/views.py:419
 msgid ""
 "Deadlines that depend on this event are computed from the date you enter "
 "here. Never substitute the date a file was uploaded."
 msgstr "依赖此事件的期限将按此处输入的日期计算。切勿以文件上传日期代替。"
 
-#: deals/views.py:424
+#: deals/views.py:431
 msgid "Contract term approved. Dependent deadlines were recomputed."
 msgstr "合同条款已批准，相关期限已重新计算。"
 
-#: deals/views.py:427
+#: deals/views.py:434
 msgid ""
 "Manual entry is always available. Enter only values stated in an executed "
 "agreement; superseded values are kept in history."
 msgstr "可随时手动录入。只录入已签署协议中约定的值；被取代的值会保留在历史记录中。"
 
-#: deals/views.py:428
+#: deals/views.py:435
 msgid "Approve term"
 msgstr "批准条款"
 
-#: deals/views.py:488
+#: deals/views.py:495
 msgid "Recorded as sent by you. DealDesk did not send anything."
 msgstr "已记录为由您发送。DealDesk 未发送任何内容。"
 
-#: deals/views.py:494
+#: deals/views.py:501
 msgid "Draft saved."
 msgstr "草稿已保存。"
 
-#: deals/views.py:526
+#: deals/views.py:533
 msgid "Edit issue"
 msgstr "编辑问题"
 
-#: deals/views.py:561
+#: deals/views.py:568
 msgid "Deal / property"
 msgstr "交易/物业"
 
-#: deals/views.py:565 templates/deals/issue.html:27
+#: deals/views.py:572 templates/deals/issue.html:27
 msgid "Resolution"
 msgstr "解决情况"
 
-#: deals/views.py:576 templates/base.html:71 templates/deals/list.html:7
+#: deals/views.py:583 templates/base.html:71 templates/deals/list.html:7
 #: templates/properties/detail.html:35 templates/properties/detail.html:89
 msgid "Issues"
 msgstr "问题"
 
-#: deals/views.py:591
+#: deals/views.py:598
 msgid "Key dates saved. Deadlines were recomputed."
 msgstr "关键日期已保存，截止日已重新计算。"
 
-#: deals/views.py:608
+#: deals/views.py:615
 msgid "SKW commission saved."
 msgstr "SKW Commission 已保存。"
 
-#: deals/views.py:629
+#: deals/views.py:636
 msgid "Payment recorded."
 msgstr "收款已记录。"
 
-#: deals/views.py:647
+#: deals/views.py:654
 msgid "Payment reversed. The original entry is kept in the ledger."
 msgstr "收款已冲销，原始记录保留在账簿中。"
 
-#: deals/views.py:665
+#: deals/views.py:672
 msgid "Listing details saved."
 msgstr "Listing 信息已保存。"
 
-#: deals/views.py:667
+#: deals/views.py:674
 msgid "Listing details"
 msgstr "Listing 信息"
 
@@ -5170,20 +5171,47 @@ msgstr "原因（终止 / 流失时填写）"
 msgid "Change stage"
 msgstr "更改阶段"
 
-#: templates/deals/detail.html:30 templates/deals/tabs/closing.html:4
+#: templates/deals/detail.html:33 templates/deals/detail.html:49
+#: templates/deals/tabs/closing.html:4 templates/partials/closed_hero.html:14
 #: templates/reports/detail.html:10 templates/reports/detail.html:18
 msgid "Lease consideration"
 msgstr "租约总额"
 
-#: templates/deals/detail.html:30 templates/imports/detail.html:24
+#: templates/deals/detail.html:33
+#| msgid "Closed on"
+msgid "Closed for"
+msgstr "成交额"
+
+#: templates/deals/detail.html:34 templates/deals/detail.html:35
+#: templates/deals/detail.html:41 templates/deals/tabs/overview.html:34
+#: templates/partials/timeline.html:9 templates/partials/timeline.html:12
+msgid "Not entered"
+msgstr "未填写"
+
+#: templates/deals/detail.html:36
+#| msgid "Lease assignment"
+msgid "Lease signed"
+msgstr "租约签署于"
+
+#: templates/deals/detail.html:36 templates/deals/tabs/closing.html:4
+msgid "Closed on"
+msgstr "成交于"
+
+#: templates/deals/detail.html:40
+#| msgid "SKW commission saved."
+msgid "SKW commission earned"
+msgstr "SKW 赚到的 Commission"
+
+#: templates/deals/detail.html:49 templates/imports/detail.html:24
 msgid "Price"
 msgstr "价格"
 
-#: templates/deals/detail.html:32
+#: templates/deals/detail.html:51
 msgid "Actual closing"
 msgstr "实际交割"
 
-#: templates/deals/detail.html:33 templates/deals/tabs/overview.html:31
+#: templates/deals/detail.html:52 templates/deals/tabs/overview.html:31
+#: templates/partials/closed_hero.html:20
 msgid "SKW commission"
 msgstr "SKW Commission"
 
@@ -5434,10 +5462,6 @@ msgid "follow up"
 msgstr "跟进"
 
 #: templates/deals/tabs/closing.html:4
-msgid "Closed on"
-msgstr "成交于"
-
-#: templates/deals/tabs/closing.html:4
 msgid "Actual consideration"
 msgstr "实际成交金额"
 
@@ -5521,11 +5545,6 @@ msgstr "添加其他日期"
 #: templates/deals/tabs/overview.html:25
 msgid "No property linked."
 msgstr "未关联物业。"
-
-#: templates/deals/tabs/overview.html:34 templates/partials/timeline.html:9
-#: templates/partials/timeline.html:12
-msgid "Not entered"
-msgstr "未填写"
 
 #: templates/deals/tabs/overview.html:45
 msgid "This deal has a detailed commission agreement."
@@ -5745,6 +5764,67 @@ msgid ""
 "closed only if its status says closed and it has an actual closing date in "
 "the past."
 msgstr "空白金额按“未知”导入，绝不会视为 $0。只有状态为已成交且实际交割日期在过去的行才会作为已成交导入。"
+
+#: templates/partials/closed_hero.html:2
+#| msgid "Close deal"
+msgid "Closed deals"
+msgstr "已成交"
+
+#: templates/partials/closed_hero.html:4
+#, python-format
+#| msgid "Closed sales volume (by actual closing date)"
+msgid "%(n)s closed deal, by actual closing date"
+msgid_plural "%(n)s closed deals, by actual closing date"
+msgstr[0] "%(n)s 笔成交，按实际成交日期统计"
+
+#: templates/partials/closed_hero.html:5
+#| msgid "All active"
+msgid "All time"
+msgstr "全部"
+
+#: templates/partials/closed_hero.html:9
+#| msgid "Transaction volume"
+msgid "Sales volume"
+msgstr "销售成交额"
+
+#: templates/partials/closed_hero.html:11
+#: templates/partials/closed_hero.html:26
+#, python-format
+#| msgid "%(n)s day"
+#| msgid_plural "%(n)s days"
+msgid "%(n)s sale"
+msgid_plural "%(n)s sales"
+msgstr[0] "%(n)s 笔买卖"
+
+#: templates/partials/closed_hero.html:11
+#, python-format
+msgid "%(n)s price unknown"
+msgstr "%(n)s 笔价格未知"
+
+#: templates/partials/closed_hero.html:16
+#, python-format
+#| msgid "%(n)s day"
+#| msgid_plural "%(n)s days"
+msgid "%(n)s lease"
+msgid_plural "%(n)s leases"
+msgstr[0] "%(n)s 笔租约"
+
+#: templates/partials/closed_hero.html:16
+#, python-format
+msgid "%(n)s total unknown"
+msgstr "%(n)s 笔总额未知"
+
+#: templates/partials/closed_hero.html:22
+#, python-format
+#| msgid "+ %(n)s deal not entered"
+#| msgid_plural "+ %(n)s deals not entered"
+msgid "%(n)s not entered"
+msgstr "%(n)s 笔未填写"
+
+#: templates/partials/closed_hero.html:26
+#| msgid "Business asset sale"
+msgid "Business asset sales"
+msgstr "生意转让"
 
 #: templates/partials/lang_switch.html:1
 msgid "English"

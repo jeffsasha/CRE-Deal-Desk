@@ -109,6 +109,66 @@
     window.location.href = href;
   });
 
+  // ---- Rolling numbers (odometer) ---------------------------------------------
+  // The server renders the final text; each digit becomes a strip that rolls into
+  // place when the number scrolls into view. Without JS the plain text stays.
+  function buildOdometer(el) {
+    var text = el.textContent.trim();
+    if (!/\d/.test(text)) return null;
+    el.setAttribute("aria-label", text);
+    el.textContent = "";
+    var strips = [];
+    var digitsLeft = text.replace(/\D/g, "").length;
+    Array.prototype.forEach.call(text, function (ch) {
+      if (/\d/.test(ch)) {
+        var cell = document.createElement("span");
+        cell.className = "odo-d";
+        cell.setAttribute("aria-hidden", "true");
+        var strip = document.createElement("span");
+        strip.className = "odo-strip";
+        for (var i = 0; i < 20; i++) {
+          var n = document.createElement("span");
+          n.textContent = String(i % 10);
+          strip.appendChild(n);
+        }
+        cell.appendChild(strip);
+        el.appendChild(cell);
+        digitsLeft -= 1;
+        strips.push({ strip: strip, target: 10 + Number(ch), rank: digitsLeft });
+      } else {
+        var sep = document.createElement("span");
+        sep.className = "odo-s";
+        sep.setAttribute("aria-hidden", "true");
+        sep.textContent = ch;
+        el.appendChild(sep);
+      }
+    });
+    return strips;
+  }
+  function rollOdometer(strips) {
+    strips.forEach(function (s) {
+      s.strip.style.transitionDelay = (s.rank * 70) + "ms";
+      s.strip.style.transform = "translateY(" + (-s.target * 5) + "%)";
+    });
+  }
+  var odos = document.querySelectorAll(".odo[data-odo]");
+  if (odos.length && !reduceMotion) {
+    var pending = [];
+    odos.forEach(function (el) {
+      var strips = buildOdometer(el);
+      if (strips) { el._strips = strips; pending.push(el); }
+    });
+    var start = function (el) { requestAnimationFrame(function () { requestAnimationFrame(function () { rollOdometer(el._strips); }); }); };
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) { start(en.target); io.unobserve(en.target); } });
+      }, { threshold: 0.4 });
+      pending.forEach(function (el) { io.observe(el); });
+    } else {
+      pending.forEach(start);
+    }
+  }
+
   // ---- Auto-hide confirmations ------------------------------------------------
   document.querySelectorAll(".notice[data-autohide]").forEach(function (n) {
     setTimeout(function () {

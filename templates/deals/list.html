@@ -6,5 +6,6 @@
 <div class="actions"><div class="segmented"><a class="on" href="{% url 'deal_list' %}">{% translate "Table" %}</a><a href="{% url 'deal_board' %}">{% translate "Board" %}</a><a href="{% url 'deadline_calendar' %}">{% translate "Calendar" %}</a></div>
 <a class="btn" href="{% url 'issue_list' %}">{% translate "Issues" %}</a><a class="btn" href="{% url 'deposit_list' %}">{% translate "Deposits" %}</a>
 {% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div></div>
+{% include "partials/closed_hero.html" %}
 {% include "partials/listing.html" %}
 {% endblock %}

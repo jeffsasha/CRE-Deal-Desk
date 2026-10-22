@@ -128,7 +128,14 @@ def deal_list(request):
                       filters=_deal_filters(), default_sort="-updated_at")
     if request.GET.get("export") == "csv":
         return listing.export_csv("deals")
-    return render(request, "deals/list.html", {"listing": listing, "view": "table"})
+    from . import stats
+
+    period = request.GET.get("period") or str(timezone.localdate().year)
+    year = int(period) if period.isdigit() else None
+    totals = stats.totals(year, with_commission=has_perm(request.user, "commission.view"))
+    years = sorted(set(totals.years) | {timezone.localdate().year}, reverse=True)
+    return render(request, "deals/list.html", {"listing": listing, "view": "table", "totals": totals,
+                                               "period": period if year else "all", "years": years})
 
 
 @require_perm("view")
@@ -244,7 +251,10 @@ def deal_detail(request, pk):
         "tl": keydates.timeline(deal, key, today),
         "other_deadlines": [d for d in deadlines if d.state == "open" and d.template_key not in keydates.KEY_TEMPLATES],
         "skw": simple.for_deal(deal) if has_perm(request.user, "commission.view") else None,
-        "listing": {"show": listing.is_listing_side(deal), "asking": listing.asking_display(deal),
+        # Closed deals keep the listing card only if listing details were recorded.
+        "listing": {"show": listing.is_listing_side(deal) and (not deal.is_closed or bool(deal.listing_date)
+                                                                or deal.asking_price_cents is not None),
+                    "asking": listing.asking_display(deal),
                     "dom": listing.days_on_market(deal, today), "contract": listing.under_contract(deal)},
         "open_item_count": open_items.count(),
         "blocked_items": open_items.filter(status="blocked"),

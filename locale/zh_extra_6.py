@@ -64,4 +64,9 @@ ZH = {
     "SKW representing the buyer or tenant; not yet under contract": "SKW 代表买方或租户，尚未 Under Contract",
     "Listing": "Listing", "Edit listing": "编辑 Listing", "Enter listing details": "填写 Listing 信息",
     "%(n)s day on market": "已挂牌 %(n)s 天", "Under Contract": "Under Contract", "Listed": "已挂牌",
+    "Closed for": "成交额", "Lease signed": "租约签署于", "SKW commission earned": "SKW 赚到的 Commission",
+    "Closed deals": "已成交", "%(n)s closed deal, by actual closing date": "%(n)s 笔成交，按实际成交日期统计",
+    "All time": "全部", "Sales volume": "销售成交额", "%(n)s sale": "%(n)s 笔买卖", "%(n)s price unknown": "%(n)s 笔价格未知",
+    "%(n)s total unknown": "%(n)s 笔总额未知", "%(n)s not entered": "%(n)s 笔未填写", "Business asset sales": "生意转让",
+    "%(n)s lease": "%(n)s 笔租约", "Closed on": "成交于", "Closed": "已成交",
 }

@@ -16,16 +16,35 @@
   </div>
   <div class="actions">
     {% if can.edit %}
-    <form method="post" action="{% url 'deal_stage' deal.pk %}" class="inline-form">{% csrf_token %}
+    {% if not deal.is_closed %}<form method="post" action="{% url 'deal_stage' deal.pk %}" class="inline-form">{% csrf_token %}
       <select name="stage" aria-label="{% translate "Stage" %}">{% for s in stage_form.fields.stage.queryset %}<option value="{{ s.key }}" {% if s == deal.stage %}selected{% endif %}>{% translate s.name %}</option>{% endfor %}</select>
       <input name="reason" placeholder="{% translate "Reason (Terminated/Lost)" %}" style="width:170px">
       <button class="btn">{% translate "Change stage" %}</button>
-    </form>
+    </form>{% endif %}
     <a class="btn" href="{% url 'deal_edit' deal.pk %}">{% translate "Edit" %}</a>
     {% endif %}
   </div>
 </div>
 
+{% if deal.is_closed %}
+<section class="hero-band hero-deal" aria-label="{% translate "Closed" %}">
+  <div class="hero-grid">
+    <div class="hero-stat">
+      <div class="k">{% if deal.is_lease %}{% translate "Lease consideration" %}{% else %}{% translate "Closed for" %}{% endif %}</div>
+      {% if deal.is_lease %}{% with amt=deal.lease_total_consideration_cents %}{% if amt is not None %}<div class="v odo" data-odo="{{ amt }}">{{ amt|money0 }}</div>{% else %}<div class="v muted">{% translate "Not entered" %}</div>{% endif %}{% endwith %}
+      {% else %}{% with amt=deal.actual_closing_price_cents %}{% if amt is not None %}<div class="v odo" data-odo="{{ amt }}">{{ amt|money0 }}</div>{% else %}<div class="v muted">{% translate "Not entered" %}</div>{% endif %}{% endwith %}{% endif %}
+      <div class="n">{% if deal.is_lease %}{% translate "Lease signed" %}{% else %}{% translate "Closed on" %}{% endif %} {{ deal.actual_closing_date|d }}</div>
+    </div>
+    {% if skw %}
+    <div class="hero-stat accent">
+      <div class="k">{% translate "SKW commission earned" %}</div>
+      {% if skw.expected is not None %}<div class="v odo" data-odo="{{ skw.expected }}">{{ skw.expected|money0 }}</div>{% else %}<div class="v muted">{% translate "Not entered" %}</div>{% endif %}
+      <div class="n">{% pill skw.status skw.status_label skw.tone %} {% translate "Received" %} {{ skw.received|money0 }}</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
 <div class="facts">
   <div><div class="k">{% if deal.is_lease %}{% translate "Lease consideration" %}{% else %}{% translate "Price" %}{% endif %}</div><div class="v">{% if deal.is_lease %}{{ deal.lease_total_consideration_cents|money0:"—" }}{% elif deal.actual_closing_price_cents is not None %}{{ deal.actual_closing_price_cents|money0 }}{% else %}{{ deal.executed_contract_price_cents|money0:"—" }}{% endif %}</div></div>
   <div><div class="k">{% translate "Effective Date" %}</div><div class="v">{{ deal.effective_date|d|default:"—" }}</div></div>
