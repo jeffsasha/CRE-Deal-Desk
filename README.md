@@ -7,7 +7,7 @@ A private commercial real estate transaction workspace for SKW Realty LLC. It ke
 | Concern | Choice |
 |---|---|
 | Web app | Django 5.2 (server-rendered pages, small vanilla JS). Built-in sign-in, sessions, CSRF protection, migrations, test runner. No front-end build step. |
-| Database | PostgreSQL in production (`DATABASE_URL`), SQLite for local single-user use. The same migrations run on both; the full test suite passes on both. |
+| Database | SQLite for local single-user use (the current setup). PostgreSQL is supported via `DATABASE_URL` if the app is ever moved to a server; the same migrations and tests run on both. |
 | Files | Private storage under `DEALDESK_DATA_DIR/private_storage`, never served publicly. Downloads use signed links that are user-bound and expire in 10 minutes. |
 | Background work | Jobs live in a database queue and run via `manage.py run_worker`. Reminders are delivered by the same worker or by cron (`process_reminders`). No Redis required. |
 | OCR | macOS Vision (offline, `bin/vision_ocr`), or Tesseract on Linux. If neither is available the file is still stored and manual entry still works. |
@@ -16,7 +16,11 @@ A private commercial real estate transaction workspace for SKW Realty LLC. It ke
 
 Extraction is kept separate from the deterministic logic. `deadlines/engine.py` and `commissions/ledger.py` never read unreviewed AI output.
 
-## Setup
+## Setup (local, single user)
+
+DealDesk runs on this Mac for one user. It listens on `127.0.0.1` only, so other computers and phones — even on the same Wi-Fi — cannot reach it. No cloud hosting is configured.
+
+First-time setup:
 
 ```bash
 cd ~/SKW-DealDesk
@@ -24,16 +28,25 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ./scripts/build_ocr.sh                     # macOS only: offline OCR for scanned PDFs
 .venv/bin/python manage.py migrate         # also seeds stages, holiday calendars, checklist templates
 .venv/bin/python manage.py createsuperuser # becomes an Administrator
-.venv/bin/python manage.py runserver 127.0.0.1:8000
 ```
 
-In a second terminal, run the worker (document processing and reminders):
+Start DealDesk (web app on http://localhost:8020 plus the background worker for document processing and reminders):
 
 ```bash
-.venv/bin/python manage.py run_worker
+./scripts/run_local.sh
 ```
 
-Configuration is read from environment variables; see `.env.example`. For production, set `DJANGO_DEBUG=false`, `DATABASE_URL`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS`, serve over HTTPS behind a reverse proxy, run `collectstatic`, and schedule `manage.py backup` daily.
+It keeps running while that terminal stays open; Ctrl-C stops both. If it is already running, the script says so and exits.
+
+Your data lives in `var/` (database `var/dealdesk.sqlite3` and uploaded files in `var/private_storage/`). It is not in Git. Back it up regularly:
+
+```bash
+.venv/bin/python manage.py backup        # writes var/backups/dealdesk-<timestamp>.tar.gz
+```
+
+Copy the backup archives somewhere off this Mac (an external drive or a private cloud folder). See [docs/BACKUP_AND_RESTORE.md](docs/BACKUP_AND_RESTORE.md).
+
+Configuration is read from environment variables; see `.env.example`.
 
 ## Demo mode
 
@@ -49,7 +62,7 @@ Demo mode uses its own database and storage (`var-demo/`). It loads clearly fict
 .venv/bin/python manage.py test tests
 ```
 
-There are 104 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), amendments, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, document safeguards, and an end-to-end run of all 15 acceptance flows through the HTTP layer. They pass on SQLite and on PostgreSQL 17.
+There are 112 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), amendments, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, document safeguards, and an end-to-end run of all 15 acceptance flows through the HTTP layer. They pass on SQLite and on PostgreSQL 17.
 
 ## Languages (中 / EN)
 
@@ -96,5 +109,5 @@ See [REQUIREMENTS.md](REQUIREMENTS.md) for the requirements checklist, and [docs
 
 - **Claude extraction** needs an `ANTHROPIC_API_KEY`. The integration is implemented against the current SDK (structured outputs, PDF input, refusal fallback) but has **not been exercised against the live API** here. Until a key is set, the offline extractor runs.
 - **Email reminders** need SMTP settings. Until then they are recorded as failed delivery, and in-app reminders still go out.
-- **Hosting:** a production server (HTTPS, PostgreSQL, worker process, daily backups) is not yet set up.
+- **Hosting:** DealDesk runs locally on this Mac for a single user. Sharing it with the team would need a server and is not set up.
 - **Real data:** your actual transaction records have not been loaded. Use Settings → Historical imports or manual entry.
