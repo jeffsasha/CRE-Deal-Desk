@@ -62,8 +62,9 @@ Keep this file current so later stages don't silently drop off. It is also shown
 - [ ] Load real historical records (your spreadsheets and documents)
 - [ ] Configure `ANTHROPIC_API_KEY` and validate extraction on real contracts
 - [ ] Configure SMTP for email reminders
-- [ ] Start DealDesk automatically at login (macOS LaunchAgent), so no terminal is needed
-- [ ] Daily automatic backup, copied off this Mac
+- [x] Start DealDesk automatically at login (macOS LaunchAgent, `scripts/install_autostart.sh`)
+- [x] Daily automatic backup at 20:00 into `var/backups/`
+- [ ] Copy backups off this Mac automatically (external drive or private cloud folder)
 - [ ] Two-factor sign-in and login rate limiting
 - [ ] Texas state holiday calendar (federal calendar provided; contracts may define holidays differently)
 - [ ] Photo gallery and thumbnails for property images

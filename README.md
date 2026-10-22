@@ -38,9 +38,16 @@ Start DealDesk (web app on http://localhost:8020 plus the background worker for 
 
 It keeps running while that terminal stays open; Ctrl-C stops both. If it is already running, the script says so and exits.
 
-Everyday use: open http://localhost:8020. If the page does not load (the terminal was closed or the Mac restarted), run `./scripts/run_local.sh` again.
+Or have macOS run it for you (recommended):
 
-Your data lives in `var/` (database `var/dealdesk.sqlite3` and uploaded files in `var/private_storage/`). It is not in Git. Back it up regularly:
+```bash
+./scripts/install_autostart.sh     # start at login, restart after a crash, daily backup at 20:00
+./scripts/uninstall_autostart.sh   # undo; data and backups are kept
+```
+
+With auto-start installed, everyday use is just opening http://localhost:8020 — no terminal needed. Logs are in `var/logs/`. Without it, run `./scripts/run_local.sh` whenever the page does not load (the terminal was closed or the Mac restarted).
+
+Your data lives in `var/` (database `var/dealdesk.sqlite3` and uploaded files in `var/private_storage/`). It is not in Git. Auto-start includes a daily backup; you can also run one any time:
 
 ```bash
 .venv/bin/python manage.py backup        # writes var/backups/dealdesk-<timestamp>.tar.gz
