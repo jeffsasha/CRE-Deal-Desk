@@ -159,3 +159,17 @@ class AcceptanceFlows(DeskTestCase):
             urls.append(reverse("report_detail", args=[m]))
         for u in urls:
             self.assertEqual(self.client.get(u).status_code, 200, u)
+
+    def test_dashboard_deal_progress(self):
+        rows = dashboard.deal_progress()["rows"]
+        by_name = {r["deal"].name: r for r in rows}
+        gessner = by_name["SAMPLE Gessner warehouse acquisition"]
+        self.assertEqual(gessner["deal"].stage.key, "due_diligence")
+        self.assertEqual([s["state"] for s in gessner["steps"]].index("current"), gessner["stage_no"] - 1)
+        self.assertEqual(sum(1 for s in gessner["steps"] if s["state"] == "done"), gessner["stage_no"] - 1)
+        self.assertNotIn("SAMPLE two-pad portfolio sale", by_name)  # closed deals are not "open"
+        leases = dashboard.deal_progress("lease")["rows"]
+        self.assertTrue(all(r["deal"].is_lease for r in leases))
+        resp = self.client.get(reverse("dashboard"))
+        self.assertContains(resp, 'role="progressbar"')
+        self.assertContains(resp, "step 7 of 9")

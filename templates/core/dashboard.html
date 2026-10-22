@@ -11,18 +11,52 @@
   </div>
 </div>
 
-<div class="grid grid-4" style="margin-bottom:14px">
-  <a class="metric {% if deadlines.overdue.0 %}bad{% endif %}" href="{{ deadlines.overdue.1 }}"><div class="label">Overdue deadlines</div><div class="value">{{ deadlines.overdue.0 }}</div><div class="note">Contractual and internal, still open</div></a>
-  <a class="metric {% if deadlines.today.0 %}warn{% endif %}" href="{{ deadlines.today.1 }}"><div class="label">Due today</div><div class="value">{{ deadlines.today.0 }}</div><div class="note">America/Chicago unless the deal says otherwise</div></a>
-  <a class="metric" href="{{ deadlines.week.1 }}"><div class="label">Due in the next 7 days</div><div class="value">{{ deadlines.week.0 }}</div></a>
-  <a class="metric" href="{{ deadlines.next30.1 }}"><div class="label">Due in the next 30 days</div><div class="value">{{ deadlines.next30.0 }}</div></a>
+<div class="alert-strip">
+  <a class="chip {% if deadlines.overdue.0 %}bad{% endif %}" href="{{ deadlines.overdue.1 }}"><span class="n">{{ deadlines.overdue.0 }}</span>Overdue</a>
+  <a class="chip {% if deadlines.today.0 %}warn{% endif %}" href="{{ deadlines.today.1 }}"><span class="n">{{ deadlines.today.0 }}</span>Due today</a>
+  <a class="chip" href="{{ deadlines.week.1 }}"><span class="n">{{ deadlines.week.0 }}</span>Next 7 days</a>
+  <a class="chip" href="{{ deadlines.next30.1 }}"><span class="n">{{ deadlines.next30.0 }}</span>Next 30 days</a>
+  <a class="chip {% if deadlines.awaiting.0 %}warn{% endif %}" href="{{ deadlines.awaiting.1 }}" title="No date until the actual event is recorded"><span class="n">{{ deadlines.awaiting.0 }}</span>Awaiting trigger</a>
+  <a class="chip {% if deadlines.needs_review.0 %}bad{% endif %}" href="{{ deadlines.needs_review.1 }}"><span class="n">{{ deadlines.needs_review.0 }}</span>Needs review</a>
+  <a class="chip {% if overdue_items.0 %}bad{% endif %}" href="{{ overdue_items.1 }}"><span class="n">{{ overdue_items.0 }}</span>Overdue tasks</a>
+  <a class="chip {% if review_runs.0 %}warn{% endif %}" href="{{ review_runs.1 }}"><span class="n">{{ review_runs.0 }}</span>Extractions to review</a>
 </div>
 
-<div class="grid grid-4" style="margin-bottom:14px">
-  <a class="metric {% if deadlines.awaiting.0 %}warn{% endif %}" href="{{ deadlines.awaiting.1 }}"><div class="label">Deadlines awaiting a trigger</div><div class="value">{{ deadlines.awaiting.0 }}</div><div class="note">No date until the actual event is recorded</div></a>
-  <a class="metric {% if deadlines.needs_review.0 %}bad{% endif %}" href="{{ deadlines.needs_review.1 }}"><div class="label">Deadlines needing review</div><div class="value">{{ deadlines.needs_review.0 }}</div><div class="note">Missing or unconfirmed contract terms</div></a>
-  <a class="metric {% if overdue_items.0 %}bad{% endif %}" href="{{ overdue_items.1 }}"><div class="label">Overdue tasks & follow-ups</div><div class="value">{{ overdue_items.0 }}</div></a>
-  <a class="metric {% if review_runs.0 %}warn{% endif %}" href="{{ review_runs.1 }}"><div class="label">Extractions awaiting review</div><div class="value">{{ review_runs.0 }}</div>{% if failed_runs.0 %}<div class="note" style="color:var(--red-fg)">{{ failed_runs.0 }} failed — manual entry available</div>{% endif %}</a>
+<div class="card progress-card" style="margin-bottom:16px">
+  <div class="card-head">
+    <div><h2>Deal progress</h2><div class="muted" style="font-size:12px;margin-top:2px">Where every open deal stands on the path to closing</div></div>
+    <div class="segmented">{% for key, label in progress.kinds %}<a class="{% if progress.kind == key %}on{% endif %}" href="?kind={{ key }}{% if period != 'year' %}&period={{ period }}{% endif %}">{{ label }}</a>{% endfor %}</div>
+  </div>
+  <div class="progress-legend">{% for s in progress.path %}<span>{{ s.name }}</span>{% endfor %}</div>
+  <div class="progress-list">
+  {% for r in progress.rows %}
+    <a class="deal-progress {% if r.on_hold %}is-hold{% endif %}" href="{{ r.deal.get_absolute_url }}" style="--pct:{{ r.pct }}%; --i:{{ forloop.counter0 }}">
+      <div class="dp-info">
+        <div class="dp-name">{{ r.deal.name }}</div>
+        <div class="dp-meta">{{ r.deal.internal_id }} · {{ r.deal.get_transaction_type_display }}{% if r.deal.responsible_broker %} · {{ r.deal.responsible_broker }}{% endif %}</div>
+      </div>
+      <div class="dp-track-wrap">
+        <div class="dp-head">
+          <span class="dp-stage">{% if r.on_hold %}On hold{% else %}{{ r.deal.stage.name }}{% endif %}{% if r.stage_no %} <span class="muted">· step {{ r.stage_no }} of {{ r.stage_total }}</span>{% endif %}</span>
+          <span class="dp-flags">
+            {% if r.deal.is_blocked %}<span class="pill pill-red" title="Blocked by {{ r.deal.blocked_by }}">Blocked</span>{% endif %}
+            {% if r.awaiting %}<span class="pill pill-amber" title="Some deadlines are awaiting a trigger or need review">Dates pending</span>{% endif %}
+          </span>
+        </div>
+        <div class="dp-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ r.pct }}" aria-label="{{ r.deal.name }}: {{ r.deal.stage.name }}">
+          {% for st in r.steps %}<span class="seg {{ st.state }}" title="{{ st.name }}"></span>{% endfor %}
+        </div>
+      </div>
+      <div class="dp-side">
+        {% if r.next %}<div class="{% if r.next_overdue %}dp-overdue{% endif %}"><span class="muted">Next:</span> {{ r.next.name|truncatechars:30 }}</div><div class="dp-date {% if r.next_overdue %}dp-overdue{% endif %}">{{ r.next.current_date|dshort }} · {{ r.next.current_date|relday }}</div>
+        {% else %}<div class="muted">No dated deadline</div>{% endif %}
+        {% if r.checklist_pct is not None %}<div class="dp-check" title="Checklist items approved, waived or not applicable"><span class="dp-mini"><span style="width:{{ r.checklist_pct }}%"></span></span>{{ r.checklist_pct }}% checklist</div>{% endif %}
+      </div>
+    </a>
+  {% empty %}
+    <div class="empty">No open deals{% if progress.kind != 'all' %} of this type{% endif %}.{% if can.edit %} <a href="{% url 'deal_create' %}">Create a deal</a>.{% endif %}</div>
+  {% endfor %}
+  </div>
 </div>
 
 <div class="split">
@@ -47,20 +81,11 @@
       </div>
     </div>
 
-    <div class="grid grid-2">
-      <div class="card">
-        <div class="card-head"><h2>Active deals by stage</h2><a class="btn btn-sm" href="{% url 'deal_board' %}">Board</a></div>
-        <div class="card-body flush"><table class="t"><tbody>
-          {% for s in stages %}<tr><td><a href="{% url 'deal_list' %}?stage={{ s.key }}">{{ s.name }}</a></td><td class="num"><a href="{% url 'deal_list' %}?stage={{ s.key }}">{{ s.n }}</a></td></tr>{% endfor %}
-        </tbody></table></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>Unresolved diligence items</h2></div>
-        <div class="card-body flush"><table class="t"><tbody>
-          {% for t in topics %}<tr><td><a href="{{ t.url }}">{{ t.label }}</a></td><td class="num"><a href="{{ t.url }}">{{ t.n }}</a></td></tr>{% endfor %}
-        </tbody></table>
-        <div style="padding:8px 10px" class="muted"><small>Open checklist items on active deals. "Received" items are still open until reviewed and approved.</small></div></div>
-      </div>
+    <div class="card">
+      <div class="card-head"><h2>Unresolved diligence items</h2><small class="muted">"Received" stays open until reviewed and approved</small></div>
+      <div class="card-body"><div class="topic-row">
+        {% for t in topics %}<a class="chip {% if t.n %}warn{% endif %}" href="{{ t.url }}"><span class="n">{{ t.n }}</span>{{ t.label }}</a>{% endfor %}
+      </div></div>
     </div>
 
     <div class="grid grid-2">

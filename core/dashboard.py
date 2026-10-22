@@ -26,6 +26,57 @@ def topic_filter(topic):
     return TOPICS[topic][1]
 
 
+PROGRESS_KINDS = [("all", "All"), ("sale", "Sales & acquisitions"), ("lease", "Leases"), ("business", "Business assets")]
+
+
+def deal_progress(kind="all"):
+    """One row per active or on-hold deal: where it sits on the stage path, its
+    checklist completion, next open deadline and blockers."""
+    from deals.models import BUSINESS_TYPES, LEASE_TYPES, SALE_TYPES
+
+    path = list(Stage.objects.filter(enabled=True, category__in=[Stage.CATEGORY_ACTIVE, Stage.CATEGORY_CLOSED])
+                .order_by("order"))
+    index = {s.pk: i for i, s in enumerate(path)}
+    deals = Deal.objects.filter(archived_at__isnull=True,
+                                stage__category__in=[Stage.CATEGORY_ACTIVE, Stage.CATEGORY_ON_HOLD])
+    types = {"sale": SALE_TYPES, "lease": LEASE_TYPES, "business": BUSINESS_TYPES}.get(kind)
+    if types:
+        deals = deals.filter(transaction_type__in=types)
+    deals = deals.select_related("stage", "responsible_broker").annotate(
+        items_total=Count("checklist_items", distinct=True),
+        items_done=Count("checklist_items", filter=Q(checklist_items__status__in=["approved", "waived", "not_applicable"]),
+                         distinct=True),
+    )
+    today = timezone.localdate()
+    next_by_deal = {}
+    for d in (Deadline.objects.filter(deal__in=deals, state="open", computation="computed")
+              .order_by("current_date").only("id", "deal_id", "name", "current_date")):
+        next_by_deal.setdefault(d.deal_id, d)
+    awaiting = set(Deadline.objects.filter(deal__in=deals, state="open")
+                   .exclude(computation="computed").values_list("deal_id", flat=True))
+    rows = []
+    for deal in deals:
+        on_hold = deal.stage.category == Stage.CATEGORY_ON_HOLD
+        current = index.get(deal.stage_id)
+        steps = []
+        for i, s in enumerate(path):
+            state = "todo"
+            if current is not None:
+                state = "done" if i < current else ("current" if i == current else "todo")
+            steps.append({"name": s.name, "state": state})
+        pct = round(100 * (current + 1) / len(path)) if current is not None else 0
+        nxt = next_by_deal.get(deal.pk)
+        rows.append({
+            "deal": deal, "steps": steps, "pct": pct, "on_hold": on_hold, "position": current if current is not None else -1,
+            "stage_no": (current + 1) if current is not None else None, "stage_total": len(path),
+            "checklist_pct": round(100 * deal.items_done / deal.items_total) if deal.items_total else None,
+            "next": nxt, "next_overdue": bool(nxt and nxt.current_date < today),
+            "awaiting": deal.pk in awaiting, "property": deal.primary_property,
+        })
+    rows.sort(key=lambda r: (r["on_hold"], -r["position"], r["next"].current_date if r["next"] else today + timedelta(days=9999)))
+    return {"rows": rows, "path": path, "kinds": PROGRESS_KINDS, "kind": kind}
+
+
 def build(user, params):
     today = timezone.localdate()
     week_end = today + timedelta(days=7)
@@ -83,6 +134,7 @@ def build(user, params):
     data = {
         "today": today,
         "stages": stages,
+        "progress": deal_progress(params.get("kind", "all") if params.get("kind") in dict(PROGRESS_KINDS) else "all"),
         "deadlines": deadlines,
         "feasibility": (feasibility.count(), f"{url('deadline_list')}?category=feasibility&bucket=next14"),
         "feasibility_list": list(feasibility.select_related("deal")[:6]),
