@@ -8,24 +8,24 @@
 - `private_storage/`: every original uploaded file and import file
 - `BACKUP_INFO.txt`: timestamp, database engine, demo flag
 
-Schedule it daily, for example with cron:
+DealDesk runs locally on this Mac, so the data exists only here until you copy it elsewhere. Run a backup at least daily on days you make changes:
 
-```
-15 2 * * *  cd /srv/SKW-DealDesk && .venv/bin/python manage.py backup
+```bash
+cd ~/SKW-DealDesk && .venv/bin/python manage.py backup
 ```
 
-Copy the archives off the machine (for example to encrypted cloud storage), and test a restore at least quarterly.
+Copy the archives off this Mac (an external drive or an encrypted private cloud folder), and test a restore at least quarterly.
 
 ## Restore procedure
 
-1. Stop the web server and the worker.
+1. Stop DealDesk (Ctrl-C in the terminal running `scripts/run_local.sh`).
 2. Unpack the archive into a temporary folder: `tar -xzf dealdesk-YYYYMMDD-HHMMSS.tar.gz -C /tmp/restore`
 3. Restore the database:
    - **SQLite:** move the current `var/dealdesk.sqlite3` aside, then copy `/tmp/restore/database.sqlite3` to `var/dealdesk.sqlite3`.
-   - **PostgreSQL:** `createdb dealdesk_restored && pg_restore -d dealdesk_restored /tmp/restore/database.pgdump`, then point `DATABASE_URL` at it, or rename databases during a maintenance window.
+   - **PostgreSQL** (only if you switched to it): `createdb dealdesk_restored && pg_restore -d dealdesk_restored /tmp/restore/database.pgdump`, then point `DATABASE_URL` at it, or rename databases during a maintenance window.
 4. Restore files: move the current `var/private_storage` aside and copy `/tmp/restore/private_storage` into its place.
 5. Run `manage.py migrate`. This is a no-op unless the code is newer than the backup.
-6. Start the app and the worker. Check that the dashboard loads, open a document, and confirm the audit log shows the latest expected entries.
+6. Start DealDesk again with `./scripts/run_local.sh`. Check that the dashboard loads, open a document, and confirm the audit log shows the latest expected entries.
 
 ## Recoverable archiving vs. deletion
 

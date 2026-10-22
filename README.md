@@ -38,6 +38,8 @@ Start DealDesk (web app on http://localhost:8020 plus the background worker for 
 
 It keeps running while that terminal stays open; Ctrl-C stops both. If it is already running, the script says so and exits.
 
+Everyday use: open http://localhost:8020. If the page does not load (the terminal was closed or the Mac restarted), run `./scripts/run_local.sh` again.
+
 Your data lives in `var/` (database `var/dealdesk.sqlite3` and uploaded files in `var/private_storage/`). It is not in Git. Back it up regularly:
 
 ```bash

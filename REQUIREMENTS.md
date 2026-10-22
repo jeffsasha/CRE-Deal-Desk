@@ -55,14 +55,15 @@ Keep this file current so later stages don't silently drop off. It is also shown
 - [x] Private storage, signed short-lived user-bound download links, audit log of key changes, recoverable archiving
 - [x] Backups (`manage.py backup`) and a documented restoration procedure
 - [x] Failed extraction never destroys the file or blocks manual entry
-- [x] Relational database (SQLite locally, PostgreSQL in production)
+- [x] Relational database (SQLite, local single-user; PostgreSQL also supported)
 - [x] Demo mode isolated in its own database, with fictional labeled data
 
 ## Open items / recommended next
 - [ ] Load real historical records (your spreadsheets and documents)
 - [ ] Configure `ANTHROPIC_API_KEY` and validate extraction on real contracts
 - [ ] Configure SMTP for email reminders
-- [ ] Production hosting (HTTPS, PostgreSQL, worker as a service, off-site backups)
+- [ ] Start DealDesk automatically at login (macOS LaunchAgent), so no terminal is needed
+- [ ] Daily automatic backup, copied off this Mac
 - [ ] Two-factor sign-in and login rate limiting
 - [ ] Texas state holiday calendar (federal calendar provided; contracts may define holidays differently)
 - [ ] Photo gallery and thumbnails for property images
