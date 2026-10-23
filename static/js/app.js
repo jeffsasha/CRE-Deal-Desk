@@ -170,9 +170,13 @@
   }
 
   // ---- Neon Reveal: end the ignition, re-light on click, card spotlight ----------
-  var IGNITE_MS = 3200;
+  // The ignition ends when the darkness has lifted; the timer is only a fallback.
+  var IGNITE_MS = 4000;
   function endIgnite() { root.classList.remove("neon-igniting"); }
   if (root.classList.contains("neon-igniting")) setTimeout(endIgnite, IGNITE_MS);
+  document.addEventListener("animationend", function (e) {
+    if (e.animationName === "neon-veil-lift") endIgnite();
+  });
   var tube = document.querySelector("[data-neon-tube]");
   if (tube && !reduceMotion) {
     tube.addEventListener("click", function () {
@@ -186,12 +190,14 @@
   // Keep the tube just under the top bar (a demo banner above it scrolls away).
   var stage = document.querySelector("[data-neon]");
   var rail = document.querySelector("[data-neon-rail]");
+  var veil = document.querySelector("[data-neon-veil]");
   var topbar = document.querySelector(".topbar");
   if (stage && rail && topbar) {
     var place = function () {
       var top = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom)) + "px";
       stage.style.top = top;
       rail.style.top = top;
+      if (veil) veil.style.top = top;
     };
     place();
     window.addEventListener("scroll", place, { passive: true });
