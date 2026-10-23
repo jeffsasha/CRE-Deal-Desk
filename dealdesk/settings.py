@@ -73,6 +73,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.AutoLoginMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.LoginRequiredMiddleware",
@@ -135,7 +136,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+# Owner shown on the opening page and badge.
+OWNER_NAME = env("DEALDESK_OWNER_NAME", "Jeff Lu")
+OWNER_GITHUB = env("DEALDESK_OWNER_GITHUB", "https://github.com/jeffsasha")
+# The owner's photo stays on this machine (var/brand/photo.*), never in Git.
+BRAND_DIR = BASE_DIR / "var" / "brand"
+
 LOGIN_URL = "login"
+# Local single-user mode: no login page; requests run as the first administrator.
+# Demo mode keeps sign-in so its role accounts can be tried.
+AUTO_LOGIN = env_bool("DEALDESK_AUTO_LOGIN", not DEMO_MODE)
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 

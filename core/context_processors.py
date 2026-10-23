@@ -22,6 +22,9 @@ def workspace(request):
     nav = [(name, label) for name, label, perm in NAV if perms.get(perm.replace(".", "_"))]
     return {
         "DEMO_MODE": settings.DEMO_MODE,
+        "AUTO_LOGIN": settings.AUTO_LOGIN,
+        "OWNER_NAME": settings.OWNER_NAME,
+        "OWNER_GITHUB": settings.OWNER_GITHUB,
         "FIRM_NAME": settings.DEALDESK_FIRM_NAME,
         "can": perms,
         "nav_items": nav,

@@ -34,6 +34,45 @@ def safe_next(request, fallback):
 
 
 @require_perm("view")
+def hero(request):
+    """Opening page: animated skyline, the owner's badge and a few headline numbers."""
+    from deals import stats
+
+    today = timezone.localdate()
+    year = stats.totals(today.year, with_commission=has_perm(request.user, "commission.view"))
+    open_deals = Deal.objects.active().filter(stage__category__in=[Stage.CATEGORY_ACTIVE, Stage.CATEGORY_ON_HOLD]).count()
+    cutout = _brand_photo_path(cutout=True)
+    return render(request, "core/hero.html", {
+        "year": year, "this_year": today.year, "open_deals": open_deals, "has_photo": cutout is not None,
+        "photo_is_cutout": bool(cutout and cutout.name.startswith("photo-cutout")),
+        "handle": "@" + settings.OWNER_GITHUB.rstrip("/").rsplit("/", 1)[-1]})
+
+
+def _brand_photo_path(cutout=False):
+    """The owner's photo in var/brand; the badge prefers the cut-out made by
+    scripts/make_badge_photo.py and falls back to the original."""
+    names = ["photo-cutout.png"] if cutout else []
+    names += [f"photo.{ext}" for ext in ("webp", "jpg", "jpeg", "png")]
+    for name in names:
+        path = Path(settings.BRAND_DIR) / name
+        if path.exists():
+            return path
+    return None
+
+
+@require_perm("view")
+def brand_photo(request):
+    from django.http import FileResponse, Http404
+
+    path = _brand_photo_path(cutout=request.GET.get("v") == "cutout")
+    if path is None:
+        raise Http404("No photo in var/brand/")
+    response = FileResponse(open(path, "rb"))
+    response["Cache-Control"] = "private, max-age=3600"
+    return response
+
+
+@require_perm("view")
 def dashboard(request):
     data = dash.build(request.user, request.GET)
     return render(request, "core/dashboard.html", data)

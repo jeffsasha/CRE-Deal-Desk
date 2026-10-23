@@ -12,7 +12,7 @@
 {% if DEMO_MODE %}<div class="demo-banner">{% translate "Demo mode — fictional sample data in an isolated database. Nothing here is SKW transaction history." %}</div>{% endif %}
 <div class="app">
   <aside class="sidebar">
-    <a class="brand" href="{% url 'dashboard' %}" aria-label="{% translate "SKW DealDesk home" %}">
+    <a class="brand" href="{% url 'hero' %}" aria-label="{% translate "SKW DealDesk home" %}">
       <img class="brand-logo light" src="{% static 'img/skw-logo.png' %}" alt="SKW">
       <img class="brand-logo dark" src="{% static 'img/skw-logo-white.png' %}" alt="SKW">
       <span class="brand-divider"></span>
@@ -29,9 +29,12 @@
       {% endfor %}
     </nav>
     <div class="sidebar-foot">
-      <span class="avatar" aria-hidden="true">{{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}</span>
-      <span class="who"><strong>{{ user.display_name }}</strong>{% translate user.get_role_display %}</span>
-      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="icon-btn" title="{% translate "Sign out" %}" aria-label="{% translate "Sign out" %}">{% icon "logout" %}</button></form>
+      {% if AUTO_LOGIN %}<img class="avatar avatar-photo" src="{% url 'brand_photo' %}" alt="" onerror="this.style.visibility='hidden'">
+      <span class="who"><strong>{{ OWNER_NAME }}</strong>SKW Realty LLC</span>
+      {% else %}<span class="avatar" aria-hidden="true">{{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}</span>
+      <span class="who"><strong>{{ user.display_name }}</strong>{% translate user.get_role_display %}</span>{% endif %}
+      {% if AUTO_LOGIN %}<a class="icon-btn" href="{{ OWNER_GITHUB }}" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">{% include "partials/github_icon.html" %}</a>
+      {% else %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="icon-btn" title="{% translate "Sign out" %}" aria-label="{% translate "Sign out" %}">{% icon "logout" %}</button></form>{% endif %}
     </div>
   </aside>
   <div class="main">
@@ -45,6 +48,7 @@
       <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="{% translate "Switch theme" %}" title="{% translate "Switch theme" %}">
         <span data-theme-icon="light">{% icon "sun" %}</span><span data-theme-icon="dark" hidden>{% icon "moon" %}</span><span data-theme-icon="system" hidden>{% icon "monitor" %}</span>
       </button>
+      <a class="icon-btn" href="{{ OWNER_GITHUB }}" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">{% include "partials/github_icon.html" %}</a>
       <a class="icon-btn" href="{% url 'notifications' %}" aria-label="{% translate "Notifications" %}" title="{% translate "Notifications" %}">{% icon "bell" %}{% if unread_notifications %}<span class="badge-dot">{{ unread_notifications }}</span>{% endif %}</a>
     </header>
     <main class="content">

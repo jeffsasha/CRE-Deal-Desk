@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 import tempfile
 from decimal import Decimal
 
@@ -12,7 +13,7 @@ from properties.models import Property
 _TMP = tempfile.mkdtemp(prefix="dealdesk-test-")
 
 
-@override_settings(MEDIA_ROOT=_TMP, PRIVATE_STORAGE_ROOT=_TMP, EMAIL_CONFIGURED=False)
+@override_settings(MEDIA_ROOT=_TMP, PRIVATE_STORAGE_ROOT=_TMP, EMAIL_CONFIGURED=False, AUTO_LOGIN=False, BRAND_DIR=Path(_TMP) / "brand")
 class DeskTestCase(TestCase):
     @classmethod
     def tearDownClass(cls):

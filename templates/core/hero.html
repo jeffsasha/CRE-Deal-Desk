@@ -1,0 +1,49 @@
+{% load static i18n %}<!doctype html>
+{% get_current_language as LANG %}<html lang="{{ LANG }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% translate "SKW DealDesk" %}</title>
+  {% include "partials/theme_head.html" %}
+  <link rel="stylesheet" href="{% asset 'css/app.css' %}">
+  <link rel="stylesheet" href="{% asset 'css/hero.css' %}">
+</head>
+<body class="hero-page">
+<div class="skyline" data-skyline aria-hidden="true"><img src="{% static 'img/nyc-skyline.jpg' %}" alt="" fetchpriority="high" decoding="async"></div>
+<div class="hero-shade" aria-hidden="true"></div>
+
+<header class="hero-top">
+  <a class="hero-brand" href="{% url 'hero' %}" aria-label="{% translate "SKW DealDesk home" %}">
+    <img src="{% static 'img/skw-logo-white.png' %}" alt="SKW"><span class="brand-divider"></span><span>DealDesk</span>
+  </a>
+  <div class="hero-top-actions">
+    {% include "partials/lang_switch.html" %}
+    <a class="hero-gh" href="{{ OWNER_GITHUB }}" target="_blank" rel="noopener" aria-label="GitHub">{% include "partials/github_icon.html" with size=18 %}<span>{{ OWNER_GITHUB|cut:"https://" }}</span></a>
+  </div>
+</header>
+
+<main class="hero-main">
+  <section class="hero-copy">
+    <div class="hero-eyebrow">SKW Realty LLC · Houston, TX</div>
+    <h1 class="hero-h1">DealDesk</h1>
+    <p class="hero-lede">{% translate "Every deal, every key date and every commission dollar in one place." %}</p>
+    <div class="hero-stats">
+      <div><div class="hv odo" data-odo="{{ open_deals }}">{{ open_deals }}</div><div class="hk">{% translate "Open deals" %}</div></div>
+      <div><div class="hv odo" data-odo="{{ year.count }}">{{ year.count }}</div><div class="hk">{% blocktranslate with y=this_year %}Closed in {{ y }}{% endblocktranslate %}</div></div>
+      {% if can.commission_view %}<div><div class="hv odo" data-odo="{{ year.received }}">{{ year.received|money0 }}</div><div class="hk">{% blocktranslate with y=this_year %}Received in {{ y }}{% endblocktranslate %}</div></div>{% endif %}
+    </div>
+    <a class="hero-cta" href="{% url 'dashboard' %}">{% translate "Enter dashboard" %}<span aria-hidden="true">→</span></a>
+    <div class="hero-hint">{% translate "Drag the badge, or click it to flip." %}</div>
+  </section>
+  <section class="hero-badge" data-badge
+           data-photo="{% if has_photo %}{% url 'brand_photo' %}?v=cutout{% endif %}" data-cutout="{{ photo_is_cutout|yesno:'1,' }}" data-handle="{{ handle }}"
+           data-logo="{% static 'img/skw-logo.png' %}" data-logo-white="{% static 'img/skw-logo-white.png' %}"
+           data-name="{{ OWNER_NAME }}" data-github="{{ OWNER_GITHUB|cut:'https://' }}"
+           data-line1="SKW Realty LLC" data-line2="{% translate "Commercial Real Estate" %}"
+           aria-label="{{ OWNER_NAME }} — SKW Realty LLC"></section>
+</main>
+
+<script src="{% asset 'js/app.js' %}"></script>
+<script type="module" src="{% asset 'js/hero.js' %}"></script>
+</body>
+</html>

@@ -13,6 +13,9 @@ A private commercial real estate transaction workspace for real estate teams. It
 
 How it works day to day (menu: Dashboard, Deals, Commissions, Contacts, Settings):
 
+- **No sign-in locally.** The site only listens on 127.0.0.1 and signs every request in as the first administrator (`DEALDESK_AUTO_LOGIN`, on by default; demo mode keeps the login page).
+- **Opening page** (`/`): a New York skyline photo with a slow drift and pointer parallax, the owner's badge hanging on a lanyard (drag it, click to flip) and a few headline numbers; **Enter dashboard** goes to `/dashboard/`. The badge portrait is read from `var/brand/` on this machine and is never committed: put a photo at `var/brand/photo.webp` (or .jpg/.png) and run `.venv/bin/python scripts/make_badge_photo.py` to make the black-and-white cut-out (works on a plain studio backdrop). Owner name and GitHub link: `DEALDESK_OWNER_NAME`, `DEALDESK_OWNER_GITHUB`.
+
 - **A deal is its address.** New deal = kind (sale / lease / business), who the brokerage represents, and the street address. The property record behind it is found or created automatically, so every deal at the same address shares its history.
 - **Deals page:** closed totals at the top (sales, lease consideration, the brokerage commission, with rolling numbers), then one table: open deals first, closed and terminated / lost at the end. Search by address or client.
 
@@ -115,7 +118,7 @@ Demo mode uses its own database and storage (`var-demo/`). It loads a handful of
 .venv/bin/python manage.py test tests
 ```
 
-There are 101 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), brokerage Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
+There are 106 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), brokerage Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
 
 ## Languages (中 / EN)
 
@@ -130,6 +133,12 @@ After adding or changing interface text:
 .venv/bin/python locale/fill_zh.py      # lists any strings that still need a Chinese entry in locale/zh_extra_*.py
 .venv/bin/python manage.py compilemessages -l zh_Hans --ignore=.venv
 ```
+
+## Third-party code
+
+- `static/vendor/three/` — three.js r169 (MIT), verified against the npm registry.
+- `static/js/lanyard.js` — the React Bits Lanyard component, ported to a plain ES module.
+- `static/img/nyc-skyline.jpg` — photo by Luca Bravo on [Unsplash](https://unsplash.com/photos/_QdFx92MO2U), Unsplash License.
 
 ## Repository map
 

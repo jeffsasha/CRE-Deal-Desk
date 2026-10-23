@@ -76,4 +76,7 @@ ZH = {
     "Add past deals from a CSV or Excel file; a batch can be reverted.": "从 CSV 或 Excel 文件添加过往 Deal，可整批撤回。",
     "A full backup runs every day at 20:00 into var/backups on this Mac. Copy it somewhere else from time to time.": "每天 20:00 自动完整备份到这台 Mac 的 var/backups，请定期复制到别处保存。",
     "Leased area (SF)": "租赁面积（平方英尺）",
+    "Every deal, every key date and every commission dollar in one place.": "每一笔 Deal、每一个关键日期、每一笔 Commission，都在这里。",
+    "Closed in %(y)s": "%(y)s 年成交", "Enter dashboard": "进入 Dashboard", "Drag the badge, or click it to flip.": "拖动工牌，或点击翻面。",
+    "Commercial Real Estate": "Commercial Real Estate",
 }

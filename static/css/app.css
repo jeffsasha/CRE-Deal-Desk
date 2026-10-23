@@ -637,3 +637,5 @@ html[lang^="zh"] body { font-family: "Inter", -apple-system, "PingFang SC", "Hir
 .deal-search input { flex: 1; min-width: 0; }
 .deal-table td { padding-top: 11px; padding-bottom: 11px; }
 .deal-table .group-row td { background: var(--surface-2); color: var(--text-3); font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 7px 12px; }
+.avatar-photo { object-fit: cover; padding: 0; }
+.gh-icon { display: block; }

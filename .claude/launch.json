@@ -17,6 +17,15 @@
         "scripts/run_local.sh"
       ],
       "port": 8020
+    },
+    {
+      "name": "dealdesk-demo-auto",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "DEALDESK_DEMO=1 DEALDESK_AUTO_LOGIN=1 .venv/bin/python manage.py runserver 127.0.0.1:8018"
+      ],
+      "port": 8018
     }
   ]
 }
