@@ -9,6 +9,8 @@ Days are calendar days and the Effective Date itself is not counted. A deadline 
 falls on a weekend or holiday is moved to the next business day only when the user
 says the contract provides for it. Superseded values stay in history.
 """
+from datetime import timedelta
+
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_noop
@@ -110,33 +112,53 @@ def key_deadlines(deal):
 
 
 def timeline(deal, deadlines=None, today=None):
-    """Dashboard timeline: Effective Date at the start, then each milestone. Positions
-    are percentages of the span from the Effective Date to the last milestone."""
+    """Dashboard timeline: Effective Date at the start, then each milestone. A sale
+    always shows three marks (Effective Date, Feasibility Period ends in the middle,
+    Closing Date at the end) even before dates are entered; dates replaced by an
+    extension stay on the track as extra marks. Positions are percentages of the span
+    from the Effective Date to the last date."""
     today = today or timezone.localdate()
     if deadlines is None:
         deadlines = key_deadlines(deal)
     by_key = {d.template_key: d for d in deadlines}
+    spec = milestone_spec(deal)
     points = []
-    for label, keys in milestone_spec(deal):
+    for label, keys in spec:
         d = next((by_key[k] for k in keys if k in by_key), None)
         points.append({"label": label, "date": d.current_date if d else None, "deadline": d,
                        "awaiting": bool(d and d.current_date is None)})
+    replaced = {}
+    if not deal.is_lease:
+        for ext in deal.extensions.all():
+            replaced.setdefault(ext.milestone, []).append(ext.previous_date)
+    for p, key in zip(points, EXTENSION_MILESTONES if not deal.is_lease else [None]):
+        p["replaced"] = replaced.get(key, [])
+
     start = deal.effective_date
-    dated = [p["date"] for p in points if p["date"]]
-    end = max(dated) if dated else None
-    span = (end - start).days if start and end and end > start else None
-    for p in points:
-        p["pos"] = round(100 * (p["date"] - start).days / span) if span and p["date"] else None
+    dates = [p["date"] for p in points if p["date"]] + [d for p in points for d in p["replaced"]]
+    end = max(dates) if dates else None
+    span = None
+    if start and end and end > start:
+        span = (end - start).days
+        if not points[-1]["date"]:
+            span *= 2  # no end date yet: the latest known date sits in the middle
+    # Where a milestone goes when it has no position of its own.
+    slots = [round(100 * (i + 1) / len(points)) for i in range(len(points))]
+
+    def pos(day):
+        return max(0, min(100, round(100 * (day - start).days / span))) if span and day else None
+
+    for p, slot in zip(points, slots):
+        p["pos"] = pos(p["date"])
+        p["slot"] = slot if p["pos"] is None else p["pos"]
         p["passed"] = bool(p["date"] and p["date"] < today)
         p["days_left"] = (p["date"] - today).days if p["date"] else None
-    today_pos = None
-    if span:
-        today_pos = max(0, min(100, round(100 * (today - start).days / span)))
+    today_pos = max(0, min(100, round(100 * (today - start).days / span))) if span else None
     upcoming = next((p for p in points if p["date"] and p["date"] >= today), None)
-    marks, unplaced = _marks(start, points, upcoming, today)
+    marks = _marks(start, points, upcoming, today, pos)
     return {"start": start, "end": end, "points": points, "today_pos": today_pos,
             "complete": bool(start and all(p["date"] for p in points)), "next": upcoming,
-            "marks": marks, "unplaced": unplaced, "has_above": any(m["above"] for m in marks)}
+            "marks": marks, "has_above": any(m["above"] for m in marks)}
 
 
 # Labels closer than this (percent of the track) would overlap, so the later one
@@ -144,20 +166,19 @@ def timeline(deal, deadlines=None, today=None):
 MARK_GAP = 24
 
 
-def _marks(start, points, upcoming, today):
-    """Axis marks: the Effective Date and every milestone that has a position, each
-    labelled at its own spot. Milestones without a position are listed separately."""
-    marks = []
-    if start:
-        marks.append({"label": gettext_noop("Effective Date"), "date": start, "pos": 0,
-                      "passed": start <= today, "next": False})
-    unplaced = []
+def _marks(start, points, upcoming, today, pos):
+    """Axis marks: the Effective Date, every milestone (at its date, or at its slot
+    when not entered yet) and every date an extension replaced."""
+    marks = [{"label": gettext_noop("Effective Date"), "date": start, "pos": 0, "kind": "start" if start else "missing",
+              "passed": bool(start and start <= today), "next": False, "extended": False, "awaiting": False}]
     for p in points:
-        if p["pos"] is None:
-            unplaced.append(p)
-        else:
-            marks.append({"label": p["label"], "date": p["date"], "pos": p["pos"],
-                          "passed": p["passed"], "next": p is upcoming})
+        marks.append({"label": p["label"], "date": p["date"], "pos": p["slot"],
+                      "kind": "main" if p["date"] else "missing", "passed": p["passed"],
+                      "next": p is upcoming, "extended": bool(p["replaced"]), "awaiting": p["awaiting"]})
+        for was in p["replaced"]:
+            if pos(was) is not None:
+                marks.append({"label": gettext_noop("Before extension"), "date": was, "pos": pos(was), "kind": "was",
+                              "passed": was < today, "next": False, "extended": False, "awaiting": False})
     marks.sort(key=lambda m: m["pos"])
     last_below = last_above = None
     for m in marks:
@@ -168,4 +189,65 @@ def _marks(start, points, upcoming, today):
             m["above"], last_above = True, m["pos"]
         else:
             m["above"], last_below = False, m["pos"]
-    return marks, unplaced
+    return marks
+
+
+# --- Extensions ----------------------------------------------------------------
+
+EXTENSION_MILESTONES = ["feasibility", "closing"]  # same order as SALE_MILESTONES
+
+
+class ExtensionError(ValueError):
+    pass
+
+
+def _current(deal, milestone):
+    keys = dict(zip(EXTENSION_MILESTONES, [k for _, k in SALE_MILESTONES]))[milestone]
+    by_key = {d.template_key: d for d in key_deadlines(deal)}
+    d = next((by_key[k] for k in keys if k in by_key), None)
+    return d.current_date if d else None
+
+
+def _move(values, milestone, new_date):
+    eff = values["effective_date"]
+    if milestone == "feasibility":
+        values["feasibility_days"] = (new_date - eff).days
+    elif values["closing_mode"] == "date":
+        values["closing_date"] = new_date
+    else:
+        values["closing_days"] = (new_date - eff).days
+
+
+@transaction.atomic
+def extend(deal, milestone, actor, new_date=None, days=None, shift_closing=False, note=""):
+    """Extend the Feasibility Period or the Closing Date to new_date (or by `days`
+    from the current date). With shift_closing, a Feasibility extension moves the
+    Closing Date by the same number of days. Returns the DateExtension rows made."""
+    from .models import DateExtension
+
+    if deal.is_lease:
+        raise ExtensionError(gettext_noop("Leases have no Feasibility Period or Closing Date to extend."))
+    values = current_values(deal)
+    if not values["effective_date"]:
+        raise ExtensionError(gettext_noop("Enter the Effective Date first."))
+    old = _current(deal, milestone)
+    if not old:
+        raise ExtensionError(gettext_noop("This date has not been entered yet. Enter it on the key dates form first."))
+    new = new_date or old + timedelta(days=days)
+    if new <= old:
+        raise ExtensionError(gettext_noop("The new date must be later than the current date."))
+    moves = [(milestone, old, new, note)]
+    if milestone == "feasibility" and shift_closing:
+        closing = _current(deal, "closing")
+        if closing:
+            moves.append(("closing", closing, closing + (new - old), note or "Moved with the Feasibility Period extension"))
+    for key, _old, target, _note in moves:
+        _move(values, key, target)
+    save(deal, values, actor)
+    made = []
+    for key, was, _target, why in moves:
+        landed = _current(deal, key)  # may differ if the contract moves weekend dates
+        made.append(DateExtension.objects.create(deal=deal, milestone=key, previous_date=was, new_date=landed,
+                                                 note=why, created_by=actor))
+        log_activity(deal, f"{dict(DateExtension.MILESTONES)[key]} extended: {was} -> {landed}", actor=actor)
+    return made

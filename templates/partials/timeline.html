@@ -1,16 +1,9 @@
-{% load i18n %}{# Key-date timeline: Effective Date → milestones, each marked at its real position. Expects `tl` from deals.keydates.timeline. #}
-{% if tl.marks %}<div class="tl{% if tl.has_above %} has-above{% endif %}">
-  {% if tl.has_above %}<div class="tl-marks tl-marks-above">{% for m in tl.marks %}{% if m.above %}{% include "partials/_tl_mark.html" %}{% endif %}{% endfor %}</div>{% endif %}
+{% load i18n %}{# Key-date timeline: Effective Date → milestones, each marked at its position. Expects `tl` from deals.keydates.timeline. #}
+<div class="tl{% if tl.has_above %} has-above{% endif %}{% if not tl.start %} tl-empty{% endif %}" data-tl>
+  <div class="tl-marks tl-marks-above">{% for m in tl.marks %}{% if m.above %}{% include "partials/_tl_mark.html" %}{% endif %}{% endfor %}</div>
   <div class="tl-track">
     {% if tl.today_pos is not None %}<span class="tl-fill" style="width:{{ tl.today_pos }}%"></span><span class="tl-today" style="left:{{ tl.today_pos }}%" title="{% translate "Today" %}"></span>{% endif %}
-    {% for m in tl.marks %}<span class="tl-dot{% if m.passed %} passed{% elif m.next %} next{% endif %}" style="left:{{ m.pos }}%" title="{% translate m.label %} · {{ m.date|d }}"></span>{% endfor %}
+    {% for m in tl.marks %}<span class="tl-dot is-{{ m.kind }}{% if m.kind != 'was' %}{% if m.passed %} passed{% elif m.next %} next{% endif %}{% endif %}" style="left:{{ m.pos }}%" title="{% translate m.label %} · {% if m.date %}{{ m.date|d }}{% else %}{% translate "Not entered" %}{% endif %}"></span>{% endfor %}
   </div>
   <div class="tl-marks">{% for m in tl.marks %}{% if not m.above %}{% include "partials/_tl_mark.html" %}{% endif %}{% endfor %}</div>
-{% else %}<div class="tl tl-empty">
-  <div class="tl-track"></div>
-{% endif %}
-  {% if tl.unplaced or not tl.start %}<div class="tl-unplaced">
-    {% if not tl.start %}<span><span class="k">{% translate "Effective Date" %}</span> <span class="muted">{% translate "Not entered" %}</span></span>{% endif %}
-    {% for p in tl.unplaced %}<span><span class="k">{% translate p.label %}</span> {% if p.date %}<b>{{ p.date|dshort }}</b>{% elif p.awaiting %}<span class="muted">{% translate "Needs Effective Date" %}</span>{% else %}<span class="muted">{% translate "Not entered" %}</span>{% endif %}</span>{% endfor %}
-  </div>{% endif %}
 </div>

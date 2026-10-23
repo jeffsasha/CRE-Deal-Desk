@@ -2,7 +2,6 @@
 application (HTTP), the way a user would see them: key-date timelines on the
 dashboard, SKW commission per deal, history kept on the property, read-only limits,
 and every main page rendering in English and Chinese."""
-from django.test import SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -11,6 +10,7 @@ from commissions.ledger import effective_entries
 from commissions.models import LedgerEntry
 from core import dashboard
 from core.models import User
+from deals import keydates
 from deals.models import Deal
 from properties.models import Property
 
@@ -51,7 +51,9 @@ class AcceptanceFlows(DeskTestCase):
         self.assertEqual([m["label"] for m in g["marks"]], ["Effective Date", "Feasibility Period ends", "Closing Date"])
         self.assertEqual([m["pos"] for m in g["marks"]][::2], [0, 100])
         self.assertEqual(g["marks"][-1]["align"], "end")
-        self.assertEqual(g["unplaced"], [])
+        harbor_tl = keydates.timeline(Deal.objects.get(name="SAMPLE Harbor Cafe business sale"))
+        # No dates yet: still three marks, Feasibility in the middle and Closing at the end.
+        self.assertEqual([(m["kind"], m["pos"]) for m in harbor_tl["marks"]], [("missing", 0), ("missing", 50), ("missing", 100)])
         lease = rows["SAMPLE Kirby dental suite lease"]["tl"]
         self.assertEqual([p["label"] for p in lease["points"]], ["Commencement Date"])
         harbor = rows["SAMPLE Harbor Cafe business sale"]
@@ -220,18 +222,3 @@ class ListingTests(DeskTestCase):
         lost = self.deal("Lost deal", stage="lost", transaction_type="sale", actor=self.broker)
         names = [r["deal"].name for r in self.client.get(reverse("deal_list")).context["rows"]]
         self.assertEqual(names, ["Contract deal", "Buyer search", "Listing deal", closed.name, lost.name])
-
-
-class TimelineMarksTests(SimpleTestCase):
-    def test_marks_follow_dates_and_crowded_labels_go_above(self):
-        from datetime import date
-        from deals import keydates
-        start, today = date(2026, 1, 1), date(2026, 1, 5)
-        pts = [{"label": "A", "date": date(2026, 1, 11), "pos": 10, "passed": False},
-               {"label": "B", "date": date(2026, 1, 16), "pos": 15, "passed": False},
-               {"label": "C", "date": None, "pos": None, "passed": False}]
-        marks, unplaced = keydates._marks(start, pts, pts[0], today)
-        self.assertEqual([(m["label"], m["pos"], m["above"]) for m in marks],
-                         [("Effective Date", 0, False), ("A", 10, True), ("B", 15, False)])
-        self.assertTrue(marks[1]["next"])
-        self.assertEqual([p["label"] for p in unplaced], ["C"])

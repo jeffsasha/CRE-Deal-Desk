@@ -120,6 +120,41 @@ class KeyDatesTests(DeskTestCase):
         self.assertEqual(self.by_key()["closing_fixed"].current_date, date(2026, 7, 1))
         self.assertFalse(self.deal.terms.filter(key="closing_days_after_effective", status="active").exists())
 
+    def test_extensions_move_dates_and_stay_on_the_timeline(self):
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="days", closing_days=60)
+        # Feasibility by days, Closing moved along: Apr 3 -> May 3, May 3 -> Jun 2.
+        keydates.extend(self.deal, "feasibility", self.broker, days=30, shift_closing=True, note="First extension")
+        d = self.by_key()
+        self.assertEqual(d["feasibility_expiration"].current_date, date(2026, 5, 3))
+        self.assertEqual(d["closing_offset"].current_date, date(2026, 6, 2))
+        # Closing alone to a given date; Feasibility unchanged.
+        keydates.extend(self.deal, "closing", self.broker, new_date=date(2026, 6, 20))
+        d = self.by_key()
+        self.assertEqual(d["closing_offset"].current_date, date(2026, 6, 20))
+        self.assertEqual(d["feasibility_expiration"].current_date, date(2026, 5, 3))
+        self.assertEqual([(x.milestone, x.previous_date, x.new_date) for x in self.deal.extensions.all()],
+                         [("closing", date(2026, 5, 3), date(2026, 6, 2)), ("closing", date(2026, 6, 2), date(2026, 6, 20)),
+                          ("feasibility", date(2026, 4, 3), date(2026, 5, 3))])
+        tl = keydates.timeline(self.deal, today=date(2026, 4, 1))
+        kinds = [(m["kind"], m["date"]) for m in tl["marks"]]
+        self.assertEqual(kinds[0], ("start", date(2026, 3, 4)))
+        self.assertEqual(kinds[-1], ("main", date(2026, 6, 20)))
+        self.assertEqual(sum(1 for k, _ in kinds if k == "was"), 3)
+        self.assertTrue(all(m["extended"] for m in tl["marks"] if m["kind"] == "main"))
+        with self.assertRaises(keydates.ExtensionError):
+            keydates.extend(self.deal, "closing", self.broker, new_date=date(2026, 6, 1))
+
+    def test_extension_form(self):
+        self.client.force_login(self.broker)
+        url = reverse("deal_extend", args=[self.deal.pk])
+        self.assertContains(self.client.post(url, {"milestone": "feasibility", "days": "10"}), "Enter the Effective Date first")
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="date", closing_date=date(2026, 6, 1))
+        self.assertContains(self.client.post(url, {"milestone": "closing"}), "Enter either the new date or the number of days")
+        resp = self.client.post(url, {"milestone": "closing", "new_date": "2026-06-15", "note": "Lender delay"})
+        self.assertRedirects(resp, self.deal.get_absolute_url(), fetch_redirect_response=False)
+        self.assertEqual(self.by_key()["closing_fixed"].current_date, date(2026, 6, 15))
+        self.assertContains(self.client.get(self.deal.get_absolute_url()), "Lender delay")
+
     def test_lease_commencement(self):
         lease = DeskTestCase.deal(self, name="Lease", actor=self.broker, transaction_type="lease")
         keydates.save(lease, {"effective_date": date(2026, 3, 4), "commencement_date": date(2026, 5, 1)}, self.broker)

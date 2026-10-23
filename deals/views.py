@@ -548,6 +548,29 @@ def deal_key_dates(request, pk):
     return render(request, "deals/key_dates.html", {"form": form, "deal": deal})
 
 
+@require_edit_on_post
+def deal_extend(request, pk):
+    from . import keydates
+    from .forms import ExtensionForm
+
+    require(request.user, "edit")
+    deal = get_object_or_404(Deal, pk=pk)
+    form = ExtensionForm(request.POST or None, initial={"milestone": request.GET.get("m", "feasibility")})
+    if request.method == "POST" and form.is_valid():
+        c = form.cleaned_data
+        try:
+            keydates.extend(deal, c["milestone"], request.user, new_date=c.get("new_date"), days=c.get("days"),
+                            shift_closing=c.get("shift_closing"), note=c.get("note", ""))
+        except keydates.ExtensionError as e:
+            form.add_error(None, _(str(e)))
+        else:
+            messages.success(request, gettext_lazy("Extension saved. Deadlines were recomputed."))
+            return redirect(deal)
+    current = {m: keydates._current(deal, m) for m in keydates.EXTENSION_MILESTONES}
+    return render(request, "deals/extend.html", {"form": form, "deal": deal, "current": current,
+                                                 "extensions": deal.extensions.all()})
+
+
 @require_POST
 @require_perm("commission.edit")
 def deal_commission(request, pk):

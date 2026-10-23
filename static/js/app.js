@@ -177,16 +177,6 @@
   document.addEventListener("animationend", function (e) {
     if (e.animationName === "neon-veil-lift") endIgnite();
   });
-  var tube = document.querySelector("[data-neon-tube]");
-  if (tube && !reduceMotion) {
-    tube.addEventListener("click", function () {
-      endIgnite();
-      void root.offsetWidth;  // restart the CSS animations
-      root.classList.add("neon-igniting");
-      clearTimeout(tube._t);
-      tube._t = setTimeout(endIgnite, IGNITE_MS);
-    });
-  }
   // Keep the tube just under the top bar (a demo banner above it scrolls away).
   var stage = document.querySelector("[data-neon]");
   var rail = document.querySelector("[data-neon-rail]");
@@ -197,7 +187,8 @@
       var top = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom)) + "px";
       stage.style.top = top;
       rail.style.top = top;
-      if (veil) veil.style.top = top;
+      // The darkness starts below the tube so the tube is seen switching on.
+      if (veil) veil.style.top = (parseInt(top, 10) + 18) + "px";
     };
     place();
     window.addEventListener("scroll", place, { passive: true });
@@ -211,6 +202,48 @@
     el.style.setProperty("--mx", (e.clientX - r.left) + "px");
     el.style.setProperty("--my", (e.clientY - r.top) + "px");
   }, { passive: true });
+
+  // ---- Timeline labels: measure real widths and place each label below the track,
+  // else above it. Current dates go first; a date replaced by an extension gives way
+  // (date only, then no label; its dot keeps a tooltip).
+  function layoutTimeline(tl) {
+    var rows = tl.querySelectorAll(".tl-marks");
+    if (rows.length < 2) return;
+    var row = { above: rows[0], below: rows[1] };
+    var taken = { above: [], below: [] };
+    var marks = Array.prototype.slice.call(tl.querySelectorAll(".tl-mark"));
+    marks.sort(function (a, b) {
+      return (a.classList.contains("is-was") - b.classList.contains("is-was")) || (a.dataset.pos - b.dataset.pos);
+    });
+    tl.classList.add("has-above");  // measure with both rows in place
+    function tryRow(m, name) {
+      row[name].appendChild(m);
+      var r = m.getBoundingClientRect();
+      var clear = taken[name].every(function (o) { return r.right + 8 <= o.left || r.left >= o.right + 8; });
+      if (clear) taken[name].push({ left: r.left, right: r.right });
+      return clear;
+    }
+    var used = false;
+    marks.forEach(function (m) {
+      m.classList.remove("is-tight", "is-hidden");
+      if (tryRow(m, "below")) return;
+      if (tryRow(m, "above")) { used = true; return; }
+      m.classList.add("is-tight");
+      if (tryRow(m, "below")) return;
+      if (tryRow(m, "above")) { used = true; return; }
+      if (m.classList.contains("is-was")) { m.classList.add("is-hidden"); row.below.appendChild(m); return; }
+      tryRow(m, "below");
+    });
+    tl.classList.toggle("has-above", used);
+  }
+  var tls = document.querySelectorAll("[data-tl]");
+  if (tls.length) {
+    var layoutAll = function () { tls.forEach(layoutTimeline); };
+    layoutAll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutAll);
+    var tlTimer = 0;
+    window.addEventListener("resize", function () { clearTimeout(tlTimer); tlTimer = setTimeout(layoutAll, 120); });
+  }
 
   // ---- Auto-hide confirmations ------------------------------------------------
   document.querySelectorAll(".notice[data-autohide]").forEach(function (n) {

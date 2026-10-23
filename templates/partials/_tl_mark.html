@@ -1,4 +1,4 @@
-{% load i18n %}<div class="tl-mark tl-{{ m.align }}{% if m.next %} is-next{% endif %}{% if m.passed %} is-passed{% endif %}" style="left:{{ m.pos }}%">
-  <span class="k">{% translate m.label %}</span>
-  <span class="v">{{ m.date|dshort }}{% if not m.passed %} <small>{{ m.date|relday }}</small>{% endif %}</span>
+{% load i18n %}<div class="tl-mark tl-{{ m.align }} is-{{ m.kind }}{% if m.next %} is-next{% endif %}{% if m.passed %} is-passed{% endif %}" style="left:{{ m.pos }}%" data-pos="{{ m.pos }}">
+  <span class="k">{% translate m.label %}{% if m.extended %} <em class="tl-ext">{% translate "Extended" %}</em>{% endif %}</span>
+  <span class="v">{% if m.date %}{{ m.date|dshort }}{% if not m.passed and m.kind != 'was' %} <small>{{ m.date|relday }}</small>{% endif %}{% elif m.awaiting %}{% translate "Needs Effective Date" %}{% else %}{% translate "Not entered" %}{% endif %}</span>
 </div>

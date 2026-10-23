@@ -371,6 +371,27 @@ class KeyDatesForm(LocalizedForm):
         return data
 
 
+class ExtensionForm(LocalizedForm):
+    """Extend the Feasibility Period or the Closing Date: a new date, or a number of days."""
+
+    milestone = forms.ChoiceField(label="Extend", widget=forms.RadioSelect,
+                                  choices=[("feasibility", "Feasibility Period ends"), ("closing", "Closing Date")])
+    new_date = forms.DateField(label="New date", required=False, widget=DateInput())
+    days = forms.IntegerField(label="Or extend by (days)", required=False, min_value=1,
+                              help_text="Counted from the current date.")
+    shift_closing = forms.BooleanField(label="Move the Closing Date by the same number of days", required=False)
+    note = forms.CharField(label="Note", required=False, max_length=255,
+                           help_text="e.g. First extension, extension fee paid.")
+
+    def clean(self):
+        data = super().clean()
+        if bool(data.get("new_date")) == bool(data.get("days")):
+            raise forms.ValidationError(gettext_lazy("Enter either the new date or the number of days."))
+        if data.get("milestone") != "feasibility":
+            data["shift_closing"] = False
+        return data
+
+
 class SkwCommissionForm(LocalizedForm):
     expected = MoneyField(label="SKW commission (expected)", help_text="What SKW Realty expects to receive. Blank = unknown.")
 

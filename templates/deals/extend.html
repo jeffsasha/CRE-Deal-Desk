@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Extend a date" %}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ deal.get_absolute_url }}">← {{ deal.name }}</a></div>
+<div class="page-head"><div><h1>{% translate "Extend a date" %}</h1>
+  <div class="sub">{% translate "Record an extension of the Feasibility Period or the Closing Date. The earlier date stays on the timeline." %}</div></div></div>
+<div class="card" style="max-width:640px"><div class="card-body">
+  <form method="post" class="extend-form">{% csrf_token %}
+    {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <div class="form-grid">
+      <div class="field full"><label>{{ form.milestone.label|tr }}</label>
+        <div class="seg-radio">{% for r in form.milestone %}<label>{{ r.tag }}<span>{{ r.choice_label|tr }}</span></label>{% endfor %}</div>
+        <div class="help">{% translate "Now" %}: {% translate "Feasibility Period ends" %} <b>{{ current.feasibility|d|default:"—" }}</b> · {% translate "Closing Date" %} <b>{{ current.closing|d|default:"—" }}</b></div>
+      </div>
+      {% for f in form.visible_fields %}{% if f.name != "milestone" %}
+        <div class="field {% if f.field.widget.input_type == 'checkbox' %}check full{% endif %}{% if f.name == 'note' %} full{% endif %}" data-field="{{ f.name }}">
+          {% if f.field.widget.input_type == 'checkbox' %}{{ f }}<label for="{{ f.id_for_label }}">{{ f.label|tr }}</label>
+          {% else %}<label for="{{ f.id_for_label }}">{{ f.label|tr }}</label>{{ f }}{% endif %}
+          {% if f.help_text %}<div class="help">{{ f.help_text|tr }}</div>{% endif %}
+          {% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+      {% endif %}{% endfor %}
+    </div>
+    <div class="form-actions"><button class="btn btn-primary">{% translate "Save extension" %}</button><a class="btn" href="{{ deal.get_absolute_url }}">{% translate "Cancel" %}</a></div>
+  </form>
+</div></div>
+{% if extensions %}
+<div class="card" style="max-width:640px"><div class="card-head"><h2>{% translate "Extensions" %}</h2></div>
+  <div class="card-body flush table-wrap"><table class="t"><thead><tr><th>{% translate "Date" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Note" %}</th></tr></thead><tbody>
+  {% for x in extensions %}<tr><td>{{ x.get_milestone_display|tr }}</td><td class="nowrap">{{ x.previous_date|dshort }}</td><td class="nowrap"><strong>{{ x.new_date|dshort }}</strong> <small class="muted">+{{ x.days }}</small></td><td>{{ x.note|tr }}</td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script>
+(function () {
+  var form = document.querySelector(".extend-form");
+  if (!form) return;
+  function sync() {
+    var m = form.querySelector('input[name="milestone"]:checked');
+    var shift = form.querySelector('[data-field="shift_closing"]');
+    if (shift) shift.style.display = m && m.value === "feasibility" ? "" : "none";
+  }
+  form.addEventListener("change", sync);
+  sync();
+})();
+</script>{% endblock %}

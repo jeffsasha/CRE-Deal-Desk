@@ -8,9 +8,10 @@
         <div><div class="k">{% translate "Listing agreement expires" %}</div><div class="v">{{ deal.listing_expires_on|d }}</div>{% if deal.listing_expires_on and not listing.contract %}<small class="muted">{{ deal.listing_expires_on|relday }}</small>{% endif %}</div>
       </div></div></div>
     {% endif %}
-    <div class="card"><div class="card-head"><h2>{% translate "Key dates" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_key_dates' deal.pk %}">{% if tl.start %}{% translate "Edit key dates" %}{% else %}{% translate "Enter key dates" %}{% endif %}</a>{% endif %}</div>
+    <div class="card"><div class="card-head"><h2>{% translate "Key dates" %}</h2>{% if can.edit %}<div class="actions">{% if not deal.is_lease and tl.start and not deal.is_closed %}<a class="btn btn-sm" href="{% url 'deal_extend' deal.pk %}">{% translate "Extend" %}</a>{% endif %}<a class="btn btn-sm btn-primary" href="{% url 'deal_key_dates' deal.pk %}">{% if tl.start %}{% translate "Edit key dates" %}{% else %}{% translate "Enter key dates" %}{% endif %}</a></div>{% endif %}</div>
       <div class="card-body">
         {% include "partials/timeline.html" %}
+        {% with exts=deal.extensions.all %}{% if exts %}<ul class="ext-list">{% for x in exts %}<li><span class="muted">{{ x.get_milestone_display|tr }}</span> {% translate "extended" %} {{ x.previous_date|dshort }} → <strong>{{ x.new_date|dshort }}</strong> <small class="muted">+{{ x.days }}d{% if x.note %} · {{ x.note|tr }}{% endif %}</small></li>{% endfor %}</ul>{% endif %}{% endwith %}
         {% if not tl.start %}<p class="muted" style="margin:12px 0 0">{% translate "Enter the Effective Date and contract periods; the Feasibility Period and Closing Date are calculated for you." %}</p>{% endif %}
       </div>
       {% if other_deadlines %}<div class="card-body flush table-wrap"><table class="t"><thead><tr><th>{% translate "Other dates" %}</th><th>{% translate "Date" %}</th></tr></thead><tbody>

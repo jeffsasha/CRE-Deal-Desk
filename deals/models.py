@@ -393,6 +393,31 @@ class DealEvent(models.Model):
         return f"{self.label}: {self.occurred_on or 'not recorded'}"
 
 
+class DateExtension(models.Model):
+    """A Feasibility Period or Closing Date extension. The contract term is changed so
+    the deadline lands on new_date; this row keeps the date it replaced."""
+
+    MILESTONES = [("feasibility", "Feasibility Period ends"), ("closing", "Closing Date")]
+
+    deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="extensions")
+    milestone = models.CharField(max_length=20, choices=MILESTONES)
+    previous_date = models.DateField()
+    new_date = models.DateField()
+    note = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["milestone", "created_at", "pk"]
+
+    @property
+    def days(self):
+        return (self.new_date - self.previous_date).days
+
+    def __str__(self):
+        return f"{self.get_milestone_display()}: {self.previous_date} -> {self.new_date}"
+
+
 class DealTerm(models.Model):
     """An approved contract term. Superseded versions are kept, never overwritten."""
 
