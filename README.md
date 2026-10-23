@@ -1,13 +1,22 @@
-# SKW DealDesk
+# CRE Deal Desk
 
-A private commercial real estate transaction workspace for SKW Realty LLC. It keeps properties, deals, deadlines, checklists, contacts and commissions as separate linked records, and answers one daily question: **where does each deal stand, what date is next, and how much Commission is SKW still owed?**
+[![Django 5.2](https://img.shields.io/badge/Django-5.2-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![English / 中文](https://img.shields.io/badge/Language-English%20%2F%20中文-A51C30)](#languages-中--en)
+
+**Commercial real estate transactions, deadlines, contacts, and commissions in one local workspace.**
+
+[Local setup](#setup-local-single-user) · [Demo mode](#demo-mode) · [Tests](#tests) · [Repository map](#repository-map)
+
+A private commercial real estate transaction workspace for real estate teams. It keeps properties, deals, deadlines, checklists, contacts and commissions as separate linked records, and answers one daily question: **where does each deal stand, what date is next, and how much Commission is the brokerage still owed?**
 
 How it works day to day:
 
-- **Dashboard, top to bottom:** **Under Contract** — one timeline per deal (Effective Date → Feasibility Period → Closing Date, or Commencement Date for leases) with today's position, the next milestone and SKW's Commission; **Listings** — every property SKW has on the market for a seller or landlord, with asking price, days on market and listing expiration (red within 30 days); then buyer / tenant searches not yet under contract.
-- **Listings:** a deal where SKW represents the seller or landlord and that is not yet Under Contract (new stage **Listed**). Enter the listing date, asking price or rent and the listing agreement expiration; the expiration goes on the calendar with reminders. When the deal goes Under Contract it moves up to the timeline section.
+- **Dashboard, top to bottom:** **Under Contract** — one timeline per deal (Effective Date → Feasibility Period → Closing Date, or Commencement Date for leases) with today's position, the next milestone and the brokerage's Commission; **Listings** — every property the brokerage has on the market for a seller or landlord, with asking price, days on market and listing expiration (red within 30 days); then buyer / tenant searches not yet under contract.
+- **Listings:** a deal where the brokerage represents the seller or landlord and that is not yet Under Contract (new stage **Listed**). Enter the listing date, asking price or rent and the listing agreement expiration; the expiration goes on the calendar with reminders. When the deal goes Under Contract it moves up to the timeline section.
 - **Key dates:** on each deal, enter the Effective Date and the contract periods by hand (Feasibility Period in days; Closing Date as a fixed date or days after the Effective Date). The rule engine calculates the dates: calendar days, the Effective Date itself not counted, weekends and holidays moved only when you tick that the contract says so. Changes keep their history.
-- **Commission:** per deal, only SKW's expected amount and the payments received. A wrong payment is reversed, never deleted.
+- **Commission:** per deal, only the brokerage's expected amount and the payments received. A wrong payment is reversed, never deleted.
 
 ## Stack and why
 
@@ -23,12 +32,40 @@ There is no document upload: contract terms are typed in from the executed contr
 
 ## Setup (local, single user)
 
-DealDesk runs on this Mac for one user. It listens on `127.0.0.1` only, so other computers and phones — even on the same Wi-Fi — cannot reach it. No cloud hosting is configured.
+DealDesk runs locally for one user. It listens on `127.0.0.1` only, so other computers and phones — even on the same Wi-Fi — cannot reach it. No cloud hosting is configured.
+
+### Windows (PowerShell)
+
+First-time setup (Python 3.12):
+
+```powershell
+cd CRE-Deal-Desk
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py createsuperuser
+```
+
+Start the web app:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8020 --noreload
+```
+
+In a second PowerShell window, start the reminder worker:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py run_worker
+```
+
+Open [http://localhost:8020](http://localhost:8020) and sign in with the account created above. Keep both terminals open; Ctrl-C stops each process. The macOS auto-start scripts below do not apply to Windows.
+
+### macOS / Linux
 
 First-time setup:
 
 ```bash
-cd ~/SKW-DealDesk
+cd ~/CRE-Deal-Desk
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python manage.py migrate         # also seeds stages, holiday calendars, checklist templates
 .venv/bin/python manage.py createsuperuser # becomes an Administrator
@@ -75,7 +112,7 @@ Demo mode uses its own database and storage (`var-demo/`). It loads a handful of
 .venv/bin/python manage.py test tests
 ```
 
-There are 98 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), SKW Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
+There are 99 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), brokerage Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
 
 ## Languages (中 / EN)
 
@@ -101,7 +138,7 @@ deals/        deals, stages, parties, representation, key dates (keydates.py), p
 documents/    database tables only (kept so older records stay valid); there is no upload
 deadlines/    engine.py (pure rules), services (revisions, preview), reminders, calendar export
 checklists/   templates (acquisition, disposition, lease, land, business asset) and conditional checklist items
-commissions/  SKW expected / received per deal (simple.py) on top of agreements and the append-only ledger (ledger.py)
+commissions/  brokerage expected / received per deal (simple.py) on top of agreements and the append-only ledger (ledger.py)
 imports/      CSV/XLSX mapping, validation, duplicate detection, commit, safe reversal
 reports/      volume and financial reports with drill-down to the source records
 demo/         the demo seed (fictional data only)
@@ -121,5 +158,5 @@ See [REQUIREMENTS.md](REQUIREMENTS.md) for the requirements checklist, and [docs
 ## Remaining dependencies
 
 - **Email reminders** need SMTP settings. Until then they are recorded as failed delivery, and in-app reminders still go out.
-- **Hosting:** DealDesk runs locally on this Mac for a single user. Sharing it with the team would need a server and is not set up.
+- **Hosting:** DealDesk runs locally for a single user. Sharing it with the team would need a server and is not set up.
 - **Real data:** your actual transaction records have not been loaded. Use Settings → Historical imports or manual entry.
