@@ -5,6 +5,14 @@
       var t = localStorage.getItem("dd-theme");
       if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
     } catch (e) {}
+    /* Neon Reveal: ignite on the first main page of a visit only. */
+    try {
+      if (location.pathname !== "/" && !sessionStorage.getItem("dd-neon-lit")
+          && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("neon-igniting");
+        sessionStorage.setItem("dd-neon-lit", "1");
+      }
+    } catch (e) {}
   })();
 </script>
   <meta name="color-scheme" content="light dark">

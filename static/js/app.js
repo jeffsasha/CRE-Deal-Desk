@@ -169,6 +169,43 @@
     }
   }
 
+  // ---- Neon Reveal: end the ignition, re-light on click, card spotlight ----------
+  var IGNITE_MS = 3200;
+  function endIgnite() { root.classList.remove("neon-igniting"); }
+  if (root.classList.contains("neon-igniting")) setTimeout(endIgnite, IGNITE_MS);
+  var tube = document.querySelector("[data-neon-tube]");
+  if (tube && !reduceMotion) {
+    tube.addEventListener("click", function () {
+      endIgnite();
+      void root.offsetWidth;  // restart the CSS animations
+      root.classList.add("neon-igniting");
+      clearTimeout(tube._t);
+      tube._t = setTimeout(endIgnite, IGNITE_MS);
+    });
+  }
+  // Keep the tube just under the top bar (a demo banner above it scrolls away).
+  var stage = document.querySelector("[data-neon]");
+  var topbar = document.querySelector(".topbar");
+  if (stage && topbar) {
+    var placing = 0;
+    var place = function () {
+      placing = 0;
+      stage.style.top = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom)) + "px";
+    };
+    var schedule = function () { if (!placing) placing = requestAnimationFrame(place); };
+    place();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+  }
+  var SPOT = ".card, .metric, .facts, .hero-band, .tile";
+  document.addEventListener("pointermove", function (e) {
+    var el = e.target.closest && e.target.closest(SPOT);
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    el.style.setProperty("--my", (e.clientY - r.top) + "px");
+  }, { passive: true });
+
   // ---- Auto-hide confirmations ------------------------------------------------
   document.querySelectorAll(".notice[data-autohide]").forEach(function (n) {
     setTimeout(function () {

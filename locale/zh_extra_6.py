@@ -83,4 +83,5 @@ ZH = {
     ", tracked.": "，尽在掌握。",
     "Listings, contracts, key dates and SKW commission — every deal on one screen.": "Listing、合同、关键日期和 SKW Commission，每一笔 Deal 都在一个页面上。",
     "Exit": "退出", "Exit to opening page": "退出到开场页",
+    "Click to re-light": "点击重新点亮",
 }

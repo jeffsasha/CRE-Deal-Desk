@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 13:19-0500\n"
+"POT-Creation-Date: 2026-10-23 14:44-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3790,7 +3790,7 @@ msgstr "已跳过"
 msgid "Revert blocked"
 msgstr "撤销受阻"
 
-#: imports/models.py:58 templates/base.html:72 templates/base.html:73
+#: imports/models.py:58 templates/base.html:71 templates/base.html:72
 msgid "Create"
 msgstr "新建"
 
@@ -3905,111 +3905,115 @@ msgid ""
 "SKW transaction history."
 msgstr "演示模式——独立数据库中的虚构示例数据，并非 SKW 的真实交易记录。"
 
-#: templates/base.html:17 templates/core/hero.html:16
+#: templates/base.html:13
+msgid "Click to re-light"
+msgstr "点击重新点亮"
+
+#: templates/base.html:16 templates/core/hero.html:16
 msgid "SKW DealDesk home"
 msgstr "SKW DealDesk 首页"
 
-#: templates/base.html:23
+#: templates/base.html:22
 msgid "Main"
 msgstr "主菜单"
 
-#: templates/base.html:38 templates/base.html:55
+#: templates/base.html:37 templates/base.html:54
 msgid "Exit to opening page"
 msgstr "退出到开场页"
 
-#: templates/base.html:39
+#: templates/base.html:38
 msgid "Sign out"
 msgstr "退出登录"
 
-#: templates/base.html:44
+#: templates/base.html:43
 msgid "Menu"
 msgstr "菜单"
 
-#: templates/base.html:45 templates/base.html:65
+#: templates/base.html:44 templates/base.html:64
 msgid "Search and commands"
 msgstr "搜索与命令"
 
-#: templates/base.html:46
+#: templates/base.html:45
 msgid "Search or jump to…"
 msgstr "搜索或跳转…"
 
-#: templates/base.html:46
+#: templates/base.html:45
 msgid "⌘K"
 msgstr "⌘K"
 
-#: templates/base.html:50
+#: templates/base.html:49
 msgid "Switch theme"
 msgstr "切换主题"
 
-#: templates/base.html:54 templates/base.html:74
+#: templates/base.html:53 templates/base.html:73
 #: templates/core/notifications.html:3 templates/core/notifications.html:5
 msgid "Notifications"
 msgstr "通知"
 
-#: templates/base.html:55
+#: templates/base.html:54
 msgid "Exit"
 msgstr "退出"
 
-#: templates/base.html:65
+#: templates/base.html:64
 msgid "Search everything for"
 msgstr "全局搜索"
 
-#: templates/base.html:65
+#: templates/base.html:64
 msgid "No matches"
 msgstr "无匹配结果"
 
-#: templates/base.html:65
+#: templates/base.html:64
 msgid "Navigate"
 msgstr "导航"
 
-#: templates/base.html:65 templates/core/search.html:3
+#: templates/base.html:64 templates/core/search.html:3
 #: templates/core/search.html:5
 msgid "Search"
 msgstr "搜索"
 
-#: templates/base.html:66
+#: templates/base.html:65
 msgid "Search deals, properties, contacts — or type a command"
 msgstr "搜索 Deal、Property、联系人——或输入命令"
 
-#: templates/base.html:68
+#: templates/base.html:67
 msgid "move"
 msgstr "移动"
 
-#: templates/base.html:68
+#: templates/base.html:67
 msgid "open"
 msgstr "打开"
 
-#: templates/base.html:68
+#: templates/base.html:67
 msgid "close"
 msgstr "关闭"
 
-#: templates/base.html:72 templates/core/dashboard.html:10
+#: templates/base.html:71 templates/core/dashboard.html:10
 #: templates/deals/list.html:6 templates/deals/new.html:3
 #: templates/deals/new.html:6
 msgid "New deal"
 msgstr "新建交易"
 
-#: templates/base.html:73 templates/crm/list.html:6
+#: templates/base.html:72 templates/crm/list.html:6
 msgid "New contact"
 msgstr "新建联系人"
 
-#: templates/base.html:74
+#: templates/base.html:73
 msgid "Go to"
 msgstr "前往"
 
-#: templates/base.html:75
+#: templates/base.html:74
 msgid "Switch to light theme"
 msgstr "切换到浅色主题"
 
-#: templates/base.html:75 templates/base.html:76 templates/base.html:77
+#: templates/base.html:74 templates/base.html:75 templates/base.html:76
 msgid "Appearance"
 msgstr "外观"
 
-#: templates/base.html:76
+#: templates/base.html:75
 msgid "Switch to dark theme"
 msgstr "切换到深色主题"
 
-#: templates/base.html:77
+#: templates/base.html:76
 msgid "Match system theme"
 msgstr "跟随系统主题"
 

@@ -31,7 +31,7 @@ How it works day to day (menu: Dashboard, Deals, Commissions, Contacts, Settings
 | Web app | Django 5.2 (server-rendered pages, small vanilla JS). Built-in sign-in, sessions, CSRF protection, migrations, test runner. No front-end build step. |
 | Database | SQLite for local single-user use (the current setup). PostgreSQL is supported via `DATABASE_URL` if the app is ever moved to a server; the same migrations and tests run on both. |
 | Background work | `manage.py run_worker` delivers deadline reminders (or run `process_reminders` from cron). No Redis required. |
-| Look | Harvard crimson accents on solid parchment (light) or warm charcoal (dark) cards over a slowly drifting blue → purple → pink page gradient. English / 中文 switch. |
+| Look | Solid cards with a neon edge and cursor spotlight on hover; a neon tube under the top bar pours pink → violet light over the page (an original take on React Bits Pro *Neon Reveal*: ignites on the first page of a visit, click the tube to re-light). Harvard crimson accents. English / 中文 switch. |
 | Money | Integer cents everywhere. A blank amount means *unknown* (`None`) and is never treated as zero. |
 
 There is no document upload: contract terms are typed in from the executed contract.
