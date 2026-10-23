@@ -22,7 +22,7 @@ if (el) {
   let theme = currentTheme();
   const ascii = mountGradientASCII(el, {
     ...PALETTES[theme],
-    shape: 'horizon',
+    shape: 'rise',
     characters: ' .:-=+*#%@',
     cellSize: 16,
     density: 0.62,
