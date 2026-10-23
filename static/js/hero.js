@@ -160,7 +160,7 @@ async function badgeImages(el) {
 
 async function startBadge(el) {
   const images = await badgeImages(el);
-  const narrow = window.matchMedia('(max-width: 820px)').matches;
+  const narrow = window.matchMedia('(max-width: 900px)').matches;
   const lanyard = mountLanyard(el, {
     frontImage: images.front,
     backImage: images.back,
@@ -170,6 +170,7 @@ async function startBadge(el) {
     metal: 'silver',
     strapColor: '#0d0d0f',
     size: narrow ? 0.62 : 0.56,
+    anchor: narrow ? 'center' : 'right',
     strapLength: 0.42,
     strapWidth: 0.7,
     breeze: 0.4
