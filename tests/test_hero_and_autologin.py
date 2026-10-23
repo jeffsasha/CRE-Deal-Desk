@@ -20,6 +20,7 @@ class AutoLoginTests(DeskTestCase):
             self.assertEqual(resp.wsgi_request.user, owner)
             self.assertNotContains(resp, 'action="/accounts/logout/"')
             self.assertContains(resp, "https://github.com/jeffsasha")
+            self.assertContains(resp, 'class="btn btn-exit" href="/"')  # exit back to the opening page
             self.assertRedirects(self.client.get("/accounts/login/"), reverse("hero"), fetch_redirect_response=False)
 
     def test_login_still_required_when_disabled(self):
