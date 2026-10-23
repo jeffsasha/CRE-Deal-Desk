@@ -5,8 +5,10 @@
       var t = localStorage.getItem("dd-theme");
       if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
     } catch (e) {}
-    /* Neon Reveal: ignite on the first main page of a visit only. */
+    /* Neon Reveal: ignite on the first main page after the opening page (or the
+       first main page of a visit); later pages show the tube already lit. */
     try {
+      if (location.pathname === "/") sessionStorage.removeItem("dd-neon-lit");
       if (location.pathname !== "/" && !sessionStorage.getItem("dd-neon-lit")
           && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         document.documentElement.classList.add("neon-igniting");

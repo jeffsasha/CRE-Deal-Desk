@@ -133,5 +133,39 @@ def timeline(deal, deadlines=None, today=None):
     if span:
         today_pos = max(0, min(100, round(100 * (today - start).days / span)))
     upcoming = next((p for p in points if p["date"] and p["date"] >= today), None)
+    marks, unplaced = _marks(start, points, upcoming, today)
     return {"start": start, "end": end, "points": points, "today_pos": today_pos,
-            "complete": bool(start and all(p["date"] for p in points)), "next": upcoming}
+            "complete": bool(start and all(p["date"] for p in points)), "next": upcoming,
+            "marks": marks, "unplaced": unplaced, "has_above": any(m["above"] for m in marks)}
+
+
+# Labels closer than this (percent of the track) would overlap, so the later one
+# goes above the track instead.
+MARK_GAP = 24
+
+
+def _marks(start, points, upcoming, today):
+    """Axis marks: the Effective Date and every milestone that has a position, each
+    labelled at its own spot. Milestones without a position are listed separately."""
+    marks = []
+    if start:
+        marks.append({"label": gettext_noop("Effective Date"), "date": start, "pos": 0,
+                      "passed": start <= today, "next": False})
+    unplaced = []
+    for p in points:
+        if p["pos"] is None:
+            unplaced.append(p)
+        else:
+            marks.append({"label": p["label"], "date": p["date"], "pos": p["pos"],
+                          "passed": p["passed"], "next": p is upcoming})
+    marks.sort(key=lambda m: m["pos"])
+    last_below = last_above = None
+    for m in marks:
+        m["align"] = "start" if m["pos"] < 12 else "end" if m["pos"] > 88 else "mid"
+        if last_below is None or m["pos"] - last_below >= MARK_GAP:
+            m["above"], last_below = False, m["pos"]
+        elif last_above is None or m["pos"] - last_above >= MARK_GAP:
+            m["above"], last_above = True, m["pos"]
+        else:
+            m["above"], last_below = False, m["pos"]
+    return marks, unplaced

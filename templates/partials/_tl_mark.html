@@ -1,0 +1,4 @@
+{% load i18n %}<div class="tl-mark tl-{{ m.align }}{% if m.next %} is-next{% endif %}{% if m.passed %} is-passed{% endif %}" style="left:{{ m.pos }}%">
+  <span class="k">{% translate m.label %}</span>
+  <span class="v">{{ m.date|dshort }}{% if not m.passed %} <small>{{ m.date|relday }}</small>{% endif %}</span>
+</div>

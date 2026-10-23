@@ -185,17 +185,17 @@
   }
   // Keep the tube just under the top bar (a demo banner above it scrolls away).
   var stage = document.querySelector("[data-neon]");
+  var rail = document.querySelector("[data-neon-rail]");
   var topbar = document.querySelector(".topbar");
-  if (stage && topbar) {
-    var placing = 0;
+  if (stage && rail && topbar) {
     var place = function () {
-      placing = 0;
-      stage.style.top = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom)) + "px";
+      var top = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom)) + "px";
+      stage.style.top = top;
+      rail.style.top = top;
     };
-    var schedule = function () { if (!placing) placing = requestAnimationFrame(place); };
     place();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", place, { passive: true });
+    window.addEventListener("resize", place);
   }
   var SPOT = ".card, .metric, .facts, .hero-band, .tile";
   document.addEventListener("pointermove", function (e) {
