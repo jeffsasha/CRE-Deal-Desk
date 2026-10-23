@@ -31,7 +31,7 @@ How it works day to day (menu: Dashboard, Deals, Commissions, Contacts, Settings
 | Web app | Django 5.2 (server-rendered pages, small vanilla JS). Built-in sign-in, sessions, CSRF protection, migrations, test runner. No front-end build step. |
 | Database | SQLite for local single-user use (the current setup). PostgreSQL is supported via `DATABASE_URL` if the app is ever moved to a server; the same migrations and tests run on both. |
 | Background work | `manage.py run_worker` delivers deadline reminders (or run `process_reminders` from cron). No Redis required. |
-| Look | Harvard palette: Crimson on parchment (light) or warm charcoal (dark) — never pure white or black. English / 中文 switch. |
+| Look | Harvard crimson accents on solid parchment (light) or warm charcoal (dark) cards over a slowly drifting blue → purple → pink page gradient. English / 中文 switch. |
 | Money | Integer cents everywhere. A blank amount means *unknown* (`None`) and is never treated as zero. |
 
 There is no document upload: contract terms are typed in from the executed contract.
@@ -139,7 +139,6 @@ After adding or changing interface text:
 - `static/vendor/three/` — three.js r169 (MIT), verified against the npm registry.
 - `static/js/lanyard.js` — the React Bits Lanyard component, ported to a plain ES module.
 - `static/js/rotating-text.js` — the React Bits RotatingText component, ported to a plain ES module on the Web Animations API (rotating word in the opening headline).
-- `static/js/gradient-ascii.js` — the React Bits GradientASCII component, ported to a plain ES module; `static/js/app-bg.js` mounts it behind the main pages in the Harvard palette (follows light / dark).
 - `static/img/nyc-skyline.jpg` — photo by Luca Bravo on [Unsplash](https://unsplash.com/photos/_QdFx92MO2U), Unsplash License.
 
 ## Repository map

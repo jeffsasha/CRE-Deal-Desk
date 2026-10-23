@@ -10,8 +10,6 @@
 <body>
 <div class="nprogress" aria-hidden="true"></div>
 {% if DEMO_MODE %}<div class="demo-banner">{% translate "Demo mode — fictional sample data in an isolated database. Nothing here is SKW transaction history." %}</div>{% endif %}
-<div class="app-glow" aria-hidden="true"><span></span></div>
-<div class="app-ascii" data-app-ascii aria-hidden="true"></div>
 <div class="app">
   <aside class="sidebar">
     <a class="brand" href="{% url 'hero' %}" aria-label="{% translate "SKW DealDesk home" %}">
@@ -79,7 +77,6 @@
 <template id="cmdk-icons"><span data-i="search">{% icon "search" %}</span><span data-i="plus">{% icon "plus" %}</span><span data-i="deal_list">{% icon "deal_list" %}</span><span data-i="deadline_list">{% icon "deadline_list" %}</span><span data-i="document_list">{% icon "document_list" %}</span><span data-i="alert">{% icon "alert" %}</span><span data-i="bell">{% icon "bell" %}</span><span data-i="sun">{% icon "sun" %}</span><span data-i="moon">{% icon "moon" %}</span><span data-i="monitor">{% icon "monitor" %}</span><span data-i="arrow">{% icon "arrow" %}</span><span data-i="property_list">{% icon "property_list" %}</span><span data-i="contact_list">{% icon "contact_list" %}</span></template>
 <script type="application/json" id="cmdk-search-url">"{% url 'search' %}"</script>
 <script src="{% asset 'js/app.js' %}"></script>
-<script type="module" src="{% asset 'js/app-bg.js' %}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
