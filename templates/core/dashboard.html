@@ -7,7 +7,7 @@
     <h1>{% translate "Today" %}</h1>
     <div class="sub">{{ today|longdate }}</div>
   </div>
-  <div class="actions"><div class="segmented">{% for key, label in progress.kinds %}<a class="{% if progress.kind == key %}on{% endif %}" href="?kind={{ key }}">{{ label }}</a>{% endfor %}</div>{% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div>
+  <div class="actions">{% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div>
 </div>
 
 <div class="summary-row">
@@ -22,7 +22,7 @@
 
 <div class="card progress-card" style="margin-bottom:16px">
   <div class="card-head">
-    <div><h2>{% translate "Under Contract" %} <span class="count-badge">{{ progress.contract|length }}</span></h2><div class="muted" style="font-size:12px;margin-top:2px">{% translate "Effective Date → Feasibility Period → Closing Date" %}</div></div>
+    <div><h2>{% translate "Under Contract" %} <span class="count-badge">{{ progress.contract|length }}</span></h2></div>
   </div>
   <div class="progress-list">
   {% for r in progress.contract %}{% include "core/_deal_row.html" %}
@@ -34,7 +34,7 @@
 
 <div class="card" style="margin-bottom:16px">
   <div class="card-head">
-    <div><h2>{% translate "Listings" %} <span class="count-badge">{{ progress.listings|length }}</span></h2><div class="muted" style="font-size:12px;margin-top:2px">{% translate "On the market, SKW representing the seller or landlord" %}</div></div>
+    <div><h2>{% translate "Listings" %} <span class="count-badge">{{ progress.listings|length }}</span></h2></div>
   </div>
   <div class="card-body flush table-wrap"><table class="t listing-table">
     <thead><tr><th>{% translate "Property" %}</th><th>{% translate "Stage" %}</th><th class="num">{% translate "Asking" %}</th><th class="num hide-sm">{% translate "On market" %}</th><th class="num">{% translate "Listing expires" %}</th>{% if fin %}<th class="num hide-sm">{% translate "SKW" %}</th>{% endif %}</tr></thead>
@@ -51,13 +51,13 @@
 
 {% if progress.searches %}
 <div class="card progress-card" style="margin-bottom:16px">
-  <div class="card-head"><div><h2>{% translate "Buyer & tenant searches" %} <span class="count-badge">{{ progress.searches|length }}</span></h2><div class="muted" style="font-size:12px;margin-top:2px">{% translate "SKW representing the buyer or tenant; not yet under contract" %}</div></div></div>
+  <div class="card-head"><div><h2>{% translate "Buyer & tenant searches" %} <span class="count-badge">{{ progress.searches|length }}</span></h2></div></div>
   <div class="progress-list">{% for r in progress.searches %}{% include "core/_deal_row.html" %}{% endfor %}</div>
 </div>
 {% endif %}
 
 <div class="card">
-  <div class="card-head"><h2>{% translate "Next 14 days" %}</h2><a class="btn btn-sm" href="{% url 'deadline_calendar' %}">{% translate "Calendar" %}</a></div>
+  <div class="card-head"><h2>{% translate "Next 14 days" %}</h2></div>
   <div class="card-body flush table-wrap"><table class="t"><tbody>
     {% for dl in upcoming %}<tr class="{% if dl.days_until == 0 %}row-warn{% endif %}">
       <td class="nowrap"><strong>{{ dl.current_date|dshort }}</strong> <small class="muted">{{ dl.current_date|relday }}</small></td>

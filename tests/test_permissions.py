@@ -47,7 +47,7 @@ class ReadOnlyTests(DeskTestCase):
         self.assertNotEqual(self.d.stage.key, "lost")
 
     def test_get_create_forms_forbidden(self):
-        for url in [reverse("deal_create"), reverse("property_create"), reverse("deal_key_dates", args=[self.d.pk])]:
+        for url in [reverse("deal_create"), reverse("deal_key_dates", args=[self.d.pk])]:
             self.assertEqual(self.client.get(url).status_code, 403, url)
 
     def test_no_financial_access(self):

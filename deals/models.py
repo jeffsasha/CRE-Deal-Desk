@@ -73,15 +73,15 @@ def ensure_default_stages():
 
 
 TRANSACTION_TYPES = [
-    ("purchase", _("Purchase / acquisition")),
-    ("sale", _("Sale / listing disposition")),
-    ("land_purchase", _("Land acquisition")),
+    ("purchase", _("Purchase")),
+    ("sale", _("Sale")),
+    ("land_purchase", _("Land purchase")),
     ("land_sale", _("Land sale")),
-    ("lease", _("Commercial lease")),
+    ("lease", _("Lease")),
     ("lease_renewal", _("Lease renewal")),
     ("lease_expansion", _("Lease expansion")),
     ("lease_assignment", _("Lease assignment")),
-    ("business_asset", _("Business asset sale")),
+    ("business_asset", _("Business sale")),
 ]
 SALE_TYPES = {"purchase", "sale", "land_purchase", "land_sale"}
 LEASE_TYPES = {"lease", "lease_renewal", "lease_expansion", "lease_assignment"}

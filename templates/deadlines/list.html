@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% translate "Calendar & Deadlines" %}{% endblock %}
+{% block title %}{% translate "Dates" %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>{% translate "Calendar & Deadlines" %}</h1><div class="sub">{% translate "Computed by explicit rules from approved terms and recorded events. “Awaiting Trigger” means no date exists yet." %}</div></div>
-<div class="actions"><div class="segmented"><a class="on" href="{% url 'deadline_list' %}">{% translate "List" %}</a><a href="{% url 'deadline_calendar' %}">{% translate "Month" %}</a></div><a class="btn" href="{% url 'deadline_ics' %}">{% translate "Export .ics" %}</a></div></div>
+<div class="page-head"><div><h1>{% translate "Dates" %}</h1></div></div>
 {% include "partials/listing.html" %}
 {% endblock %}

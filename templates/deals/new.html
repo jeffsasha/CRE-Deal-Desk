@@ -3,7 +3,7 @@
 {% block title %}{% translate "New deal" %}{% endblock %}
 {% block content %}
 <div class="crumbs"><a href="{% url 'deal_list' %}">← {% translate "Deals" %}</a></div>
-<div class="page-head"><div><h1>{% translate "New deal" %}</h1><div class="sub">{% translate "Three quick choices. Everything else can be added on the deal page." %}</div></div></div>
+<div class="page-head"><div><h1>{% translate "New deal" %}</h1></div></div>
 
 <form method="post" class="new-deal" data-new-deal>{% csrf_token %}
   {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
@@ -45,26 +45,14 @@
   <section class="nd-step" data-needs-side>
     <div class="nd-step-head"><span class="nd-num">3</span><h2>{% translate "Deal details" %}</h2></div>
     <div class="card"><div class="card-body">
-      <div class="field">
-        <label>{% translate "Property" %}</label>
-        <div class="segmented seg-radio">
-          {% for value, label in form.property_mode.field.choices %}
-          <label><input type="radio" name="property_mode" value="{{ value }}" {% if property_mode == value %}checked{% endif %}><span>{{ label }}</span></label>
-          {% endfor %}
-        </div>
-      </div>
-      <div class="form-grid" style="margin-top:14px">
-        <div class="field full" data-mode-only="existing"><label for="id_property">{% translate "Choose property" %}</label>{{ form.property }}{% for e in form.property.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
-        <div class="field" data-mode-only="new"><label for="id_new_address">{% translate "Street address" %}</label>{{ form.new_address }}{% for e in form.new_address.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
-        <div class="field" data-mode-only="new"><label for="id_new_city">{% translate "City" %}</label>{{ form.new_city }}</div>
-        <div class="field" data-mode-only="new"><label for="id_new_type">{% translate "Property type" %}</label>{{ form.new_type }}</div>
-        <div class="field" data-kind-only="lease"><label for="id_suite">{% translate "Suite" %}</label>{{ form.suite }}</div>
-
-        <div class="field"><label for="id_client_a" data-client-label="a">{% translate "Client" %}</label>{{ form.client_a }}<div class="help">{% translate "A company or person. Matched to an existing company when the name is the same." %}</div></div>
-        <div class="field" data-client-b><label for="id_client_b" data-client-label="b">{% translate "Other client" %}</label>{{ form.client_b }}</div>
-        <div class="field"><label for="id_responsible_broker">{% translate "Responsible broker" %}</label>{{ form.responsible_broker }}</div>
+      <div class="form-grid">
+        <div class="field full"><label for="id_street">{% translate "Street address" %}</label>{{ form.street }}{% for e in form.street.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label for="id_suite">{% translate "Suite" %}</label>{{ form.suite }}</div>
+        <div class="field"><label for="id_city">{% translate "City" %}</label>{{ form.city }}{% for e in form.city.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label for="id_zip_code">{% translate "ZIP" %}</label>{{ form.zip_code }}</div>
         <div class="field"><label for="id_stage">{% translate "Stage" %}</label>{{ form.stage }}</div>
-        <div class="field full"><label for="id_name">{% translate "Deal name" %}</label>{{ form.name }}<div class="help">{{ form.name.help_text }}</div>{% for e in form.name.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label for="id_client_a" data-client-label="a">{% translate "Client" %}</label>{{ form.client_a }}</div>
+        <div class="field" data-client-b><label for="id_client_b" data-client-label="b">{% translate "Other client" %}</label>{{ form.client_b }}</div>
       </div>
       <div class="nd-summary" data-summary></div>
       <div class="form-actions"><button class="btn btn-primary">{% translate "Create deal" %}</button><a class="btn" href="{% url 'deal_list' %}">{% translate "Cancel" %}</a></div>

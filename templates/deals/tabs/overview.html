@@ -20,9 +20,6 @@
       {% if can.edit %}<div class="card-foot"><a class="btn btn-sm btn-ghost" href="{% url 'deadline_create' %}?deal={{ deal.pk }}">{% icon "plus" %}{% translate "Add another date" %}</a></div>{% endif %}
     </div>
 
-    <div class="card"><div class="card-head"><h2>{% translate "Property" %}</h2></div><div class="card-body flush table-wrap"><table class="t"><tbody>
-      {% for l in properties %}<tr><td><a href="{{ l.property.get_absolute_url }}">{{ l.property.name }}</a>{% if l.space.suite %} · {% translate "Suite" %} {{ l.space.suite }}{% endif %}<br><small class="muted">{{ l.property.address }}</small></td><td class="num muted">{{ l.property.get_property_type_display }}</td></tr>
-      {% empty %}<tr><td><div class="empty">{% translate "No property linked." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
     {% if deal.description %}<div class="card"><div class="card-head"><h2>{% translate "Notes" %}</h2></div><div class="card-body"><div style="white-space:pre-wrap">{{ deal.description }}</div></div></div>{% endif %}
   </div>
 

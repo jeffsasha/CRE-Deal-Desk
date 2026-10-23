@@ -1,5 +1,4 @@
-import calendar
-from datetime import date, datetime, timedelta, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.contrib import messages
 from django.http import Http404, HttpResponse
@@ -80,33 +79,6 @@ def deadline_list(request):
     if request.GET.get("export") == "csv":
         return listing.export_csv("deadlines")
     return render(request, "deadlines/list.html", {"listing": listing, "bucket": bucket})
-
-
-@require_perm("view")
-def deadline_calendar(request):
-    today = timezone.localdate()
-    try:
-        year = int(request.GET.get("y", today.year))
-        month = int(request.GET.get("m", today.month))
-        first = date(year, month, 1)
-    except ValueError:
-        first = today.replace(day=1)
-    cal = calendar.Calendar(firstweekday=6)
-    weeks = cal.monthdatescalendar(first.year, first.month)
-    start, end = weeks[0][0], weeks[-1][-1]
-    items = Deadline.objects.filter(current_date__gte=start, current_date__lte=end, deal__archived_at__isnull=True,
-                                    computation="computed").exclude(state__in=["superseded", "cancelled"]).select_related("deal")
-    by_day = {}
-    for d in items:
-        by_day.setdefault(d.current_date, []).append(d)
-    prev_m = (first - timedelta(days=1)).replace(day=1)
-    next_m = (first + timedelta(days=32)).replace(day=1)
-    awaiting = Deadline.objects.filter(state="open", computation__in=["awaiting_trigger", "needs_review"],
-                                       deal__archived_at__isnull=True).select_related("deal")
-    return render(request, "deadlines/calendar.html", {
-        "weeks": [[{"date": d, "items": by_day.get(d, []), "other": d.month != first.month} for d in w] for w in weeks],
-        "first": first, "prev": prev_m, "next": next_m, "today": today, "awaiting": awaiting,
-    })
 
 
 @require_perm("view")

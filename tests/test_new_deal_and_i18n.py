@@ -14,8 +14,7 @@ class GuidedNewDealTests(DeskTestCase):
         self.lead = Stage.objects.get(key="lead")
 
     def post(self, **data):
-        base = {"stage": self.lead.pk, "responsible_broker": self.broker.pk, "property_mode": "new",
-                "new_address": "100 Test Ave", "new_city": "Houston", "new_type": "retail", "lease_type": "lease"}
+        base = {"stage": self.lead.pk, "street": "100 Test Ave", "city": "Houston", "lease_type": "lease"}
         base.update(data)
         return self.client.post(reverse("deal_create"), base)
 
@@ -27,7 +26,6 @@ class GuidedNewDealTests(DeskTestCase):
             ("sale", "buyer", {}, "purchase", ["buyer"]),
             ("sale", "seller", {}, "sale", ["seller"]),
             ("sale", "both", {}, "sale", ["buyer", "seller"]),
-            ("sale", "buyer", {"new_type": "land"}, "land_purchase", ["buyer"]),
             ("lease", "tenant", {"lease_type": "lease_renewal"}, "lease_renewal", ["tenant"]),
             ("lease", "both", {}, "lease", ["landlord", "tenant"]),
             ("business", "seller", {}, "business_asset", ["seller"]),
@@ -49,7 +47,15 @@ class GuidedNewDealTests(DeskTestCase):
         self.assertEqual(roles["landlord"], "New Landlord LP")
         self.assertEqual(Organization.objects.filter(name__iexact="existing tenant llc").count(), 1)
         self.assertEqual(d.deal_properties.get().space.suite, "210")
-        self.assertIn("Commercial lease", d.name)
+        self.assertEqual(d.name, "100 Test Ave Ste 210, Houston, TX")  # the deal is its address
+
+    def test_same_address_reuses_the_property(self):
+        self.post(kind="sale", side="seller", street="4008 Ade St", zip_code="77063")
+        self.post(kind="lease", side="landlord", street="4008 ADE STREET")
+        first, second = Deal.objects.order_by("pk")
+        self.assertEqual(first.primary_property, second.primary_property)
+        self.assertEqual(first.name, "4008 Ade St, Houston, TX 77063")
+        self.assertEqual(second.responsible_broker, self.broker)
 
     def test_side_must_match_kind(self):
         resp = self.post(kind="lease", side="buyer")

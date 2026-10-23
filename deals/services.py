@@ -288,15 +288,16 @@ def create_guided_deal(actor, data):
 
     from .models import DealParty, Representation
 
+    from imports.services import _find_property
+
     kind, side = data["kind"], data["side"]
-    prop = None
-    if data["property_mode"] == "existing":
-        prop = data["property"]
-    elif data["property_mode"] == "new":
-        prop = Property.objects.create(name=data["new_address"], street=data["new_address"],
-                                       city=data.get("new_city") or "Houston", property_type=data.get("new_type") or "other")
+    street, city = data["street"].strip(), (data.get("city") or "Houston").strip()
+    prop = _find_property("", street, city)
+    if prop is None:
+        prop = Property.objects.create(name=street, street=street, city=city, state="TX",
+                                       postal_code=(data.get("zip_code") or "").strip(), property_type="other")
         audit(actor, "property.created", prop)
-    ttype = transaction_type_for(kind, side, data.get("lease_type"), prop.property_type if prop else None)
+    ttype = transaction_type_for(kind, side, data.get("lease_type"), prop.property_type)
     sides = SIDE_MAP[(kind, side)]
     role_pairs = list(zip(sides, [data.get("client_a"), data.get("client_b")]))
     clients = []
@@ -311,20 +312,16 @@ def create_guided_deal(actor, data):
     from .models import TRANSACTION_TYPES
 
     type_label = str(dict(TRANSACTION_TYPES)[ttype])
-    name = (data.get("name") or "").strip()
-    if not name:
-        base = prop.name if prop else (clients[0][1].name if clients else "New deal")
-        name = f"{base} — {type_label}"
-    deal = Deal.objects.create(name=name[:255], transaction_type=ttype, stage=data["stage"],
-                               responsible_broker=data.get("responsible_broker"),
+    suite = (data.get("suite") or "").strip()
+    name = ", ".join(x for x in [street + (f" Ste {suite}" if suite else ""), city, " ".join(
+        x for x in ["TX", (data.get("zip_code") or "").strip()] if x)] if x)
+    broker = actor if getattr(actor, "role", "") in {"admin", "broker"} else None
+    deal = Deal.objects.create(name=name[:255], transaction_type=ttype, stage=data["stage"], responsible_broker=broker,
                                client=clients[0][1] if clients else None)
-    if prop:
-        space = None
-        if data.get("suite"):
-            space, _ = Space.objects.get_or_create(property=prop, suite=data["suite"].strip())
-        deal.deal_properties.create(property=prop, space=space, is_primary=True)
+    space = Space.objects.get_or_create(property=prop, suite=suite)[0] if suite else None
+    deal.deal_properties.create(property=prop, space=space, is_primary=True)
     for role in sides:
-        Representation.objects.create(deal=deal, side=role, is_skw=True, broker_user=data.get("responsible_broker"))
+        Representation.objects.create(deal=deal, side=role, is_skw=True, broker_user=broker)
     for role, org in clients:
         DealParty.objects.create(deal=deal, role=role, organization=org)
     represented = " and ".join(sides)

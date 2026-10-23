@@ -69,4 +69,11 @@ ZH = {
     "All time": "全部", "Sales volume": "销售成交额", "%(n)s sale": "%(n)s 笔买卖", "%(n)s price unknown": "%(n)s 笔价格未知",
     "%(n)s total unknown": "%(n)s 笔总额未知", "%(n)s not entered": "%(n)s 笔未填写", "Business asset sales": "生意转让",
     "%(n)s lease": "%(n)s 笔租约", "Closed on": "成交于", "Closed": "已成交",
+    "Purchase": "购买", "Sale": "出售", "Land purchase": "土地购买", "Lease": "租赁", "Business sale": "生意转让",
+    "Address": "地址", "Search address or client": "搜索地址或客户", "Terminated / lost": "已终止 / 已流失",
+    "No deals match.": "没有符合的 Deal。", "No deals yet.": "还没有 Deal。", "%(n)s deal": "%(n)s 个 Deal",
+    "Dates": "日期", "ZIP": "邮编", "Backups": "备份",
+    "Add past deals from a CSV or Excel file; a batch can be reverted.": "从 CSV 或 Excel 文件添加过往 Deal，可整批撤回。",
+    "A full backup runs every day at 20:00 into var/backups on this Mac. Copy it somewhere else from time to time.": "每天 20:00 自动完整备份到这台 Mac 的 var/backups，请定期复制到别处保存。",
+    "Leased area (SF)": "租赁面积（平方英尺）",
 }

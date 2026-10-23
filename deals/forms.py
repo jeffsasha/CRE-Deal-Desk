@@ -1,12 +1,11 @@
 from django import forms
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext, gettext_lazy
 
 from core.choices import RATE_UNITS
 from core.fields import MoneyField, MoneyModelFormMixin
 from core.forms import DateInput, LocalizedForm, StyledModelForm
 from core.models import User
 from crm.models import Contact, Organization
-from properties.models import Property
 
 from .catalog import EVENT_CATALOG, TERM_CATALOG, TERM_CATEGORY_ORDER
 from .models import (
@@ -30,36 +29,23 @@ def staff_users():
 
 
 class DealForm(MoneyModelFormMixin, StyledModelForm):
+    """Only what is edited day to day; the deal is its address."""
+
     lease_total_consideration = MoneyField(label="Total lease consideration")
     money_fields = {"lease_total_consideration": "lease_total_consideration_cents"}
-    full_width = ("description", "financing_terms", "blocker_description")
+    full_width = ("name", "description")
 
     class Meta:
         model = Deal
-        fields = ["name", "transaction_type", "priority", "responsible_broker", "team", "client", "time_zone",
-                  "target_closing_date", "description", "financing_status", "financing_terms",
-                  "next_action", "next_action_owner", "next_action_due",
-                  "is_blocked", "blocked_by", "blocker_description",
-                  "lease_area_sf", "lease_term_months", "lease_starting_rent", "lease_rent_unit"]
-        help_texts = {
-            "target_closing_date": "Internal goal only. Contractual dates come from approved contract terms.",
-            "lease_starting_rent": "With the unit below; never a bare number.",
-        }
+        fields = ["name", "transaction_type", "client", "lease_total_consideration", "lease_area_sf", "description"]
+        labels = {"name": "Address", "description": "Notes", "lease_area_sf": "Leased area (SF)"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_broker"].queryset = staff_users()
-        self.fields["team"].queryset = staff_users()
         self.fields["client"].queryset = Organization.objects.active()
-        self.fields["team"].widget.attrs["size"] = 4
-
-    def clean(self):
-        data = super().clean()
-        if data.get("lease_starting_rent") is not None and not data.get("lease_rent_unit"):
-            self.add_error("lease_rent_unit", gettext_lazy("State the unit for the starting rent."))
-        if data.get("is_blocked") and not data.get("blocked_by"):
-            self.add_error("blocked_by", gettext_lazy("Name the party blocking the deal."))
-        return data
+        if not self.instance.is_lease:
+            del self.fields["lease_total_consideration"]
+            del self.fields["lease_area_sf"]
 
 
 class StageChangeForm(LocalizedForm):
@@ -304,8 +290,6 @@ class CloseDealForm(LocalizedForm):
 # --- Guided "New deal" ----------------------------------------------------------
 from django.utils.translation import gettext_lazy as _  # noqa: E402
 
-from core.choices import PROPERTY_TYPES  # noqa: E402
-
 KIND_CHOICES = [("sale", _("Sale / purchase")), ("lease", _("Lease")), ("business", _("Business"))]
 SIDE_CHOICES = {
     "sale": [("buyer", _("Buyer")), ("seller", _("Seller")), ("both", _("Both sides"))],
@@ -333,37 +317,26 @@ class NewDealForm(LocalizedForm):
     kind = forms.ChoiceField(choices=KIND_CHOICES, widget=forms.RadioSelect)
     side = forms.ChoiceField(choices=[(s, s) for s in ALL_SIDES], widget=forms.RadioSelect)
     lease_type = forms.ChoiceField(choices=LEASE_TYPES_CHOICES, required=False, initial="lease")
-    property_mode = forms.ChoiceField(choices=[("existing", _("Existing property")), ("new", _("New property")),
-                                               ("none", _("No property yet"))], initial="new", widget=forms.RadioSelect)
-    property = forms.ModelChoiceField(queryset=Property.objects.active(), required=False)
-    new_address = forms.CharField(required=False, label=_("Street address"))
-    new_city = forms.CharField(required=False, initial="Houston", label=_("City"))
-    new_type = forms.ChoiceField(choices=PROPERTY_TYPES, required=False, initial="retail", label=_("Property type"))
+    # A deal is its address: the property record behind it is found or created from it.
+    street = forms.CharField(label=_("Street address"))
     suite = forms.CharField(required=False, label=_("Suite"))
+    city = forms.CharField(initial="Houston", label=_("City"))
+    zip_code = forms.CharField(required=False, label=_("ZIP"))
     client_a = forms.CharField(required=False)
     client_b = forms.CharField(required=False)
-    responsible_broker = forms.ModelChoiceField(queryset=User.objects.none(), required=False, label=_("Responsible broker"))
     stage = forms.ModelChoiceField(queryset=Stage.objects.none(), label=_("Stage"))
-    name = forms.CharField(required=False, label=_("Deal name"), help_text=_("Optional — generated from the property and deal type."))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_broker"].queryset = staff_users()
         self.fields["stage"].queryset = Stage.objects.filter(enabled=True, category="active")
         self.fields["stage"].initial = Stage.objects.filter(key="lead").first()
+        self.fields["stage"].label_from_instance = lambda st: gettext(st.name)
 
     def clean(self):
         d = super().clean()
         kind, side = d.get("kind"), d.get("side")
         if kind and side and side not in dict(SIDE_CHOICES[kind]):
             self.add_error("side", _("Choose who we represent for this kind of deal."))
-        mode = d.get("property_mode")
-        if mode == "existing" and not d.get("property"):
-            self.add_error("property", _("Choose the property."))
-        if mode == "new" and not d.get("new_address"):
-            self.add_error("new_address", _("Enter the street address."))
-        if mode == "none" and kind != "business" and not d.get("name"):
-            self.add_error("name", _("Without a property, give the deal a name."))
         return d
 
 

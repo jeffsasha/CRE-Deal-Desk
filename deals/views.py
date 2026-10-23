@@ -1,12 +1,9 @@
-from datetime import timedelta
-
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
@@ -15,7 +12,6 @@ from checklists.models import CONDITIONS, ChecklistTemplate
 from checklists.services import apply_template, template_for
 from core.audit import audit, diff, snapshot
 from core.listing import Column, Filter, Listing
-from core.models import User
 from core.money import format_cents
 from core.permissions import has_perm, require, require_edit_on_post, require_perm
 
@@ -39,8 +35,6 @@ from .forms import (
     StageChangeForm,
 )
 from .models import (
-    PRIORITIES,
-    TRANSACTION_TYPES,
     CommunicationDraft,
     Deal,
     DealEvent,
@@ -54,102 +48,57 @@ from .models import (
     log_activity,
 )
 
-TRACKED = ["name", "transaction_type", "priority", "responsible_broker", "target_closing_date", "financing_status",
-           "is_blocked", "blocked_by", "next_action", "lease_total_consideration_cents"]
+TRACKED = ["name", "transaction_type", "client", "lease_total_consideration_cents", "lease_area_sf", "description"]
 
 
-def _deal_columns():
-    return [
-        Column("name", gettext_lazy("Deal"), lambda d: d.name, sort="name"),
-        Column("id", gettext_lazy("ID"), lambda d: d.internal_id, sort="internal_id"),
-        Column("type", gettext_lazy("Type"), lambda d: d.get_transaction_type_display(), sort="transaction_type"),
-        Column("stage", gettext_lazy("Stage"), lambda d: format_html('<span class="pill pill-{}">{}</span>',
-                                                       {"active": "blue", "closed": "green", "on_hold": "amber",
-                                                        "terminated": "red"}.get(d.stage.category, "gray"), _(d.stage.name)),
-               sort="stage__order"),
-        Column("property", gettext_lazy("Property"), lambda d: d.primary_property or "—"),
-        Column("client", gettext_lazy("Client"), lambda d: d.client or "—", sort="client__name", default=False),
-        Column("broker", gettext_lazy("Broker"), lambda d: d.responsible_broker or "—", sort="responsible_broker__first_name"),
-        Column("priority", gettext_lazy("Priority"), lambda d: d.get_priority_display(), sort="priority", default=False),
-        Column("next", gettext_lazy("Next action"), lambda d: d.next_action or "—"),
-        Column("blocked", gettext_lazy("Blocked by"), lambda d: d.blocked_by if d.is_blocked else "", default=False),
-        Column("closing", gettext_lazy("Closing"), lambda d: _closing_label(d), sort="contractual_closing_date"),
-        Column("price", gettext_lazy("Price / consideration"), lambda d: _price_label(d), cls="num", default=False),
-        Column("updated", gettext_lazy("Updated"), lambda d: timezone.localtime(d.updated_at).strftime("%b %-d"), sort="updated_at", default=False),
-    ]
-
-
-def _closing_label(d):
-    if d.actual_closing_date:
-        return f"Closed {d.actual_closing_date:%b %-d, %Y}"
-    if d.contractual_closing_date:
-        return f"{d.contractual_closing_date:%b %-d, %Y} (contract)"
-    if d.target_closing_date:
-        return f"{d.target_closing_date:%b %-d, %Y} (target)"
-    return "—"
-
-
-def _price_label(d):
-    if d.is_lease:
-        return format_cents(d.lease_total_consideration_cents, unknown="—") + " lease"
-    if d.actual_closing_price_cents is not None:
-        return format_cents(d.actual_closing_price_cents, show_cents=False)
-    if d.executed_contract_price_cents is not None:
-        return format_cents(d.executed_contract_price_cents, show_cents=False) + " contract"
-    return "—"
-
-
-def _deal_filters():
-    stages = [(s.key, _(s.name)) for s in Stage.objects.filter(enabled=True)]
-    brokers = [(str(u.pk), u.display_name) for u in User.objects.exclude(role="read_only")]
-    today = timezone.localdate()
-    return [
-        Filter("stage", gettext_lazy("Stage"), stages + [("_active", _("All active")), ("_inactive", _("All inactive"))],
-               lambda qs, v: qs.filter(stage__category="active") if v == "_active" else (
-                   qs.exclude(stage__category="active") if v == "_inactive" else qs.filter(stage__key=v))),
-        Filter("type", gettext_lazy("Type"), TRANSACTION_TYPES, lambda qs, v: qs.filter(transaction_type=v)),
-        Filter("broker", gettext_lazy("Broker"), brokers, lambda qs, v: qs.filter(Q(responsible_broker_id=v) | Q(team__id=v))),
-        Filter("priority", gettext_lazy("Priority"), PRIORITIES, lambda qs, v: qs.filter(priority=v)),
-        Filter("blocked", gettext_lazy("Blocked"), [("1", _("Blocked by another party"))], lambda qs, v: qs.filter(is_blocked=True)),
-        Filter("closing", gettext_lazy("Closing"), [("30", _("Closing within 30 days")), ("90", _("Closing within 90 days"))],
-               lambda qs, v: qs.filter(stage__category="active").filter(
-                   Q(contractual_closing_date__gte=today, contractual_closing_date__lte=today + timedelta(days=int(v)))
-                   | Q(contractual_closing_date__isnull=True, target_closing_date__gte=today,
-                       target_closing_date__lte=today + timedelta(days=int(v))))),
-    ]
+CLOSED_LAST = {"closed": 1, "terminated": 2, "lost": 2, "archived": 3}
 
 
 @require_perm("view")
 def deal_list(request):
-    qs = Deal.objects.active().select_related("stage", "client", "responsible_broker")
-    listing = Listing(request, qs, _deal_columns(), area="deals",
-                      search_fields=["name", "internal_id", "description", "deal_properties__property__name",
-                                     "deal_properties__property__street", "client__name"],
-                      filters=_deal_filters(), default_sort="-updated_at")
-    if request.GET.get("export") == "csv":
-        return listing.export_csv("deals")
-    from . import stats
+    """One table: open deals first (furthest along first), then closed, then
+    terminated / lost. A deal is its address; there is no separate property list."""
+    from commissions import simple
 
-    period = request.GET.get("period") or str(timezone.localdate().year)
-    year = int(period) if period.isdigit() else None
-    totals = stats.totals(year, with_commission=has_perm(request.user, "commission.view"))
-    years = sorted(set(totals.years) | {timezone.localdate().year}, reverse=True)
-    return render(request, "deals/list.html", {"listing": listing, "view": "table", "totals": totals,
-                                               "period": period if year else "all", "years": years})
+    from . import keydates, listing, stats
 
-
-@require_perm("view")
-def deal_board(request):
-    stages = list(Stage.objects.filter(enabled=True, category__in=["active", "on_hold", "terminated", "lost"]))
-    deals = Deal.objects.active().select_related("stage", "responsible_broker").filter(stage__in=stages)
-    q = request.GET.get("q", "")
+    q = request.GET.get("q", "").strip()
+    deals = Deal.objects.active().select_related("stage").prefetch_related("representations")
     if q:
-        deals = deals.filter(Q(name__icontains=q) | Q(internal_id__icontains=q))
-    by_stage = {s.pk: [] for s in stages}
+        deals = deals.filter(Q(name__icontains=q) | Q(internal_id__icontains=q) | Q(client__name__icontains=q)
+                             | Q(deal_properties__property__street__icontains=q)).distinct()
+    today = timezone.localdate()
+    show_money = has_perm(request.user, "commission.view")
+    rows = []
     for d in deals:
-        by_stage[d.stage_id].append(d)
-    columns = [{"stage": s, "deals": by_stage[s.pk]} for s in stages]
-    return render(request, "deals/board.html", {"columns": columns, "view": "board", "q": q})
+        group = CLOSED_LAST.get(d.stage.category, 0)
+        tl = keydates.timeline(d, today=today) if group == 0 else None
+        if d.is_lease:
+            amount = d.lease_total_consideration_cents
+        elif d.actual_closing_price_cents is not None:
+            amount = d.actual_closing_price_cents
+        else:
+            amount = d.executed_contract_price_cents
+        rows.append({
+            "deal": d, "group": group, "next": tl["next"] if tl else None,
+            "amount": amount, "asking": listing.asking_display(d) if group == 0 and amount is None else None,
+            "sides": [r.get_side_display() for r in d.representations.all() if r.is_skw],
+            "skw": simple.for_deal(d) if show_money else None,
+        })
+    far = today.replace(year=today.year + 100)
+    rows.sort(key=lambda r: (
+        r["group"],
+        r["deal"].stage.category == "on_hold",  # on hold after the deals that are moving
+        -r["deal"].stage.order if r["group"] == 0 else 0,
+        r["next"]["date"] if r["next"] else far,
+        -(r["deal"].actual_closing_date or today).toordinal() if r["group"] else 0,
+    ))
+    period = request.GET.get("period") or str(today.year)
+    year = int(period) if period.isdigit() else None
+    totals = stats.totals(year, with_commission=show_money)
+    years = sorted(set(totals.years) | {today.year}, reverse=True)
+    return render(request, "deals/list.html", {"rows": rows, "q": q, "totals": totals,
+                                               "period": period if year else "all", "years": years})
 
 
 @require_perm("view")
@@ -188,10 +137,7 @@ def deal_create(request):
     from .forms import CLIENT_LABELS, KIND_CHOICES, NewDealForm, SIDE_CHOICES
 
     require(request.user, "edit")
-    initial = {"responsible_broker": request.user if request.user.role in {"admin", "broker"} else None}
-    if request.GET.get("property"):
-        initial.update({"property_mode": "existing", "property": request.GET["property"]})
-    form = NewDealForm(request.POST or None, initial=initial)
+    form = NewDealForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         deal = services.create_guided_deal(request.user, form.cleaned_data)
         from . import listing
@@ -205,7 +151,6 @@ def deal_create(request):
         "form": form, "kinds": KIND_CHOICES, "sides": SIDE_CHOICES, "client_labels": CLIENT_LABELS,
         "kind": form.data.get("kind") or form.initial.get("kind") or "",
         "side": form.data.get("side") or "",
-        "property_mode": form.data.get("property_mode") or form.initial.get("property_mode") or "new",
     })
 
 

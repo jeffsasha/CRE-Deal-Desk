@@ -99,8 +99,8 @@ class AcceptanceFlows(DeskTestCase):
     def _pages(self):
         d = self.gessner
         p = Property.objects.get(name="SAMPLE 1200 Example Industrial Pkwy")
-        urls = [reverse(n) for n in ["dashboard", "property_list", "deal_list", "deal_board", "deposit_list", "deadline_list",
-                                     "deadline_calendar", "checklist_list", "contact_list", "commission_list", "ledger_list",
+        urls = [reverse(n) for n in ["dashboard", "property_list", "deal_list", "deposit_list", "deadline_list",
+                                     "checklist_list", "contact_list", "commission_list", "ledger_list",
                                      "report_index", "settings_index", "notifications", "issue_list", "reminder_log",
                                      "audit_log", "archived", "requirements", "template_list", "holiday_list", "stage_list",
                                      "import_list", "deal_create"]]
@@ -128,7 +128,7 @@ class AcceptanceFlows(DeskTestCase):
         self.assertContains(self.client.get(reverse("dashboard")), "Feasibility Period 结束")
         self.assertContains(self.client.get(reverse("deal_detail", args=[d.pk])), "未收余额")
         self.assertContains(self.client.get(reverse("deal_key_dates", args=[d.pk])), "关键日期")
-        self.assertContains(self.client.get(reverse("deal_edit", args=[d.pk])), "融资状态")  # form label
+        self.assertContains(self.client.get(reverse("deal_edit", args=[d.pk])), "地址")  # form label
         self.assertContains(self.client.get(reverse("deal_detail", args=[d.pk])), "尽职调查")  # stage name
 
 
@@ -203,3 +203,14 @@ class ListingTests(DeskTestCase):
         self.assertContains(self.client.get(reverse("deal_listing", args=[self.listing.pk])), 'value="2026-03-01"')
         self.assertContains(self.client.get(reverse("deal_key_dates", args=[self.contract.pk])), 'value="2026-03-04"')
         self.assertContains(self.client.get(reverse("deal_close", args=[self.contract.pk])), 'type="date"')
+
+    def test_deal_list_order(self):
+        """Open deals first (on hold last among them), then closed, then terminated / lost."""
+        from deals.models import Stage
+
+        self.listing.stage = Stage.objects.get(key="on_hold")
+        self.listing.save()
+        closed = self.deal("Closed deal", stage="closed", transaction_type="sale", actor=self.broker)
+        lost = self.deal("Lost deal", stage="lost", transaction_type="sale", actor=self.broker)
+        names = [r["deal"].name for r in self.client.get(reverse("deal_list")).context["rows"]]
+        self.assertEqual(names, ["Contract deal", "Buyer search", "Listing deal", closed.name, lost.name])

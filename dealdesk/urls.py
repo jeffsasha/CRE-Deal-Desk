@@ -54,7 +54,6 @@ urlpatterns = [
 
     # Deals
     path("deals/", deals.deal_list, name="deal_list"),
-    path("deals/board/", deals.deal_board, name="deal_board"),
     path("deals/deposits/", deals.deposit_list, name="deposit_list"),
     path("deals/new/", deals.deal_create, name="deal_create"),
     path("deals/<int:pk>/", deals.deal_detail, name="deal_detail"),
@@ -85,7 +84,6 @@ urlpatterns = [
 
     # Deadlines
     path("deadlines/", deadlines.deadline_list, name="deadline_list"),
-    path("deadlines/calendar/", deadlines.deadline_calendar, name="deadline_calendar"),
     path("deadlines/new/", deadlines.deadline_form, name="deadline_create"),
     path("deadlines/export.ics", deadlines.deadline_ics, name="deadline_ics"),
     path("deadlines/<int:pk>/", deadlines.deadline_detail, name="deadline_detail"),

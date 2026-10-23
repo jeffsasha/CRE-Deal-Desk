@@ -23,7 +23,7 @@ from .audit import audit
 from .forms import HolidayForm, ReminderDefaultsForm, StageForm, UserCreateForm, UserEditForm
 from .listing import Column, Filter, Listing
 from .models import AuditLog, HolidayCalendar, Job, Notification, SavedView, User, WorkspaceSetting
-from .permissions import has_perm, require, require_perm, role_matrix
+from .permissions import has_perm, require, require_perm
 
 
 def safe_next(request, fallback):
@@ -113,20 +113,7 @@ def save_view(request):
 def settings_index(request):
     from deadlines.reminders import default_reminder_days
 
-    roles, matrix = role_matrix()
-    integrations = [
-        (gettext_lazy("Email reminders"), gettext_lazy("Configured (SMTP)") if settings.EMAIL_CONFIGURED else gettext_lazy("Not configured — in-app reminders only"),
-         settings.EMAIL_CONFIGURED),
-        (gettext_lazy("Calendar export"), "ICS download and private feed URL (no external account connected)", True),
-        (gettext_lazy("Database"), settings.DATABASES["default"]["ENGINE"].rsplit(".", 1)[-1], True),
-    ]
-    return render(request, "core/settings.html", {
-        "roles": roles, "matrix": matrix, "integrations": integrations,
-        "reminder_days": default_reminder_days(),
-        "jobs_failed": Job.objects.filter(status="failed").count(),
-        "jobs_queued": Job.objects.filter(status="queued").count(),
-        "calendar_feed": request.build_absolute_uri(reverse("calendar_feed", args=[request.user.calendar_token])),
-    })
+    return render(request, "core/settings.html", {"reminder_days": default_reminder_days()})
 
 
 @require_perm("users.manage")

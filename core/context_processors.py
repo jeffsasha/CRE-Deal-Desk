@@ -6,9 +6,7 @@ from .permissions import PERMISSIONS, has_perm
 NAV = [
     ("dashboard", _("Dashboard"), "view"),
     ("deal_list", _("Deals"), "view"),
-    ("deadline_list", _("Calendar & Deadlines"), "view"),
     ("commission_list", _("Commissions"), "commission.view"),
-    ("property_list", _("Properties"), "view"),
     ("contact_list", _("Contacts & Companies"), "view"),
     ("settings_index", _("Settings"), "view"),
 ]

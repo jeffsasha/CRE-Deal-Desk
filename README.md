@@ -11,7 +11,10 @@
 
 A private commercial real estate transaction workspace for real estate teams. It keeps properties, deals, deadlines, checklists, contacts and commissions as separate linked records, and answers one daily question: **where does each deal stand, what date is next, and how much Commission is the brokerage still owed?**
 
-How it works day to day:
+How it works day to day (menu: Dashboard, Deals, Commissions, Contacts, Settings):
+
+- **A deal is its address.** New deal = kind (sale / lease / business), who the brokerage represents, and the street address. The property record behind it is found or created automatically, so every deal at the same address shares its history.
+- **Deals page:** closed totals at the top (sales, lease consideration, the brokerage commission, with rolling numbers), then one table: open deals first, closed and terminated / lost at the end. Search by address or client.
 
 - **Dashboard, top to bottom:** **Under Contract** — one timeline per deal (Effective Date → Feasibility Period → Closing Date, or Commencement Date for leases) with today's position, the next milestone and the brokerage's Commission; **Listings** — every property the brokerage has on the market for a seller or landlord, with asking price, days on market and listing expiration (red within 30 days); then buyer / tenant searches not yet under contract.
 - **Listings:** a deal where the brokerage represents the seller or landlord and that is not yet Under Contract (new stage **Listed**). Enter the listing date, asking price or rent and the listing agreement expiration; the expiration goes on the calendar with reminders. When the deal goes Under Contract it moves up to the timeline section.
@@ -112,7 +115,7 @@ Demo mode uses its own database and storage (`var-demo/`). It loads a handful of
 .venv/bin/python manage.py test tests
 ```
 
-There are 99 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), brokerage Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
+There are 101 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), brokerage Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
 
 ## Languages (中 / EN)
 
