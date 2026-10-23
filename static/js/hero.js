@@ -2,6 +2,7 @@
 // owner's badge hanging on a lanyard. Everything here is decoration; the page works
 // as plain HTML without it.
 import { mountLanyard } from './lanyard.js';
+import { mountRotatingText } from './rotating-text.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -188,3 +189,18 @@ const sky = document.querySelector('[data-skyline]');
 if (sky) startSkyline(sky);
 const badge = document.querySelector('[data-badge]');
 if (badge) startBadge(badge);
+
+const rotating = document.querySelector('[data-rotating]');
+if (rotating) {
+  const words = [...rotating.querySelectorAll('[data-word]')].map(w => w.textContent.trim()).filter(Boolean);
+  mountRotatingText(rotating, {
+    texts: words,
+    effect: 'slide',
+    direction: 'up',
+    highlight: true,
+    highlightColor: '#a51c30',
+    staggerFrom: 'last',
+    staggerDuration: 0.025,
+    rotationInterval: 2400
+  });
+}

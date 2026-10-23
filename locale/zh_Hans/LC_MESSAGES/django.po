@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 11:08-0500\n"
+"POT-Creation-Date: 2026-10-23 12:50-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -116,7 +116,7 @@ msgid "Item"
 msgstr "事项"
 
 #: checklists/views.py:29 commissions/views.py:54 core/i18n_generated.py:145
-#: core/views.py:265 deadlines/views.py:51 deals/views.py:110
+#: core/views.py:272 deadlines/views.py:51 deals/views.py:110
 #: templates/commissions/list.html:15 templates/properties/detail.html:43
 #: templates/properties/detail.html:90 templates/reports/detail.html:10
 #: templates/reports/detail.html:17 templates/reports/detail.html:21
@@ -131,7 +131,7 @@ msgid "Category"
 msgstr "类别"
 
 #: checklists/views.py:31 checklists/views.py:43 core/i18n_generated.py:528
-#: core/views.py:271 core/views.py:275 deadlines/views.py:59
+#: core/views.py:278 core/views.py:282 deadlines/views.py:59
 #: deals/views.py:116 deals/views.py:119 deals/views.py:519 deals/views.py:525
 #: templates/commissions/list.html:15 templates/core/jobs.html:8
 #: templates/core/users.html:8 templates/deadlines/detail.html:44
@@ -168,7 +168,7 @@ msgstr "未解决"
 msgid "Open only"
 msgstr "仅未完成"
 
-#: checklists/views.py:44 core/views.py:289 templates/deadlines/detail.html:36
+#: checklists/views.py:44 core/views.py:296 templates/deadlines/detail.html:36
 msgid "When"
 msgstr "时间"
 
@@ -422,7 +422,7 @@ msgid "Date"
 msgstr "日期"
 
 #: commissions/views.py:52 commissions/views.py:62 core/i18n_generated.py:574
-#: core/views.py:293 crm/views.py:37 crm/views.py:45 properties/views.py:28
+#: core/views.py:300 crm/views.py:37 crm/views.py:45 properties/views.py:28
 #: properties/views.py:38 templates/commissions/detail.html:27
 #: templates/deadlines/detail.html:24 templates/deals/list.html:14
 #: templates/properties/detail.html:43 templates/reports/detail.html:10
@@ -435,7 +435,7 @@ msgstr "类型"
 msgid "Amount"
 msgstr "金额"
 
-#: commissions/views.py:55 core/views.py:266
+#: commissions/views.py:55 core/views.py:273
 #: templates/commissions/detail.html:21 templates/reports/detail.html:25
 msgid "Recipient"
 msgstr "收款人"
@@ -602,7 +602,7 @@ msgstr "UTC"
 msgid "Dashboard"
 msgstr "仪表盘"
 
-#: core/context_processors.py:8 core/views.py:101 properties/views.py:33
+#: core/context_processors.py:8 core/views.py:108 properties/views.py:33
 #: templates/crm/contact.html:8 templates/deals/detail.html:5
 #: templates/deals/list.html:3 templates/deals/list.html:5
 #: templates/deals/new.html:5 templates/properties/detail.html:25
@@ -1942,7 +1942,7 @@ msgstr "未评估"
 msgid "Not found in reviewed materials"
 msgstr "审阅资料中未发现"
 
-#: core/i18n_generated.py:358 core/views.py:296 deals/models.py:479
+#: core/i18n_generated.py:358 core/views.py:303 deals/models.py:479
 msgid "Note"
 msgstr "备注"
 
@@ -2155,7 +2155,7 @@ msgstr "物业已交付"
 msgid "Price per executed amendment"
 msgstr "依已签修正案的价格"
 
-#: core/i18n_generated.py:420 core/views.py:103 imports/models.py:13
+#: core/i18n_generated.py:420 core/views.py:110 imports/models.py:13
 #: properties/views.py:47 templates/properties/detail.html:5
 #: templates/reports/detail.html:10
 msgid "Properties"
@@ -2530,7 +2530,7 @@ msgstr "空间"
 msgid "Sprinklers"
 msgstr "喷淋系统"
 
-#: core/i18n_generated.py:523 core/views.py:203 deals/forms.py:327
+#: core/i18n_generated.py:523 core/views.py:210 deals/forms.py:327
 #: templates/commissions/list.html:15 templates/core/dashboard.html:40
 #: templates/core/stages.html:8 templates/deals/detail.html:20
 #: templates/deals/list.html:14 templates/deals/new.html:53
@@ -2930,7 +2930,7 @@ msgstr "— 选择信息项，或在下方自定义 —"
 msgid "— use the number of days entered above —"
 msgstr "— 使用上方填写的天数 —"
 
-#: core/i18n_strings.py:7 core/views.py:268
+#: core/i18n_strings.py:7 core/views.py:275
 msgid "Lead"
 msgstr "潜在客户"
 
@@ -3066,84 +3066,84 @@ msgid "%(n)d day ago"
 msgid_plural "%(n)d days ago"
 msgstr[0] "%(n)d 天前"
 
-#: core/views.py:105 templates/crm/contact.html:5
+#: core/views.py:112 templates/crm/contact.html:5
 msgid "Contacts"
 msgstr "联系人"
 
-#: core/views.py:126
+#: core/views.py:133
 msgid ""
 "Reminder acknowledged. The deadline itself is still open until it is marked "
 "satisfied."
 msgstr "已确认提醒。期限本身在标记为已满足前仍为未完成。"
 
-#: core/views.py:164 templates/core/users.html:6
+#: core/views.py:171 templates/core/users.html:6
 msgid "New user"
 msgstr "新建用户"
 
-#: core/views.py:174
+#: core/views.py:181
 msgid "You cannot remove your own administrator role."
 msgstr "不能移除您自己的管理员角色。"
 
-#: core/views.py:180
+#: core/views.py:187
 msgid "User updated."
 msgstr "用户已更新。"
 
-#: core/views.py:244
+#: core/views.py:251
 msgid ""
 "Default reminder lead times saved. They apply to deadlines without their own"
 " schedule."
 msgstr "已保存默认提醒提前天数，适用于未单独设置的期限。"
 
-#: core/views.py:246 templates/core/settings.html:8
+#: core/views.py:253 templates/core/settings.html:8
 msgid "Reminder defaults"
 msgstr "提醒默认设置"
 
-#: core/views.py:264
+#: core/views.py:271
 msgid "Reminder for"
 msgstr "提醒事项"
 
-#: core/views.py:267
+#: core/views.py:274
 msgid "Channel"
 msgstr "渠道"
 
-#: core/views.py:269
+#: core/views.py:276
 msgid "Deadline rev."
 msgstr "期限版本"
 
-#: core/views.py:270
+#: core/views.py:277
 msgid "Scheduled for"
 msgstr "计划时间"
 
-#: core/views.py:272 templates/core/notifications.html:15
+#: core/views.py:279 templates/core/notifications.html:15
 msgid "Acknowledged"
 msgstr "已确认"
 
-#: core/views.py:273
+#: core/views.py:280
 msgid "Error / reason"
 msgstr "错误/原因"
 
-#: core/views.py:290
+#: core/views.py:297
 msgid "User"
 msgstr "用户"
 
-#: core/views.py:291 core/views.py:299 templates/imports/detail.html:21
+#: core/views.py:298 core/views.py:306 templates/imports/detail.html:21
 msgid "Action"
 msgstr "操作"
 
-#: core/views.py:292 templates/deadlines/detail.html:27
+#: core/views.py:299 templates/deadlines/detail.html:27
 #: templates/deals/tabs/overview.html:46
 msgid "Record"
 msgstr "记录"
 
-#: core/views.py:294
+#: core/views.py:301
 msgid "Changes"
 msgstr "变更"
 
-#: core/views.py:306
+#: core/views.py:313
 msgid "Audit log"
 msgstr "审计日志"
 
-#: core/views.py:307
+#: core/views.py:314
 msgid ""
 "Meaningful changes to contract dates, execution status, deadline rules, "
 "prices, closings, commissions and permissions."
@@ -3790,7 +3790,7 @@ msgstr "已跳过"
 msgid "Revert blocked"
 msgstr "撤销受阻"
 
-#: imports/models.py:58 templates/base.html:69 templates/base.html:70
+#: imports/models.py:58 templates/base.html:70 templates/base.html:71
 msgid "Create"
 msgstr "新建"
 
@@ -3905,103 +3905,103 @@ msgid ""
 "SKW transaction history."
 msgstr "演示模式——独立数据库中的虚构示例数据，并非 SKW 的真实交易记录。"
 
-#: templates/base.html:15 templates/core/hero.html:16
+#: templates/base.html:16 templates/core/hero.html:16
 msgid "SKW DealDesk home"
 msgstr "SKW DealDesk 首页"
 
-#: templates/base.html:21
+#: templates/base.html:22
 msgid "Main"
 msgstr "主菜单"
 
-#: templates/base.html:37
+#: templates/base.html:38
 msgid "Sign out"
 msgstr "退出登录"
 
-#: templates/base.html:42
+#: templates/base.html:43
 msgid "Menu"
 msgstr "菜单"
 
-#: templates/base.html:43 templates/base.html:62
+#: templates/base.html:44 templates/base.html:63
 msgid "Search and commands"
 msgstr "搜索与命令"
 
-#: templates/base.html:44
+#: templates/base.html:45
 msgid "Search or jump to…"
 msgstr "搜索或跳转…"
 
-#: templates/base.html:44
+#: templates/base.html:45
 msgid "⌘K"
 msgstr "⌘K"
 
-#: templates/base.html:48
+#: templates/base.html:49
 msgid "Switch theme"
 msgstr "切换主题"
 
-#: templates/base.html:52 templates/base.html:71
+#: templates/base.html:53 templates/base.html:72
 #: templates/core/notifications.html:3 templates/core/notifications.html:5
 msgid "Notifications"
 msgstr "通知"
 
-#: templates/base.html:62
+#: templates/base.html:63
 msgid "Search everything for"
 msgstr "全局搜索"
 
-#: templates/base.html:62
+#: templates/base.html:63
 msgid "No matches"
 msgstr "无匹配结果"
 
-#: templates/base.html:62
+#: templates/base.html:63
 msgid "Navigate"
 msgstr "导航"
 
-#: templates/base.html:62 templates/core/search.html:3
+#: templates/base.html:63 templates/core/search.html:3
 #: templates/core/search.html:5
 msgid "Search"
 msgstr "搜索"
 
-#: templates/base.html:63
+#: templates/base.html:64
 msgid "Search deals, properties, contacts — or type a command"
 msgstr "搜索 Deal、Property、联系人——或输入命令"
 
-#: templates/base.html:65
+#: templates/base.html:66
 msgid "move"
 msgstr "移动"
 
-#: templates/base.html:65
+#: templates/base.html:66
 msgid "open"
 msgstr "打开"
 
-#: templates/base.html:65
+#: templates/base.html:66
 msgid "close"
 msgstr "关闭"
 
-#: templates/base.html:69 templates/core/dashboard.html:10
+#: templates/base.html:70 templates/core/dashboard.html:10
 #: templates/deals/list.html:6 templates/deals/new.html:3
 #: templates/deals/new.html:6
 msgid "New deal"
 msgstr "新建交易"
 
-#: templates/base.html:70 templates/crm/list.html:6
+#: templates/base.html:71 templates/crm/list.html:6
 msgid "New contact"
 msgstr "新建联系人"
 
-#: templates/base.html:71
+#: templates/base.html:72
 msgid "Go to"
 msgstr "前往"
 
-#: templates/base.html:72
+#: templates/base.html:73
 msgid "Switch to light theme"
 msgstr "切换到浅色主题"
 
-#: templates/base.html:72 templates/base.html:73 templates/base.html:74
+#: templates/base.html:73 templates/base.html:74 templates/base.html:75
 msgid "Appearance"
 msgstr "外观"
 
-#: templates/base.html:73
+#: templates/base.html:74
 msgid "Switch to dark theme"
 msgstr "切换到深色主题"
 
-#: templates/base.html:74
+#: templates/base.html:75
 msgid "Match system theme"
 msgstr "跟随系统主题"
 
@@ -4241,7 +4241,7 @@ msgid ""
 msgstr "每个 Deal 上 SKW Realty 的预计和已收 Commission。金额在 Deal 页面填写。"
 
 #: templates/commissions/list.html:6 templates/core/dashboard.html:16
-#: templates/core/hero.html:31
+#: templates/core/hero.html:36
 msgid "Open deals"
 msgstr "进行中的 Deal"
 
@@ -4333,7 +4333,7 @@ msgstr "7 天内到期"
 msgid "SKW commission expected"
 msgstr "SKW Commission 预计"
 
-#: templates/core/dashboard.html:19 templates/core/hero.html:33
+#: templates/core/dashboard.html:19 templates/core/hero.html:38
 #, python-format
 msgid "Received in %(y)s"
 msgstr "%(y)s 年已收"
@@ -4397,26 +4397,54 @@ msgstr "未来 14 天"
 msgid "Nothing due in the next 14 days."
 msgstr "未来 14 天没有到期事项。"
 
-#: templates/core/hero.html:29
-msgid "Every deal, every key date and every commission dollar in one place."
-msgstr "每一笔 Deal、每一个关键日期、每一笔 Commission，都在这里。"
+#: templates/core/hero.html:30
+msgid "Every"
+msgstr "每一个"
+
+#: templates/core/hero.html:31
+#| msgid "Listing"
+msgid "listing"
+msgstr "Listing"
+
+#: templates/core/hero.html:31
+#| msgid "Key dates"
+msgid "key date"
+msgstr "关键日期"
+
+#: templates/core/hero.html:31
+#| msgid "Closing"
+msgid "closing"
+msgstr "成交"
+
+#: templates/core/hero.html:31
+#| msgid "Commission"
+msgid "commission"
+msgstr "Commission"
 
 #: templates/core/hero.html:32
+msgid ", tracked."
+msgstr "，尽在掌握。"
+
+#: templates/core/hero.html:34
+msgid ""
+"Listings, contracts, key dates and SKW commission — every deal on one "
+"screen."
+msgstr "Listing、合同、关键日期和 SKW Commission，每一笔 Deal 都在一个页面上。"
+
+#: templates/core/hero.html:37
 #, python-format
-#| msgid "Received in %(y)s"
 msgid "Closed in %(y)s"
 msgstr "%(y)s 年成交"
 
-#: templates/core/hero.html:35
-#| msgid "Dashboard"
+#: templates/core/hero.html:40
 msgid "Enter dashboard"
 msgstr "进入 Dashboard"
 
-#: templates/core/hero.html:36
+#: templates/core/hero.html:41
 msgid "Drag the badge, or click it to flip."
 msgstr "拖动工牌，或点击翻面。"
 
-#: templates/core/hero.html:42
+#: templates/core/hero.html:47
 msgid "Commercial Real Estate"
 msgstr "Commercial Real Estate"
 

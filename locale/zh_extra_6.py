@@ -79,4 +79,7 @@ ZH = {
     "Every deal, every key date and every commission dollar in one place.": "每一笔 Deal、每一个关键日期、每一笔 Commission，都在这里。",
     "Closed in %(y)s": "%(y)s 年成交", "Enter dashboard": "进入 Dashboard", "Drag the badge, or click it to flip.": "拖动工牌，或点击翻面。",
     "Commercial Real Estate": "Commercial Real Estate",
+    "Every": "每一个", "listing": "Listing", "key date": "关键日期", "closing": "成交", "commission": "Commission",
+    ", tracked.": "，尽在掌握。",
+    "Listings, contracts, key dates and SKW commission — every deal on one screen.": "Listing、合同、关键日期和 SKW Commission，每一笔 Deal 都在一个页面上。",
 }
