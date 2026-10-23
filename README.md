@@ -138,6 +138,7 @@ After adding or changing interface text:
 
 - `static/vendor/three/` — three.js r169 (MIT), verified against the npm registry.
 - `static/js/lanyard.js` — the React Bits Lanyard component, ported to a plain ES module.
+- `static/js/gradient-ascii.js` — the React Bits GradientASCII component, ported to a plain ES module; `static/js/app-bg.js` mounts it behind the main pages in the Harvard palette (follows light / dark).
 - `static/img/nyc-skyline.jpg` — photo by Luca Bravo on [Unsplash](https://unsplash.com/photos/_QdFx92MO2U), Unsplash License.
 
 ## Repository map
