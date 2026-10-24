@@ -151,6 +151,9 @@ def recompute_deal(deal, actor=None, reason="Recomputed", amendment=None):
     for d in _ordered(deadlines):
         d.refresh_from_db()
         results.append((d, *recompute(d, actor=actor, reason=reason, amendment=amendment)))
+    from deals.services import sync_deal
+
+    sync_deal(deal, actor)
     return results
 
 
@@ -220,6 +223,13 @@ STANDARD_SALE_DEADLINES = [
         "rule_type": "offset",
         "trigger_keys": ["effective_date"],
         "offset_term_key": "feasibility_period_days",
+    },
+    {
+        "template_key": "feasibility_fixed",
+        "name": "Feasibility period expires",
+        "category": "feasibility",
+        "rule_type": "fixed_term",
+        "fixed_date_term_key": "feasibility_end_date",
     },
     {
         "template_key": "title_commitment_delivery",
@@ -296,6 +306,10 @@ def generate_standard_deadlines(deal, actor=None):
     existing = set(deal.deadlines.exclude(state__in=["superseded", "cancelled"]).values_list("template_key", flat=True))
     created, skipped = [], []
     for tpl in templates:
+        if tpl["template_key"] == "closing_offset" and "closing_days_after_feasibility" in terms:
+            feasibility = deal.deadlines.filter(template_key__in=["feasibility_fixed", "feasibility_expiration"]).exclude(state__in=["cancelled", "superseded"]).first()
+            tpl = {**tpl, "offset_term_key": "closing_days_after_feasibility",
+                   "trigger_keys": [f"deadline:{feasibility.pk}"] if feasibility else ["feasibility_end"]}
         term_key = tpl.get("offset_term_key") or tpl.get("fixed_date_term_key")
         if tpl["template_key"] in existing:
             skipped.append(f"{tpl['name']}: already exists.")

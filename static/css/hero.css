@@ -77,3 +77,16 @@
 .hero-rotate > span:first-child { margin-right: .28em; }  /* "Every" — then the word */
 .hero-rotate > span:last-child { margin-left: .1em; }      /* punctuation hugs the word block */
 .hero-rotate .text-rotate { font-style: italic; }
+
+/* Let the destination neon reveal paint normally; page snapshots sit above its veil. */
+@view-transition { navigation: none; }
+
+/* Match the mounted first word before the optional module arrives. Hidden source
+   words remain available to the rotator without flashing or widening the layout. */
+.hero-rotate-words:not(.text-rotate) {
+  display: inline-flex; flex-shrink: 0; overflow: hidden;
+  padding: .06em .3em .02em; border-radius: .16em;
+  background: #a51c30; color: #fff; font-style: italic;
+  box-shadow: 0 10px 30px -10px rgba(165, 28, 48, .65);
+}
+.hero-rotate-words:not(.text-rotate) > [data-word]:first-child { padding-bottom: .08em; }

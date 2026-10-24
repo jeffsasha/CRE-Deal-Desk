@@ -22,39 +22,15 @@
 
 <div class="card progress-card" style="margin-bottom:16px">
   <div class="card-head">
-    <div><h2>{% translate "Under Contract" %} <span class="count-badge">{{ progress.contract|length }}</span></h2></div>
+    <div><h2>{% translate "Active deals" %} <span class="count-badge">{{ progress.rows|length }}</span></h2></div>
   </div>
   <div class="progress-list">
-  {% for r in progress.contract %}{% include "core/_deal_row.html" %}
+  {% for r in progress.rows %}{% include "core/_deal_row.html" %}
   {% empty %}
-    <div class="empty">{% translate "No deals under contract." %}{% if can.edit and not progress.rows %} <a href="{% url 'deal_create' %}">{% translate "Create a deal" %}</a>{% endif %}</div>
+    <div class="empty">{% translate "No active deals." %}{% if can.edit %} <a href="{% url 'deal_create' %}">{% translate "Create a deal" %}</a>{% endif %}</div>
   {% endfor %}
   </div>
 </div>
-
-<div class="card" style="margin-bottom:16px">
-  <div class="card-head">
-    <div><h2>{% translate "Listings" %} <span class="count-badge">{{ progress.listings|length }}</span></h2></div>
-  </div>
-  <div class="card-body flush table-wrap"><table class="t listing-table">
-    <thead><tr><th>{% translate "Property" %}</th><th>{% translate "Stage" %}</th><th class="num">{% translate "Asking" %}</th><th class="num hide-sm">{% translate "On market" %}</th><th class="num">{% translate "Listing expires" %}</th>{% if fin %}<th class="num hide-sm">{% translate "SKW" %}</th>{% endif %}</tr></thead>
-    <tbody>{% for r in progress.listings %}<tr class="{% if r.on_hold %}row-muted{% endif %}">
-      <td><a href="{{ r.deal.get_absolute_url }}"><strong>{% if r.property %}{{ r.property.name }}{% else %}{{ r.deal.name }}{% endif %}</strong></a><br><small class="muted">{% if r.deal.is_lease %}{% translate "For lease" %}{% else %}{% translate "For sale" %}{% endif %}{% if r.property.city %} · {{ r.property.city }}{% endif %}</small></td>
-      <td>{% if r.on_hold %}<span class="pill pill-amber">{% translate "On hold" %}</span>{% else %}<span class="pill pill-blue">{% translate r.deal.stage.name %}</span>{% endif %}</td>
-      <td class="num nowrap">{{ r.asking|default:"—" }}</td>
-      <td class="num hide-sm nowrap">{% if r.dom is not None %}{% blocktranslate count n=r.dom %}{{ n }} day{% plural %}{{ n }} days{% endblocktranslate %}{% else %}—{% endif %}</td>
-      <td class="num nowrap {% if r.expires_soon %}expires-soon{% endif %}">{% if r.deal.listing_expires_on %}{{ r.deal.listing_expires_on|dshort }}<br><small>{{ r.deal.listing_expires_on|relday }}</small>{% else %}—{% endif %}</td>
-      {% if fin %}<td class="num hide-sm nowrap">{{ r.skw.expected|money0:"—" }}</td>{% endif %}</tr>
-    {% empty %}<tr><td colspan="6"><div class="empty">{% translate "No active listings." %}{% if can.edit %} <a href="{% url 'deal_create' %}">{% translate "Add a listing" %}</a>{% endif %}</div></td></tr>{% endfor %}</tbody>
-  </table></div>
-</div>
-
-{% if progress.searches %}
-<div class="card progress-card" style="margin-bottom:16px">
-  <div class="card-head"><div><h2>{% translate "Buyer & tenant searches" %} <span class="count-badge">{{ progress.searches|length }}</span></h2></div></div>
-  <div class="progress-list">{% for r in progress.searches %}{% include "core/_deal_row.html" %}{% endfor %}</div>
-</div>
-{% endif %}
 
 <div class="card">
   <div class="card-head"><h2>{% translate "Next 14 days" %}</h2></div>

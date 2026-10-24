@@ -2,6 +2,7 @@
     .venv/bin/python locale/fill_zh.py && .venv/bin/python manage.py compilemessages -l zh_Hans
 Untranslated strings fall back to English automatically."""
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import polib
@@ -118,16 +119,20 @@ ZH = {
 }
 
 sys.path.insert(0, str(Path(__file__).parent))
-for _mod in ("zh_extra_1", "zh_extra_2", "zh_extra_3", "zh_extra_4", "zh_extra_5", "zh_extra_6"):
+for _mod in ("zh_extra_1", "zh_extra_2", "zh_extra_3", "zh_extra_4", "zh_extra_5", "zh_extra_6", "zh_extra_7"):
     ZH.update(__import__(_mod).ZH)
 
 po_path = Path(__file__).parent / "zh_Hans" / "LC_MESSAGES" / "django.po"
 po = polib.pofile(str(po_path))
+po.metadata["Project-Id-Version"] = "SKW DealDesk"
+po.metadata["PO-Revision-Date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M%z")
+po.metadata["Last-Translator"] = "SKW DealDesk"
+po.metadata["Language-Team"] = "Simplified Chinese"
 po.metadata["Language"] = "zh_Hans"
 po.metadata["Plural-Forms"] = "nplurals=1; plural=0;"
 missing = []
 for e in po:
-    zh = ZH.get(e.msgid)
+    zh = ZH.get((e.msgctxt, e.msgid), ZH.get(e.msgid))
     if zh is None:
         missing.append(e.msgid)
         continue

@@ -5,7 +5,7 @@
 <div class="crumbs"><a href="{% url 'import_list' %}">← {% translate "Imports" %}</a></div>
 <div class="page-head"><div><h1>{% translate "Import #" %}{{ batch.pk }} — {{ batch.original_filename }}</h1><div class="sub">{{ batch.get_kind_display }} · {{ batch.get_status_display }} · {{ batch.summary.rows }} {% translate "rows · uploaded" %} {{ batch.created_at|d }} {% translate "by" %} {{ batch.created_by }}</div></div>
 <div class="actions"><a class="btn" href="{% url 'import_errors' batch.pk %}">{% translate "Download row report" %}</a>
-{% if batch.status == 'validated' %}<form method="post" action="{% url 'import_commit' batch.pk %}" data-confirm="Commit {{ counts.valid }} valid row(s)? Rows marked Skip and rows with errors are not imported.">{% csrf_token %}<button class="btn btn-primary">{% translate "Commit valid rows" %}</button></form>{% endif %}
+{% if batch.status == 'validated' %}<form method="post" action="{% url 'import_commit' batch.pk %}" data-confirm="{% blocktranslate with count=counts.valid %}Commit {{ count }} valid row(s)? Rows marked Skip and rows with errors are not imported.{% endblocktranslate %}">{% csrf_token %}<button class="btn btn-primary">{% translate "Commit valid rows" %}</button></form>{% endif %}
 {% if batch.status == 'committed' or batch.status == 'partially_reverted' %}{% if can.import_revert %}<form method="post" action="{% url 'import_revert' batch.pk %}" data-confirm="{% translate "Revert this batch? Records it created are deleted unless they were edited or used afterwards." %}">{% csrf_token %}<button class="btn btn-danger">{% translate "Revert batch" %}</button></form>{% endif %}{% endif %}</div></div>
 
 {% if batch.status == 'uploaded' or batch.status == 'validated' %}

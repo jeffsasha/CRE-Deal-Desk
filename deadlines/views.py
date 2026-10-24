@@ -11,9 +11,12 @@ from core.audit import audit
 from core.listing import Column, Filter, Listing
 from core.models import User
 from core.permissions import require, require_edit_on_post, require_perm
+from core.templatetags.desk import d as display_date
+from deals.catalog import term_label
 from deals.models import Deal
 
 from . import services
+from .presentation import current_note, deadline_name, trigger_rows
 from .forms import DeadlineForm, StateForm
 from .models import CATEGORIES, COMPUTATION, Deadline
 
@@ -34,9 +37,11 @@ def _bucket(qs, bucket):
     }.get(bucket, qs)
 
 
-BUCKETS = [("overdue", "Overdue"), ("today", "Due today"), ("week", "Next 7 days"), ("next14", "Next 14 days"),
-           ("next30", "Next 30 days"), ("awaiting", "Awaiting trigger"), ("needs_review", "Needs review"),
-           ("open", "All open"), ("closed", "Satisfied / waived / closed")]
+BUCKETS = [("overdue", gettext_lazy("Overdue")), ("today", gettext_lazy("Due today")),
+           ("week", gettext_lazy("Next 7 days")), ("next14", gettext_lazy("Next 14 days")),
+           ("next30", gettext_lazy("Next 30 days")), ("awaiting", gettext_lazy("Awaiting trigger")),
+           ("needs_review", gettext_lazy("Needs review")), ("open", gettext_lazy("All open")),
+           ("closed", gettext_lazy("Satisfied / waived / closed"))]
 
 
 @require_perm("view")
@@ -47,13 +52,13 @@ def deadline_list(request):
     listing = Listing(
         request, qs, area="deadlines",
         columns=[
-            Column("name", gettext_lazy("Deadline"), lambda d: d.name, sort="name"),
+            Column("name", gettext_lazy("Deadline"), lambda d: deadline_name(d), sort="name"),
             Column("deal", gettext_lazy("Deal"), lambda d: format_html('<a href="{}">{}</a>', d.deal.get_absolute_url(), d.deal.name), sort="deal__name"),
-            Column("date", gettext_lazy("Date"), lambda d: d.current_date.strftime("%a %b %-d, %Y") if d.current_date else d.get_computation_display(), sort="current_date"),
+            Column("date", gettext_lazy("Date"), lambda d: display_date(d.current_date) if d.current_date else d.get_computation_display(), sort="current_date"),
             Column("time", gettext_lazy("Time"), lambda d: f"{d.due_time:%-I:%M %p} {d.time_zone}" if d.due_time else "", default=False),
             Column("category", gettext_lazy("Category"), lambda d: d.get_category_display(), sort="category"),
-            Column("kind", gettext_lazy("Kind"), lambda d: "Contractual" if d.is_contractual else "Internal target"),
-            Column("rule", gettext_lazy("Rule"), lambda d: d.computation_note[:120], default=False),
+            Column("kind", gettext_lazy("Kind"), lambda d: gettext_lazy("Contractual") if d.is_contractual else gettext_lazy("Internal target")),
+            Column("rule", gettext_lazy("Rule"), lambda d: current_note(d)[:120], default=False),
             Column("confirmation", gettext_lazy("Rule"), lambda d: d.get_confirmation_display()),
             Column("responsible", gettext_lazy("Responsible"), lambda d: d.responsible_user or d.responsible_party or "—"),
             Column("state", gettext_lazy("Status"), lambda d: d.get_state_display() if d.state != "open" else d.get_computation_display(), sort="state"),
@@ -65,7 +70,7 @@ def deadline_list(request):
             Filter("computation", gettext_lazy("Computation"), COMPUTATION, lambda qs, v: qs.filter(computation=v)),
             Filter("responsible", gettext_lazy("Responsible"), [(str(u.pk), u.display_name) for u in User.objects.exclude(role="read_only")],
                    lambda qs, v: qs.filter(responsible_user_id=v)),
-            Filter("kind", gettext_lazy("Kind"), [("contract", "Contractual"), ("internal", "Internal targets")],
+            Filter("kind", gettext_lazy("Kind"), [("contract", gettext_lazy("Contractual")), ("internal", gettext_lazy("Internal targets"))],
                    lambda qs, v: qs.filter(is_contractual=(v == "contract"))),
         ],
         default_sort="current_date",
@@ -85,11 +90,13 @@ def deadline_list(request):
 def deadline_detail(request, pk):
     dl = get_object_or_404(Deadline.objects.select_related("deal", "holiday_calendar", "source_version__document"), pk=pk)
     return render(request, "deadlines/detail.html", {
-        "dl": dl, "revisions": dl.revisions.select_related("changed_by", "amendment"),
+        "dl": dl, "display_name": deadline_name(dl), "current_note": current_note(dl),
+        "fixed_date_term_label": gettext_lazy(term_label(dl.fixed_date_term_key)),
+        "offset_term_label": gettext_lazy(term_label(dl.offset_term_key)), "revisions": dl.revisions.select_related("changed_by", "amendment"),
         "reminders": dl.reminders.select_related("user").order_by("-target_revision", "remind_at"),
         "state_form": StateForm(initial={"state": dl.state}),
-        "triggers": services.build_triggers(dl, services._event_triggers(dl.deal)),
-        "dependents": [d for d in dl.deal.deadlines.all() if f"deadline:{dl.pk}" in (d.trigger_keys or [])],
+        "triggers": trigger_rows(dl),
+        "dependents": [{"url": d.get_absolute_url(), "name": deadline_name(d)} for d in dl.deal.deadlines.all() if f"deadline:{dl.pk}" in (d.trigger_keys or [])],
         "checklist_items": dl.checklistitem_set.all(),
     })
 

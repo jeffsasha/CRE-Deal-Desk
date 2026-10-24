@@ -98,7 +98,7 @@ class DeadlineForm(StyledModelForm):
 
 
 class StateForm(LocalizedForm):
-    state = forms.ChoiceField(choices=[("open", "Open"), ("satisfied", "Satisfied / performed"), ("waived", "Waived"),
+    state = forms.ChoiceField(label="Status", choices=[("open", "Open"), ("satisfied", "Satisfied / performed"), ("waived", "Waived"),
                                        ("expired", "Passed without action"), ("cancelled", "Cancelled / not applicable")])
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}),
                            help_text="E.g. who performed, and the evidence. Required for waived or cancelled.")

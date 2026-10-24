@@ -10,7 +10,7 @@
     {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
     <div class="form-grid">
       {% for f in form.visible_fields %}
-      {% if f.name == "closing_mode" %}
+      {% if f.name == "closing_mode" or f.name == "feasibility_mode" %}
         <div class="field full"><label>{{ f.label|tr }}</label>
           <div class="seg-radio">{% for r in f %}<label>{{ r.tag }}<span>{{ r.choice_label|tr }}</span></label>{% endfor %}</div></div>
       {% else %}
@@ -31,12 +31,12 @@
 (function () {
   var form = document.querySelector(".keydates-form");
   if (!form) return;
+  function show(name, on) { var el = form.querySelector('[data-field="' + name + '"]'); if (el) { el.hidden = !on; el.querySelectorAll("input").forEach(function (i) { i.disabled = !on; }); } }
+  function mode(name) { var m = form.querySelector('input[name="' + name + '"]:checked'); return m ? m.value : null; }
   function sync() {
-    var mode = form.querySelector('input[name="closing_mode"]:checked');
-    if (!mode) return;
-    var days = form.querySelector('[data-field="closing_days"]'), date = form.querySelector('[data-field="closing_date"]');
-    if (days) days.style.display = mode.value === "days" ? "" : "none";
-    if (date) date.style.display = mode.value === "date" ? "" : "none";
+    var f = mode("feasibility_mode"), c = mode("closing_mode");
+    if (f) { show("feasibility_days", f === "days"); show("feasibility_date", f === "date"); }
+    if (c) { show("closing_days", c === "days"); show("closing_date", c === "date"); }
   }
   form.addEventListener("change", sync);
   sync();

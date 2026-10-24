@@ -28,14 +28,14 @@
     <h1 class="hero-h1">DealDesk</h1>
     <p class="hero-rotate">
       <span>{% translate "Every" %}</span>
-      <span class="hero-rotate-words" data-rotating><span data-word>{% translate "listing" %}</span><span data-word>{% translate "key date" %}</span><span data-word>{% translate "closing" %}</span><span data-word>{% translate "commission" %}</span></span>
+      <span class="hero-rotate-words" data-rotating><span data-word>{% translate "listing" %}</span><span data-word hidden>{% translate "key date" %}</span><span data-word hidden>{% translate "closing" %}</span><span data-word hidden>{% translate "commission" %}</span></span>
       <span>{% translate ", tracked." %}</span>
     </p>
     <p class="hero-lede">{% translate "Listings, contracts, key dates and SKW commission — every deal on one screen." %}</p>
     <div class="hero-stats">
-      <div><div class="hv odo" data-odo="{{ open_deals }}">{{ open_deals }}</div><div class="hk">{% translate "Open deals" %}</div></div>
-      <div><div class="hv odo" data-odo="{{ year.count }}">{{ year.count }}</div><div class="hk">{% blocktranslate with y=this_year %}Closed in {{ y }}{% endblocktranslate %}</div></div>
-      {% if can.commission_view %}<div><div class="hv odo" data-odo="{{ year.received }}">{{ year.received|money0 }}</div><div class="hk">{% blocktranslate with y=this_year %}Received in {{ y }}{% endblocktranslate %}</div></div>{% endif %}
+      <div><div class="hv">{{ open_deals }}</div><div class="hk">{% translate "Open deals" %}</div></div>
+      <div><div class="hv">{{ year.count }}</div><div class="hk">{% blocktranslate with y=this_year %}Closed in {{ y }}{% endblocktranslate %}</div></div>
+      {% if can.commission_view %}<div><div class="hv">{{ year.received|money0 }}</div><div class="hk">{% blocktranslate with y=this_year %}Received in {{ y }}{% endblocktranslate %}</div></div>{% endif %}
     </div>
     <a class="hero-cta" href="{% url 'dashboard' %}">{% translate "Enter dashboard" %}<span aria-hidden="true">→</span></a>
     <div class="hero-hint">{% translate "Drag the badge, or click it to flip." %}</div>

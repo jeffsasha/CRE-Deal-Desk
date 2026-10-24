@@ -6,20 +6,20 @@
   </div>
   <div class="hero-grid">
     <div class="hero-stat">
-      <div class="k">{% translate "Sales volume" %}</div>
+      <div class="k">{% translate "Sales transaction volume" %}</div>
       <div class="v odo" data-odo="{{ totals.sales }}">{{ totals.sales|money0 }}</div>
-      <div class="n">{% blocktranslate count n=totals.sales_count %}{{ n }} sale{% plural %}{{ n }} sales{% endblocktranslate %}{% if totals.sales_unknown %} · {% blocktranslate with n=totals.sales_unknown %}{{ n }} price unknown{% endblocktranslate %}{% endif %}</div>
+      <div class="n">{% translate "By actual closing year" %} · {% blocktranslate count n=totals.sales_count %}{{ n }} sale{% plural %}{{ n }} sales{% endblocktranslate %}{% if totals.sales_unknown %} · {% blocktranslate with n=totals.sales_unknown %}{{ n }} price unknown{% endblocktranslate %}{% endif %}</div>
     </div>
     <div class="hero-stat">
-      <div class="k">{% translate "Lease consideration" %}</div>
+      <div class="k">{% translate "Signed lease rent total" %}</div>
       <div class="v odo" data-odo="{{ totals.leases }}">{{ totals.leases|money0 }}</div>
-      <div class="n">{% blocktranslate count n=totals.lease_count %}{{ n }} lease{% plural %}{{ n }} leases{% endblocktranslate %}{% if totals.lease_unknown %} · {% blocktranslate with n=totals.lease_unknown %}{{ n }} total unknown{% endblocktranslate %}{% endif %}</div>
+      <div class="n">{% translate "By signed year" %} · {% blocktranslate count n=totals.lease_count %}{{ n }} lease{% plural %}{{ n }} leases{% endblocktranslate %}{% if totals.lease_unknown %} · {% blocktranslate with n=totals.lease_unknown %}{{ n }} total unknown{% endblocktranslate %}{% endif %}</div>
     </div>
     {% if can.commission_view %}
     <div class="hero-stat accent">
-      <div class="k">{% translate "SKW commission" %}</div>
-      <div class="v odo" data-odo="{{ totals.commission }}">{{ totals.commission|money0 }}</div>
-      <div class="n">{% translate "Received" %} {{ totals.received|money0 }}{% if totals.commission_unknown %} · {% blocktranslate with n=totals.commission_unknown %}{{ n }} not entered{% endblocktranslate %}{% endif %}</div>
+      <div class="k">{% translate "SKW commission received" %}</div>
+      <div class="v odo" data-odo="{{ totals.received }}">{{ totals.received|money0 }}</div>
+      <div class="n">{% translate "By receipt year, net of refunds and reversals" %}</div>
     </div>
     {% endif %}
   </div>

@@ -11,11 +11,11 @@
 <tbody>{% for d in result.deals %}<tr><td><a href="{{ d.get_absolute_url }}">{{ d.internal_id }} {{ d.name }}</a></td><td>{{ d.get_transaction_type_display }}</td><td><small>{% for l in d.deal_properties.all %}{{ l.property.name }}{% if l.allocated_price_cents is not None %} {% translate "(alloc." %} {{ l.allocated_price_cents|money0 }}){% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}</small></td><td>{{ d.actual_closing_date|d }}</td>
 <td class="num">{% if metric == 'leases' %}{{ d.lease_total_consideration_cents|money }}{% else %}{{ d.actual_closing_price_cents|money }}{% endif %}</td>{% if metric == 'leases' %}<td class="num">{{ d.lease_area_sf|sf }}</td>{% endif %}</tr>
 {% empty %}<tr><td colspan="6"><div class="empty">{% translate "No records." %}</div></td></tr>{% endfor %}</tbody>
-{% if result.total %}<tfoot><tr><td colspan="4">{% translate "Total (" %}{{ result.total.count }} {% translate "deal" %}{{ result.total.count|pluralize }}{% translate ", each counted once)" %}</td><td class="num">{{ result.total|money }}</td></tr></tfoot>{% elif result.consideration %}<tfoot><tr><td colspan="4">{% translate "Total" %}</td><td class="num">{{ result.consideration|money }}</td><td class="num">{{ result.area_sf|floatformat:0 }} SF</td></tr></tfoot>{% endif %}
+{% if result.total %}<tfoot><tr><td colspan="4">{% translate "Total (" %}{% blocktranslate count count=result.total.count %}{{ count }} deal{% plural %}{{ count }} deals{% endblocktranslate %}{% translate ", each counted once)" %}</td><td class="num">{{ result.total|money }}</td></tr></tfoot>{% elif result.consideration %}<tfoot><tr><td colspan="4">{% translate "Total" %}</td><td class="num">{{ result.consideration|money }}</td><td class="num">{{ result.area_sf|sf }}</td></tr></tfoot>{% endif %}
 </table>
 {% elif metric == 'pipeline' %}
 <table class="t"><thead><tr><th>{% translate "Deal" %}</th><th>{% translate "Stage" %}</th><th>{% translate "Basis" %}</th><th class="num">{% translate "Expected value" %}</th></tr></thead>
-<tbody>{% for r in result.rows %}<tr><td><a href="{{ r.deal.get_absolute_url }}">{{ r.deal }}</a></td><td>{{ r.deal.stage }}</td><td>{% if r.deal.is_lease %}{% translate "Lease consideration" %}{% else %}{{ r.basis }}{% endif %}</td><td class="num">{{ r.value|money }}</td></tr>{% empty %}<tr><td colspan="4"><div class="empty">{% translate "No active deals." %}</div></td></tr>{% endfor %}</tbody>
+<tbody>{% for r in result.rows %}<tr><td><a href="{{ r.deal.get_absolute_url }}">{{ r.deal }}</a></td><td>{{ r.deal.stage.name|tr }}</td><td>{% if r.deal.is_lease %}{% translate "Lease consideration" %}{% else %}{{ r.basis|tr }}{% endif %}</td><td class="num">{{ r.value|money }}</td></tr>{% empty %}<tr><td colspan="4"><div class="empty">{% translate "No active deals." %}</div></td></tr>{% endfor %}</tbody>
 <tfoot><tr><td colspan="3">{% translate "Sales pipeline (not closed)" %}</td><td class="num">{{ result.sales_total|money }}</td></tr><tr><td colspan="3">{% translate "Lease pipeline (separate)" %}</td><td class="num">{{ result.lease_total|money }}</td></tr></tfoot></table>
 {% elif metric == 'earned' %}
 <table class="t"><thead><tr><th>{% translate "Deal" %}</th><th>{% translate "Agreement" %}</th><th>{% translate "Installment" %}</th><th>{% translate "Earned on" %}</th><th class="num">{% translate "Amount" %}</th></tr></thead>
@@ -31,5 +31,5 @@
 <tfoot>{% if metric == 'outstanding' %}<tr><td colspan="6">{% translate "Receivables outstanding" %}</td><td class="num">{{ result.receivable|money }}</td><td class="num">{{ result.unpaid_distributions|money }}</td></tr>{% else %}<tr><td colspan="3">{% translate "Total expected" %}</td><td class="num">{{ result.total|money }}</td><td colspan="3"></td></tr>{% endif %}</tfoot></table>
 {% endif %}
 </div></div>
-<p class="muted" style="margin-top:8px"><small>"+ N unknown" means records whose amount is not known. They are listed above and are not counted as zero.</small></p>
+<p class="muted" style="margin-top:8px"><small>{% translate '"+ N unknown" means records whose amount is not known. They are listed above and are not counted as zero.' %}</small></p>
 {% endblock %}

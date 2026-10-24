@@ -49,7 +49,7 @@
   <div class="toolbar" style="border-top:1px solid var(--border);border-bottom:0">
     {% if listing.page.has_previous %}<a class="btn btn-sm" href="{% url_with page=listing.page.previous_page_number %}">{% translate "Previous" %}</a>{% endif %}
     <span class="muted">{% blocktranslate with p=listing.page.number t=listing.page.paginator.num_pages %}Page {{ p }} of {{ t }}{% endblocktranslate %}</span>
-    {% if listing.page.has_next %}<a class="btn btn-sm" href="{% url_with page=listing.page.next_page_number %}">{% translate "Next" %}</a>{% endif %}
+    {% if listing.page.has_next %}<a class="btn btn-sm" href="{% url_with page=listing.page.next_page_number %}">{% translate "Next" context "pagination" %}</a>{% endif %}
   </div>
   {% endif %}
 </div>

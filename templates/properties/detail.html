@@ -43,7 +43,7 @@
       <thead><tr><th>{% translate "Deal" %}</th><th>{% translate "Type" %}</th><th>{% translate "Stage" %}</th><th>{% translate "Suite" %}</th><th class="num">{% translate "Closing" %}</th><th class="num">{% translate "Consideration" %}</th></tr></thead>
       <tbody>{% for l in deal_links %}<tr class="{% if l.deal.stage.category == 'terminated' or l.deal.stage.category == 'lost' %}row-muted{% endif %}">
         <td><a href="{{ l.deal.get_absolute_url }}">{{ l.deal.internal_id }} {{ l.deal.name }}</a>{% if l.deal.termination_reason %}<br><small class="muted">{{ l.deal.termination_reason|truncatechars:90 }}</small>{% endif %}</td>
-        <td>{{ l.deal.get_transaction_type_display }}</td><td>{% pill l.deal.stage.category l.deal.stage.name %}</td><td>{{ l.space.suite|default:"—" }}</td>
+        <td>{{ l.deal.get_transaction_type_display }}</td><td>{% status_pill l.deal %}</td><td>{{ l.space.suite|default:"—" }}</td>
         <td class="num">{{ l.deal.actual_closing_date|d }}</td>
         <td class="num">{% if l.deal.is_closed %}{{ l.deal.actual_closing_price_cents|money0 }}{% if l.allocated_price_cents is not None %}<br><small class="muted">{% translate "allocated here" %} {{ l.allocated_price_cents|money0 }}</small>{% endif %}{% else %}—{% endif %}</td></tr>
       {% empty %}<tr><td colspan="6"><div class="empty">{% translate "No deals yet." %}</div></td></tr>{% endfor %}</tbody>

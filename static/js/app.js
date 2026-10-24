@@ -1,6 +1,8 @@
 // SKW DealDesk — progressive enhancements. Every action also works without JS.
 (function () {
   var root = document.documentElement;
+  var uiMessages = document.querySelector("[data-ui-messages]");
+  function uiText(key, fallback) { return uiMessages && uiMessages.getAttribute("data-" + key) || fallback; }
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function csrf() {
@@ -17,7 +19,7 @@
       el.hidden = el.getAttribute("data-theme-icon") !== mode;
     });
     var btn = document.querySelector("[data-theme-toggle]");
-    if (btn) btn.title = "Theme: " + mode + " (click to change)";
+    if (btn) btn.title = uiText("theme-" + mode, "Theme: " + mode + " (click to change)");
   }
   function applyTheme(mode) {
     var commit = function () {
@@ -177,23 +179,6 @@
   document.addEventListener("animationend", function (e) {
     if (e.animationName === "neon-veil-lift") endIgnite();
   });
-  // Keep the tube just under the top bar (a demo banner above it scrolls away).
-  var stage = document.querySelector("[data-neon]");
-  var rail = document.querySelector("[data-neon-rail]");
-  var veil = document.querySelector("[data-neon-veil]");
-  var topbar = document.querySelector(".topbar");
-  if (stage && rail && topbar) {
-    var place = function () {
-      var top = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom)) + "px";
-      stage.style.top = top;
-      rail.style.top = top;
-      // The darkness starts below the tube so the tube is seen switching on.
-      if (veil) veil.style.top = (parseInt(top, 10) + 18) + "px";
-    };
-    place();
-    window.addEventListener("scroll", place, { passive: true });
-    window.addEventListener("resize", place);
-  }
   var SPOT = ".card, .metric, .facts, .hero-band, .tile";
   document.addEventListener("pointermove", function (e) {
     var el = e.target.closest && e.target.closest(SPOT);
@@ -245,6 +230,45 @@
     window.addEventListener("resize", function () { clearTimeout(tlTimer); tlTimer = setTimeout(layoutAll, 120); });
   }
 
+  // ---- Money inputs: digits and one decimal point only, grouped as 1,000,000.00 ----
+  function formatMoney(raw, negative, decimals) {
+    var neg = negative && /^\s*-/.test(raw);
+    var s = raw.replace(/[^0-9.]/g, "");
+    var dot = s.indexOf(".");
+    var whole = dot < 0 ? s : s.slice(0, dot);
+    var frac = dot < 0 ? null : s.slice(dot + 1).replace(/\./g, "").slice(0, decimals || 2);
+    whole = whole.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (whole === "" && frac !== null) whole = "0";
+    return (neg ? "-" : "") + whole + (frac !== null ? "." + frac : "");
+  }
+  document.addEventListener("input", function (e) {
+    var el = e.target;
+    if (!el.matches || !el.matches("input[data-money]")) return;
+    var before = el.value, caret = el.selectionStart || 0;
+    var digitsBefore = before.slice(0, caret).replace(/[^0-9.]/g, "").length;
+    var next = formatMoney(before, el.hasAttribute("data-money-negative"), Number(el.getAttribute("data-money-decimals")) || 2);
+    if (next === before) return;
+    el.value = next;
+    // Put the caret back after the same number of digits.
+    var pos = 0, seen = 0;
+    while (pos < next.length && seen < digitsBefore) { if (/[0-9.]/.test(next[pos])) seen++; pos++; }
+    try { el.setSelectionRange(pos, pos); } catch (err) {}
+  });
+  document.addEventListener("focusout", function (e) {
+    var el = e.target;
+    if (!el.matches || !el.matches("input[data-money]") || !el.value) return;
+    var v = formatMoney(el.value, el.hasAttribute("data-money-negative"), Number(el.getAttribute("data-money-decimals")) || 2);
+    if (!/[0-9]/.test(v)) { el.value = ""; return; }
+    var parts = v.split(".");
+    el.value = parts[0] + "." + ((parts[1] || "") + "00").slice(0, Math.max(2, (parts[1] || "").length));
+  });
+  document.querySelectorAll("input[data-money]").forEach(function (el) {
+    if (el.value) {
+      var parts = formatMoney(el.value, el.hasAttribute("data-money-negative"), Number(el.getAttribute("data-money-decimals")) || 2).split(".");
+      el.value = parts[0] + "." + ((parts[1] || "") + "00").slice(0, Math.max(2, (parts[1] || "").length));
+    }
+  });
+
   // ---- Auto-hide confirmations ------------------------------------------------
   document.querySelectorAll(".notice[data-autohide]").forEach(function (n) {
     setTimeout(function () {
@@ -275,7 +299,7 @@
         var stage = col.getAttribute("data-stage");
         var reason = "";
         if (col.getAttribute("data-needs-reason") === "1") {
-          reason = window.prompt("Reason for moving this deal to " + col.getAttribute("data-stage-name") + ":") || "";
+          reason = window.prompt(uiText("stage-reason", "Reason for moving this deal to {stage}:").replace("{stage}", col.getAttribute("data-stage-name"))) || "";
           if (!reason) return;
         }
         var from = card.parentNode, next = card.nextSibling;
@@ -294,7 +318,7 @@
         }).then(function (r) {
           if (r.ok) return;
           from.insertBefore(card, next);  // revert
-          return r.text().then(function (t) { window.alert(t || "Stage change was not allowed."); });
+          return r.text().then(function (t) { window.alert(t || uiText("stage-error", "Stage change was not allowed.")); });
         });
       });
     });
@@ -320,7 +344,7 @@
           if (m) m.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
         });
       }
-      document.querySelectorAll("[data-page-label]").forEach(function (el) { el.textContent = "Page " + page; });
+      document.querySelectorAll("[data-page-label]").forEach(function (el) { el.textContent = uiText("page", "Page {number}").replace("{number}", page); });
     });
   });
 
@@ -435,14 +459,20 @@
   function sync() {
     var kind = val("kind"), mode = val("property_mode");
     form.querySelectorAll("[data-kind-only]").forEach(function (el) {
-      var on = el.getAttribute("data-kind-only") === kind;
+      var on = el.getAttribute("data-kind-only").split(" ").indexOf(kind) >= 0;
       el.hidden = !on;
-      el.querySelectorAll('input[name="side"]').forEach(function (i) { i.disabled = !on; if (!on) i.checked = false; });
+      el.querySelectorAll('input, select, textarea').forEach(function (i) { i.disabled = !on; if (!on && i.name === 'side') i.checked = false; });
     });
     var side = val("side");
     form.querySelector("[data-needs-kind]").hidden = !kind;
     form.querySelector("[data-needs-side]").hidden = !(kind && side);
     form.querySelectorAll("[data-mode-only]").forEach(function (el) { el.hidden = el.getAttribute("data-mode-only") !== mode; });
+    var status = val("status");
+    form.querySelectorAll("[data-status-only]").forEach(function (el) {
+      var on = el.getAttribute("data-status-only") === status;
+      el.hidden = !on;
+      el.querySelectorAll("input, select, textarea").forEach(function (i) { i.disabled = !on; });
+    });
     var pair = labels[kind + ":" + side] || ["", ""];
     var a = form.querySelector('[data-client-label="a"]'), b = form.querySelector('[data-client-label="b"]');
     if (a && pair[0]) a.textContent = pair[0];

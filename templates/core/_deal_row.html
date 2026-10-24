@@ -1,12 +1,12 @@
 {% load i18n %}<a class="deal-row {% if r.on_hold %}is-hold{% endif %}" href="{{ r.deal.get_absolute_url }}" style="--i:{{ forloop.counter0 }}">
   <div class="dr-info">
     <div class="dr-name">{{ r.deal.name }}</div>
-    <div class="dr-meta">{% if r.on_hold %}<span class="pill pill-amber">{% translate "On hold" %}</span>{% else %}<span class="pill pill-blue">{% translate r.deal.stage.name %}</span>{% endif %} <span class="muted">{{ r.deal.get_transaction_type_display }}</span></div>
+    <div class="dr-meta">{% if r.price %}<strong>{{ r.price }}</strong> · {% endif %}<span class="muted">{{ r.deal.get_transaction_type_display }}</span></div>
   </div>
   <div class="dr-timeline">{% with tl=r.tl %}{% include "partials/timeline.html" %}{% endwith %}</div>
   <div class="dr-side">
     {% if r.next %}<div class="dr-next {% if r.next_soon %}soon{% endif %}"><span class="muted">{% translate "Next" %}</span> {% translate r.next.label %}<br><strong>{{ r.next.date|dshort }}</strong> <small>{{ r.next.date|relday }}</small></div>
-    {% elif not r.tl.start %}<div class="muted">{% translate "Key dates not entered" %}</div>
+    {% elif not r.tl.complete %}<div class="muted">{% translate "Key dates not entered" %}</div>
     {% else %}<div class="muted">{% translate "All key dates passed" %}</div>{% endif %}
     {% if r.skw %}<div class="dr-cm"><span class="muted">{% translate "SKW" %}</span> {{ r.skw.expected|money0:"—" }}{% if r.skw.received %} · <span class="muted">{% translate "received" %}</span> {{ r.skw.received|money0 }}{% endif %}</div>{% endif %}
   </div>

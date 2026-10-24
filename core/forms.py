@@ -28,13 +28,13 @@ def localize_fields(form):
     active language. The English strings are collected for translators by
     `manage.py collect_strings`."""
     from django.forms.utils import pretty_name
-    from django.utils.translation import gettext
+    from django.utils.translation import gettext, pgettext
 
     def tr(value):
         return gettext(str(value)) if value else value
 
     for name, field in form.fields.items():
-        field.label = tr(field.label if field.label is not None else pretty_name(name))
+        field.label = pgettext("record heading", "Title") if name == "title" else tr(field.label if field.label is not None else pretty_name(name))
         field.help_text = tr(field.help_text)
         if isinstance(field, forms.ChoiceField) and not isinstance(field, forms.ModelChoiceField):
             translated = []

@@ -1,18 +1,10 @@
 {% load i18n %}<div class="split">
   <div class="stack">
-    {% if listing.show %}
-    <div class="card"><div class="card-head"><h2>{% translate "Listing" %}</h2>{% if can.edit %}<a class="btn btn-sm {% if not deal.listing_date %}btn-primary{% endif %}" href="{% url 'deal_listing' deal.pk %}">{% if deal.listing_date or deal.asking_price_cents is not None %}{% translate "Edit listing" %}{% else %}{% translate "Enter listing details" %}{% endif %}</a>{% endif %}</div>
-      <div class="card-body"><div class="cm-figures">
-        <div><div class="k">{% translate "Asking" %}</div><div class="v">{{ listing.asking|default:"—" }}</div></div>
-        <div><div class="k">{% translate "Listed on" %}</div><div class="v">{{ deal.listing_date|d }}</div>{% if listing.dom is not None and not listing.contract %}<small class="muted">{% blocktranslate count n=listing.dom %}{{ n }} day on market{% plural %}{{ n }} days on market{% endblocktranslate %}</small>{% endif %}</div>
-        <div><div class="k">{% translate "Listing agreement expires" %}</div><div class="v">{{ deal.listing_expires_on|d }}</div>{% if deal.listing_expires_on and not listing.contract %}<small class="muted">{{ deal.listing_expires_on|relday }}</small>{% endif %}</div>
-      </div></div></div>
-    {% endif %}
     <div class="card"><div class="card-head"><h2>{% translate "Key dates" %}</h2>{% if can.edit %}<div class="actions">{% if not deal.is_lease and tl.start and not deal.is_closed %}<a class="btn btn-sm" href="{% url 'deal_extend' deal.pk %}">{% translate "Extend" %}</a>{% endif %}<a class="btn btn-sm btn-primary" href="{% url 'deal_key_dates' deal.pk %}">{% if tl.start %}{% translate "Edit key dates" %}{% else %}{% translate "Enter key dates" %}{% endif %}</a></div>{% endif %}</div>
       <div class="card-body">
         {% include "partials/timeline.html" %}
         {% with exts=deal.extensions.all %}{% if exts %}<ul class="ext-list">{% for x in exts %}<li><span class="muted">{{ x.get_milestone_display|tr }}</span> {% translate "extended" %} {{ x.previous_date|dshort }} → <strong>{{ x.new_date|dshort }}</strong> <small class="muted">+{{ x.days }}d{% if x.note %} · {{ x.note|tr }}{% endif %}</small></li>{% endfor %}</ul>{% endif %}{% endwith %}
-        {% if not tl.start %}<p class="muted" style="margin:12px 0 0">{% translate "Enter the Effective Date and contract periods; the Feasibility Period and Closing Date are calculated for you." %}</p>{% endif %}
+        {% if not tl.start %}<p class="muted" style="margin:12px 0 0">{% if deal.is_lease %}{% translate "Enter the Effective Date and the Commencement Date from the lease." %}{% else %}{% translate "Enter the Effective Date and contract periods; the Feasibility Period and Closing Date are calculated for you." %}{% endif %}</p>{% endif %}
       </div>
       {% if other_deadlines %}<div class="card-body flush table-wrap"><table class="t"><thead><tr><th>{% translate "Other dates" %}</th><th>{% translate "Date" %}</th></tr></thead><tbody>
       {% for dl in other_deadlines %}<tr class="{% if dl.is_overdue %}row-alert{% endif %}"><td><a href="{{ dl.get_absolute_url }}">{{ dl.name|tr }}</a></td>
@@ -38,12 +30,12 @@
           {% if skw.editable %}
           <form method="post" action="{% url 'deal_commission' deal.pk %}" class="cm-form">{% csrf_token %}
             <label for="cm-expected">{% translate "SKW commission (expected)" %}</label>
-            <div class="cm-row"><input id="cm-expected" name="expected" inputmode="decimal" placeholder="$0.00" value="{% if skw.expected is not None %}{{ skw.expected|money }}{% endif %}"><button class="btn">{% translate "Save" %}</button></div>
+            <div class="cm-row"><input id="cm-expected" name="expected" inputmode="decimal" placeholder="0.00" data-money value="{% if skw.expected is not None %}{{ skw.expected|money }}{% endif %}"><button class="btn">{% translate "Save" %}</button></div>
           </form>
           {% else %}<p class="muted"><small>{% translate "This deal has a detailed commission agreement." %} <a href="{% url 'commission_list' %}">{% translate "View" %}</a></small></p>{% endif %}
           <details class="cm-receipt"{% if not skw.receipts %} open{% endif %}><summary>{% icon "plus" %}{% translate "Record a payment received" %}</summary>
             <form method="post" action="{% url 'deal_receipt' deal.pk %}" class="cm-form">{% csrf_token %}
-              <div class="cm-row"><input name="amount" inputmode="decimal" placeholder="{% translate "Amount" %}" required><input type="date" name="entry_date" value="{{ today|date:'Y-m-d' }}" required></div>
+              <div class="cm-row"><input name="amount" inputmode="decimal" placeholder="{% translate "Amount" %}" data-money required><input type="date" name="entry_date" value="{{ today|date:'Y-m-d' }}" required></div>
               <div class="cm-row"><input name="reference" placeholder="{% translate "Check / wire reference (optional)" %}"><button class="btn btn-primary">{% translate "Record" %}</button></div>
             </form>
           </details>

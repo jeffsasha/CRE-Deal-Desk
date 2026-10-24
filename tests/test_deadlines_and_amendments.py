@@ -71,8 +71,9 @@ class KeyDatesTests(DeskTestCase):
         return {d.template_key: d for d in keydates.key_deadlines(self.deal)}
 
     def test_days_after_effective_date(self):
-        # Mar 4, 2026 + 30 calendar days (the Effective Date is not counted) = Apr 3.
-        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="days", closing_days=60)
+        # Mar 4, 2026 + 30 calendar days (the Effective Date is not counted) = Apr 3;
+        # Closing 30 days after the Feasibility Period ends = May 3.
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="days", closing_days=30)
         d = self.by_key()
         self.assertEqual(d["feasibility_expiration"].current_date, date(2026, 4, 3))
         self.assertEqual(d["closing_offset"].current_date, date(2026, 5, 3))
@@ -121,28 +122,55 @@ class KeyDatesTests(DeskTestCase):
         self.assertFalse(self.deal.terms.filter(key="closing_days_after_effective", status="active").exists())
 
     def test_extensions_move_dates_and_stay_on_the_timeline(self):
-        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="days", closing_days=60)
-        # Feasibility by days, Closing moved along: Apr 3 -> May 3, May 3 -> Jun 2.
-        keydates.extend(self.deal, "feasibility", self.broker, days=30, shift_closing=True, note="First extension")
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30, closing_mode="days", closing_days=30)
+        # Feasibility by days: Apr 3 -> May 3; the Closing Date (30 days after it) follows: May 3 -> Jun 2.
+        keydates.extend(self.deal, "feasibility", self.broker, days=30, note="First extension")
         d = self.by_key()
         self.assertEqual(d["feasibility_expiration"].current_date, date(2026, 5, 3))
         self.assertEqual(d["closing_offset"].current_date, date(2026, 6, 2))
-        # Closing alone to a given date; Feasibility unchanged.
+        # Closing alone to a given date: it becomes a fixed date; Feasibility unchanged.
         keydates.extend(self.deal, "closing", self.broker, new_date=date(2026, 6, 20))
         d = self.by_key()
-        self.assertEqual(d["closing_offset"].current_date, date(2026, 6, 20))
+        self.assertEqual(d["closing_fixed"].current_date, date(2026, 6, 20))
+        self.assertNotIn("closing_offset", d)
         self.assertEqual(d["feasibility_expiration"].current_date, date(2026, 5, 3))
         self.assertEqual([(x.milestone, x.previous_date, x.new_date) for x in self.deal.extensions.all()],
                          [("closing", date(2026, 5, 3), date(2026, 6, 2)), ("closing", date(2026, 6, 2), date(2026, 6, 20)),
                           ("feasibility", date(2026, 4, 3), date(2026, 5, 3))])
+        # A later Feasibility extension leaves the fixed Closing Date alone.
+        keydates.extend(self.deal, "feasibility", self.broker, days=5)
+        self.assertEqual(self.by_key()["closing_fixed"].current_date, date(2026, 6, 20))
         tl = keydates.timeline(self.deal, today=date(2026, 4, 1))
         kinds = [(m["kind"], m["date"]) for m in tl["marks"]]
         self.assertEqual(kinds[0], ("start", date(2026, 3, 4)))
         self.assertEqual(kinds[-1], ("main", date(2026, 6, 20)))
-        self.assertEqual(sum(1 for k, _ in kinds if k == "was"), 3)
+        self.assertEqual(sum(1 for k, _ in kinds if k == "was"), 4)
         self.assertTrue(all(m["extended"] for m in tl["marks"] if m["kind"] == "main"))
         with self.assertRaises(keydates.ExtensionError):
             keydates.extend(self.deal, "closing", self.broker, new_date=date(2026, 6, 1))
+
+    def test_feasibility_as_a_fixed_date(self):
+        self.save(effective_date=date(2026, 3, 4), feasibility_mode="date", feasibility_date=date(2026, 4, 15),
+                  closing_mode="days", closing_days=15)
+        d = self.by_key()
+        self.assertEqual(d["feasibility_fixed"].current_date, date(2026, 4, 15))
+        self.assertEqual(d["closing_offset"].current_date, date(2026, 4, 30))
+        # Changing the Effective Date does not move a fixed Feasibility date.
+        self.save(effective_date=date(2026, 3, 10), feasibility_mode="date", feasibility_date=date(2026, 4, 15),
+                  closing_mode="days", closing_days=15)
+        self.assertEqual(self.by_key()["feasibility_fixed"].current_date, date(2026, 4, 15))
+        keydates.extend(self.deal, "feasibility", self.broker, new_date=date(2026, 4, 25))
+        d = self.by_key()
+        self.assertEqual((d["feasibility_fixed"].current_date, d["closing_offset"].current_date), (date(2026, 4, 25), date(2026, 5, 10)))
+        self.assertEqual(keydates.current_values(self.deal)["feasibility_date"], date(2026, 4, 25))
+
+    def test_older_closing_days_after_effective_are_shown_after_feasibility(self):
+        from deals.services import set_term
+
+        self.save(effective_date=date(2026, 3, 4), feasibility_days=30)
+        set_term(self.deal, "closing_days_after_effective", 60, self.broker)
+        v = keydates.current_values(self.deal)
+        self.assertEqual((v["closing_mode"], v["closing_days"]), ("days", 30))
 
     def test_extension_form(self):
         self.client.force_login(self.broker)
@@ -165,13 +193,13 @@ class KeyDatesTests(DeskTestCase):
     def test_form_round_trip(self):
         self.client.force_login(self.broker)
         url = reverse("deal_key_dates", args=[self.deal.pk])
-        resp = self.client.post(url, {"effective_date": "2026-03-04", "feasibility_days": "30", "closing_mode": "date",
-                                      "closing_date": "2026-03-01"})
+        resp = self.client.post(url, {"effective_date": "2026-03-04", "feasibility_mode": "days", "feasibility_days": "30",
+                                      "closing_mode": "date", "closing_date": "2026-03-01"})
         self.assertContains(resp, "before the Effective Date")
-        resp = self.client.post(url, {"effective_date": "2026-03-04", "feasibility_days": "30", "closing_mode": "days",
-                                      "closing_days": "45"})
+        resp = self.client.post(url, {"effective_date": "2026-03-04", "feasibility_mode": "days", "feasibility_days": "30",
+                                      "closing_mode": "days", "closing_days": "45"})
         self.assertRedirects(resp, self.deal.get_absolute_url())
-        self.assertEqual(self.by_key()["closing_offset"].current_date, date(2026, 4, 18))
+        self.assertEqual(self.by_key()["closing_offset"].current_date, date(2026, 5, 18))
         self.assertTrue(DealEvent.objects.filter(deal=self.deal, key="effective_date").exists())
         page = self.client.get(self.deal.get_absolute_url())
         self.assertContains(page, "Feasibility Period ends")

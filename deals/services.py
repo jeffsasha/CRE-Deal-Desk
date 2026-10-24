@@ -207,6 +207,10 @@ def close_deal(deal, actor, *, actual_closing_date, total_cents, allocations=Non
     """Close a deal. `total_cents` is deal-level consideration (None = unknown).
     `allocations` maps DealProperty id -> cents and, when given for a multi-property
     deal, must add up to the total so nothing is double-counted or lost."""
+    if deal.is_lease and deal.lease_term_months is not None:
+        from . import pricing
+
+        total_cents = pricing.calculated_total(deal)
     if actual_closing_date is None:
         raise ValidationError(gettext_lazy("The actual closing date is required to close a deal."))
     if actual_closing_date > timezone.localdate():
@@ -229,7 +233,7 @@ def close_deal(deal, actor, *, actual_closing_date, total_cents, allocations=Non
     deal.stage = Stage.objects.get(key="closed")
     deal.actual_closing_date = actual_closing_date
     if deal.is_lease:
-        deal.lease_total_consideration_cents = total_cents if total_cents is not None else deal.lease_total_consideration_cents
+        deal.lease_total_consideration_cents = total_cents if total_cents is not None or deal.lease_term_months is not None else deal.lease_total_consideration_cents
     else:
         deal.actual_closing_price_cents = total_cents
     deal.save()
@@ -279,6 +283,11 @@ def transaction_type_for(kind, side, lease_type="lease", property_type=None):
     return "land_sale" if land else "sale"
 
 
+# Deals are simply Active, Closed or Terminated; every open deal sits on this stage
+# and its progress is shown by the key-date timeline.
+ACTIVE_STAGE = "under_contract"
+
+
 @transaction.atomic
 def create_guided_deal(actor, data):
     """Create a deal from the guided New Deal form: transaction type, property,
@@ -316,8 +325,8 @@ def create_guided_deal(actor, data):
     name = ", ".join(x for x in [street + (f" Ste {suite}" if suite else ""), city, " ".join(
         x for x in ["TX", (data.get("zip_code") or "").strip()] if x)] if x)
     broker = actor if getattr(actor, "role", "") in {"admin", "broker"} else None
-    deal = Deal.objects.create(name=name[:255], transaction_type=ttype, stage=data["stage"], responsible_broker=broker,
-                               client=clients[0][1] if clients else None)
+    deal = Deal.objects.create(name=name[:255], transaction_type=ttype, stage=Stage.objects.get(key=ACTIVE_STAGE),
+                               responsible_broker=broker, client=clients[0][1] if clients else None)
     space = Space.objects.get_or_create(property=prop, suite=suite)[0] if suite else None
     deal.deal_properties.create(property=prop, space=space, is_primary=True)
     for role in sides:
@@ -327,4 +336,10 @@ def create_guided_deal(actor, data):
     represented = " and ".join(sides)
     audit(actor, "deal.created", deal, {"stage": deal.stage.name, "type": type_label, "represents": represented})
     log_activity(deal, f"Deal created — SKW represents the {represented}", actor=actor)
+    from . import pricing
+
+    pricing.save(deal, data, actor)
+    if data.get("status") == "closed":
+        total = deal.lease_total_consideration_cents if deal.is_lease else deal.executed_contract_price_cents
+        close_deal(deal, actor, actual_closing_date=data["closed_on"], total_cents=total)
     return deal

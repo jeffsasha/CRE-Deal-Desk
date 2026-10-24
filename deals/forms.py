@@ -1,9 +1,8 @@
 from django import forms
-from django.utils.translation import gettext, gettext_lazy
+from django.utils.translation import gettext_lazy
 
-from core.choices import RATE_UNITS
 from core.fields import MoneyField, MoneyModelFormMixin
-from core.forms import DateInput, LocalizedForm, StyledModelForm
+from core.forms import DateInput, LocalizedForm, StyledModelForm, localize_fields
 from core.models import User
 from crm.models import Contact, Organization
 
@@ -28,24 +27,35 @@ def staff_users():
     return User.objects.filter(is_active=True).exclude(role="read_only")
 
 
-class DealForm(MoneyModelFormMixin, StyledModelForm):
-    """Only what is edited day to day; the deal is its address."""
+class DealForm(StyledModelForm):
+    """Only what is edited day to day: the address, client, price and notes."""
 
-    lease_total_consideration = MoneyField(label="Total lease consideration")
-    money_fields = {"lease_total_consideration": "lease_total_consideration_cents"}
     full_width = ("name", "description")
 
     class Meta:
         model = Deal
-        fields = ["name", "transaction_type", "client", "lease_total_consideration", "lease_area_sf", "description"]
-        labels = {"name": "Address", "description": "Notes", "lease_area_sf": "Leased area (SF)"}
+        fields = ["name", "client", "description"]
+        labels = {"name": "Address", "description": "Notes"}
 
     def __init__(self, *args, **kwargs):
+        from . import pricing
+
         super().__init__(*args, **kwargs)
         self.fields["client"].queryset = Organization.objects.active()
-        if not self.instance.is_lease:
-            del self.fields["lease_total_consideration"]
-            del self.fields["lease_area_sf"]
+        pricing.add_price_fields(self, lease=self.instance.is_lease)
+        if self.instance.is_closed and not self.instance.is_lease:
+            self.fields["price"].label = "Closing price"
+        for name, value in pricing.initial(self.instance).items():
+            self.initial.setdefault(name, value)
+        localize_fields(self)
+
+    def clean(self):
+        from . import pricing
+
+        data = super().clean()
+        if self.instance.is_lease:
+            pricing.validate_lease_data(self, data)
+        return data
 
 
 class StageChangeForm(LocalizedForm):
@@ -55,20 +65,18 @@ class StageChangeForm(LocalizedForm):
 
 
 class PartyForm(StyledModelForm):
+    name = forms.CharField(label=gettext_lazy("Name or company name"), max_length=255)
+    full_width = ("notes",)
+
     class Meta:
         model = DealParty
-        fields = ["role", "organization", "contact", "file_number", "is_notice_recipient", "notice_address", "notes"]
+        fields = ["role", "name", "notes"]
+        widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["organization"].queryset = Organization.objects.active()
-        self.fields["contact"].queryset = Contact.objects.active().select_related("organization")
-
-    def clean(self):
-        data = super().clean()
-        if not data.get("organization") and not data.get("contact"):
-            raise forms.ValidationError("Choose a company, a contact, or both.")
-        return data
+        if self.instance.pk:
+            self.initial["name"] = self.instance.display_name
 
 
 class RepresentationForm(StyledModelForm):
@@ -259,19 +267,28 @@ class DraftForm(StyledModelForm):
 
 
 class CloseDealForm(LocalizedForm):
-    actual_closing_date = forms.DateField(widget=DateInput())
-    total = MoneyField(label="Actual total consideration (deal level)",
-                       help_text="Counted once in volume reports, regardless of how many properties or sides. Blank = unknown.")
-    note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}),
-                           help_text="E.g. funding and recording confirmation.")
+    actual_closing_date = forms.DateField(label="Closing date", widget=DateInput())
+    total = MoneyField(label="Closing price", help_text="")
+    note = forms.CharField(label="Note", required=False, widget=forms.Textarea(attrs={"rows": 2}))
 
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.deal = deal
+        self.initial.setdefault("actual_closing_date", deal.actual_closing_date)
+        self.initial.setdefault("total", deal.lease_total_consideration_cents if deal.is_lease
+                                else deal.actual_closing_price_cents if deal.is_closed
+                                else deal.executed_contract_price_cents)
         if deal.is_lease:
-            self.fields["actual_closing_date"].label = "Lease execution date"
-            self.fields["total"].label = "Total lease consideration"
-            self.fields["total"].help_text = "Reported as lease consideration, never as sales volume."
+            self.fields["actual_closing_date"].label = "Lease signed date"
+            self.fields["total"].label = gettext_lazy("Signed lease rent total")
+            if deal.lease_term_months is not None:
+                from . import pricing
+
+                self.initial["total"] = pricing.calculated_total(deal)
+                self.fields["total"].disabled = True
+                self.fields["total"].help_text = gettext_lazy("Calculated from the signed term. Edit rent and term on the deal to change it.")
+            else:
+                self.fields["total"].help_text = gettext_lazy("Enter full signed-term rent, not one month's rent. Add the signed term on Edit deal to calculate automatically.")
         links = list(deal.deal_properties.select_related("property"))
         self.allocation_fields = []
         if len(links) > 1:
@@ -281,6 +298,7 @@ class CloseDealForm(LocalizedForm):
                                                help_text="Optional. If any are given, all must add up to the total.",
                                                initial=link.allocated_price_cents)
                 self.allocation_fields.append((name, link))
+        localize_fields(self)
 
     def allocations(self):
         return {link.pk: self.cleaned_data.get(name) for name, link in self.allocation_fields
@@ -324,19 +342,42 @@ class NewDealForm(LocalizedForm):
     zip_code = forms.CharField(required=False, label=_("ZIP"))
     client_a = forms.CharField(required=False)
     client_b = forms.CharField(required=False)
-    stage = forms.ModelChoiceField(queryset=Stage.objects.none(), label=_("Stage"))
+    # Active, or already closed (to record a past transaction).
+    status = forms.ChoiceField(choices=[("active", _("Active")), ("closed", _("Closed"))], initial="active",
+                               widget=forms.RadioSelect)
+    closed_on = forms.DateField(required=False, widget=DateInput(), label=_("Closing date"))
 
     def __init__(self, *args, **kwargs):
+        from . import pricing
+
         super().__init__(*args, **kwargs)
-        self.fields["stage"].queryset = Stage.objects.filter(enabled=True, category="active")
-        self.fields["stage"].initial = Stage.objects.filter(key="lead").first()
-        self.fields["stage"].label_from_instance = lambda st: gettext(st.name)
+        pricing.add_price_fields(self, lease=False)
+        pricing.add_price_fields(self, lease=True)
+        if self.is_bound:
+            self.data = self.data.copy()
+            irrelevant = ["price"] if self.data.get("kind") == "lease" else pricing.LEASE_FIELDS + ["lease_type"]
+            if self.data.get("status") != "closed":
+                irrelevant += ["closed_on"]
+            for name in irrelevant:
+                self.data.pop(name, None)
+        localize_fields(self)
 
     def clean(self):
+        from django.utils import timezone
+
         d = super().clean()
         kind, side = d.get("kind"), d.get("side")
+        if kind == "lease":
+            from . import pricing
+
+            pricing.validate_lease_data(self, d)
         if kind and side and side not in dict(SIDE_CHOICES[kind]):
             self.add_error("side", _("Choose who we represent for this kind of deal."))
+        if d.get("status") == "closed":
+            if not d.get("closed_on"):
+                self.add_error("closed_on", _("Enter the date it closed."))
+            elif d["closed_on"] > timezone.localdate():
+                self.add_error("closed_on", _("A closing date cannot be in the future."))
         return d
 
 
@@ -345,11 +386,14 @@ class KeyDatesForm(LocalizedForm):
 
     effective_date = forms.DateField(label="Effective Date", required=False, widget=DateInput(),
                                      help_text="As defined in the executed contract.")
-    feasibility_days = forms.IntegerField(label="Feasibility Period (days)", required=False, min_value=0,
-                                          help_text="Calendar days after the Effective Date.")
+    feasibility_mode = forms.ChoiceField(label="Feasibility Period is", initial="days", widget=forms.RadioSelect,
+                                         choices=[("days", "Days after the Effective Date"), ("date", "A fixed date")])
+    feasibility_days = forms.IntegerField(label="Feasibility Period (days)", required=False, min_value=0)
+    feasibility_date = forms.DateField(label="Feasibility Period ends", required=False, widget=DateInput())
     closing_mode = forms.ChoiceField(label="Closing Date is", initial="days", widget=forms.RadioSelect,
-                                     choices=[("days", "Days after the Effective Date"), ("date", "A fixed date")])
-    closing_days = forms.IntegerField(label="Closing (days after Effective Date)", required=False, min_value=0)
+                                     choices=[("days", "Days after the Feasibility Period ends"), ("date", "A fixed date")])
+    closing_days = forms.IntegerField(label="Closing (days after the Feasibility Period ends)", required=False, min_value=0,
+                                      help_text="If the Feasibility Period is extended, the Closing Date moves with it.")
     closing_date = forms.DateField(label="Closing Date", required=False, widget=DateInput())
     commencement_date = forms.DateField(label="Commencement Date", required=False,
                                         widget=DateInput())
@@ -358,15 +402,22 @@ class KeyDatesForm(LocalizedForm):
 
     def __init__(self, *args, deal=None, **kwargs):
         super().__init__(*args, **kwargs)
-        drop = ["feasibility_days", "closing_mode", "closing_days", "closing_date"] if deal.is_lease else ["commencement_date"]
+        drop = (["feasibility_mode", "feasibility_days", "feasibility_date", "closing_mode", "closing_days", "closing_date"]
+                if deal.is_lease else ["commencement_date"])
         for name in drop:
             del self.fields[name]
+        if self.is_bound:
+            self.data = self.data.copy()
+            for prefix in ("feasibility", "closing"):
+                unused = "days" if self.data.get(prefix + "_mode") == "date" else "date"
+                self.data.pop(prefix + "_" + unused, None)
 
     def clean(self):
         data = super().clean()
-        mode = data.get("closing_mode")
-        if mode == "date" and data.get("closing_date") and data.get("effective_date") \
-                and data["closing_date"] < data["effective_date"]:
+        eff = data.get("effective_date")
+        if data.get("feasibility_mode") == "date" and data.get("feasibility_date") and eff and data["feasibility_date"] < eff:
+            self.add_error("feasibility_date", gettext_lazy("The Feasibility Period cannot end before the Effective Date."))
+        if data.get("closing_mode") == "date" and data.get("closing_date") and eff and data["closing_date"] < eff:
             self.add_error("closing_date", gettext_lazy("The Closing Date is before the Effective Date."))
         return data
 
@@ -379,7 +430,6 @@ class ExtensionForm(LocalizedForm):
     new_date = forms.DateField(label="New date", required=False, widget=DateInput())
     days = forms.IntegerField(label="Or extend by (days)", required=False, min_value=1,
                               help_text="Counted from the current date.")
-    shift_closing = forms.BooleanField(label="Move the Closing Date by the same number of days", required=False)
     note = forms.CharField(label="Note", required=False, max_length=255,
                            help_text="e.g. First extension, extension fee paid.")
 
@@ -387,8 +437,6 @@ class ExtensionForm(LocalizedForm):
         data = super().clean()
         if bool(data.get("new_date")) == bool(data.get("days")):
             raise forms.ValidationError(gettext_lazy("Enter either the new date or the number of days."))
-        if data.get("milestone") != "feasibility":
-            data["shift_closing"] = False
         return data
 
 
@@ -400,19 +448,3 @@ class ReceiptForm(LocalizedForm):
     amount = MoneyField(label="Amount received", required=True)
     entry_date = forms.DateField(label="Date received", widget=DateInput())
     reference = forms.CharField(label="Check / wire reference", required=False, max_length=120)
-
-
-class ListingForm(LocalizedForm):
-    listing_date = forms.DateField(label="Listed on", required=False, widget=DateInput())
-    listing_expires_on = forms.DateField(label="Listing agreement expires", required=False,
-                                         widget=DateInput(),
-                                         help_text="Added to the calendar with reminders.")
-    asking_price = MoneyField(label="Asking price / rent", help_text="Blank = not set.")
-    asking_price_unit = forms.ChoiceField(label="Unit", choices=RATE_UNITS, initial="usd_total")
-
-    def clean(self):
-        data = super().clean()
-        if data.get("listing_date") and data.get("listing_expires_on") and data["listing_expires_on"] < data["listing_date"]:
-            self.add_error("listing_expires_on", gettext_lazy("The listing cannot expire before it was listed."))
-        data["asking_price_cents"] = data.get("asking_price")
-        return data

@@ -28,7 +28,7 @@
       <tr><th>{% translate "Notes" %}</th><td>{{ issue.resolution_notes|default:"—" }}</td></tr>
       <tr><th>{% translate "Responsible" %}</th><td>{{ issue.responsible|default:"—" }}</td></tr>
     </table></div></div>
-    <div class="card"><div class="card-head"><h2>{% translate "Disclosure" %}</h2></div><div class="card-body"><p><strong>{{ issue.get_disclosure_finding_display }}</strong></p><p class="text-2">{{ issue.disclosure_note }}</p><small class="muted">"Not found in reviewed materials" means only that our review did not find it.</small></div></div>
+    <div class="card"><div class="card-head"><h2>{% translate "Disclosure" %}</h2></div><div class="card-body"><p><strong>{{ issue.get_disclosure_finding_display }}</strong></p><p class="text-2">{{ issue.disclosure_note }}</p><small class="muted">{% translate '"Not found in reviewed materials" means only that our review did not find it.' %}</small></div></div>
   </div>
 </div>
 {% endblock %}

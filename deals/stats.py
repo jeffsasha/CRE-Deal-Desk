@@ -1,5 +1,5 @@
-"""Closed-deal totals for the Deals page header: sales volume, lease consideration and
-SKW commission on the deals that closed in a period (by actual closing date).
+"""Deals header totals: sales and lease consideration by actual closing date,
+and actual SKW cash received by receipt date, including active deals.
 
 Each closed deal is counted once. Sales and lease consideration are never added
 together; business-asset sales are reported on their own line. Unknown amounts are
@@ -8,6 +8,7 @@ counted separately, never as zero.
 from dataclasses import dataclass, field
 
 from commissions import simple
+from reports.services import cash_receipts, filters_from_params
 
 from .models import BUSINESS_TYPES, LEASE_TYPES, Deal, Stage
 
@@ -45,6 +46,10 @@ def closed_years():
 
 def totals(year=None, with_commission=True):
     t = ClosedTotals(years=closed_years())
+    if with_commission:
+        all_receipts = cash_receipts(filters_from_params({}))
+        t.years = sorted(set(t.years) | {row["entry"].entry_date.year for row in all_receipts["rows"]}, reverse=True)
+        t.received = cash_receipts(filters_from_params({"year": year}))["total"] if year else all_receipts["total"]
     for deal in closed_deals(year):
         t.count += 1
         if deal.transaction_type in LEASE_TYPES:
@@ -68,5 +73,4 @@ def totals(year=None, with_commission=True):
                 t.commission_unknown += 1
             else:
                 t.commission += c.expected
-            t.received += c.received
     return t

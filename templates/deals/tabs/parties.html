@@ -1,13 +1,13 @@
 {% load i18n %}<div class="split">
   <div class="card"><div class="card-head"><h2>{% translate "Participating parties" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_sub' deal.pk 'party' %}">{% translate "Add party" %}</a>{% endif %}</div>
   <div class="card-body flush table-wrap"><table class="t">
-    <thead><tr><th>{% translate "Role" %}</th><th>{% translate "Company" %}</th><th>{% translate "Contact" %}</th><th>{% translate "File #" %}</th><th>{% translate "Notices" %}</th><th></th></tr></thead>
-    <tbody>{% for p in parties %}<tr><td><strong>{{ p.get_role_display }}</strong></td>
-      <td>{% if p.organization %}<a href="{{ p.organization.get_absolute_url }}">{{ p.organization }}</a>{% else %}—{% endif %}</td>
-      <td>{% if p.contact %}<a href="{{ p.contact.get_absolute_url }}">{{ p.contact.full_name }}</a>{% if show_client_details or not p.contact.is_confidential_client %}<br><small class="muted">{{ p.contact.email }} {{ p.contact.phone }}</small>{% else %}<br><small class="muted">{% icon "lock" %} {% translate "details restricted" %}</small>{% endif %}{% else %}—{% endif %}</td>
-      <td>{{ p.file_number|default:"—" }}</td><td>{% if p.is_notice_recipient %}{% translate "Designated recipient" %}{% if p.notice_address %}<br><small class="muted">{{ p.notice_address }}</small>{% endif %}{% endif %}</td>
-      <td>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'party' p.pk %}">{% translate "Edit" %}</a>{% endif %}</td></tr>
-    {% empty %}<tr><td colspan="6"><div class="empty">{% translate "No parties yet: add buyer/seller or landlord/tenant, title company, escrow officer, surveyor, lender, attorneys, inspectors." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
+    <thead><tr><th>{% translate "Role" %}</th><th>{% translate "Name or company name" %}</th><th>{% translate "Notes" %}</th><th></th></tr></thead>
+    <tbody>{% for p in parties %}<tr>
+      <td><strong>{{ p.get_role_display }}</strong></td>
+      <td>{{ p.display_name }}</td>
+      <td>{{ p.notes|default:"—"|linebreaksbr }}</td>
+      <td>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'party' p.pk %}">{% translate "Edit" %}</a>{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="4"><div class="empty">{% translate "No parties yet. Add a role and type the person's or company's name." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
   <div class="card"><div class="card-head"><h2>{% translate "Representation" %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'representation' %}">{% translate "Add" %}</a>{% endif %}</div>
   <div class="card-body flush"><table class="t"><tbody>
     {% for r in representations %}<tr><td><strong>{{ r.get_side_display }}</strong><br><small class="muted">{% if r.is_skw %}{% translate "SKW Realty LLC" %}{% if r.broker_user %} — {{ r.broker_user }}{% endif %}{% else %}{{ r.brokerage|default:r.broker_name|default:_("Other / unrepresented") }}{% endif %}</small>{% if r.agreement_document %}<br><a href="{{ r.agreement_document.get_absolute_url }}"><small>{{ r.agreement_document }}</small></a>{% endif %}</td>

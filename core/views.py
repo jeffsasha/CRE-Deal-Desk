@@ -24,6 +24,7 @@ from .forms import HolidayForm, ReminderDefaultsForm, StageForm, UserCreateForm,
 from .listing import Column, Filter, Listing
 from .models import AuditLog, HolidayCalendar, Job, Notification, SavedView, User, WorkspaceSetting
 from .permissions import has_perm, require, require_perm
+from .templatetags.desk import d as format_day
 
 
 def safe_next(request, fallback):
@@ -142,7 +143,7 @@ def save_view(request):
     if area and name:
         SavedView.objects.update_or_create(user=request.user, area=area, name=name,
                                            defaults={"query_string": request.POST.get("query_string", "")})
-        messages.success(request, f"Saved view '{name}'.")
+        messages.success(request, _("Saved view '%(name)s'.") % {"name": name})
     return HttpResponseRedirect(safe_next(request, reverse("dashboard")))
 
 
@@ -166,7 +167,7 @@ def user_create(request):
     if request.method == "POST" and form.is_valid():
         user = form.save()
         audit(request.user, "user.created", user, {"role": user.role})
-        messages.success(request, f"User {user.username} created.")
+        messages.success(request, _("User %(username)s created.") % {"username": user.username})
         return redirect("user_list")
     return render(request, "form.html", {"form": form, "title": gettext_lazy("New user"), "back_url": reverse("user_list")})
 
@@ -186,7 +187,7 @@ def user_edit(request, pk):
                 audit(request.user, "user.permissions_changed", user, changes)
             messages.success(request, gettext_lazy("User updated."))
             return redirect("user_list")
-    return render(request, "form.html", {"form": form, "title": f"Edit {user.username}", "back_url": reverse("user_list")})
+    return render(request, "form.html", {"form": form, "title": _("Edit %(username)s") % {"username": user.username}, "back_url": reverse("user_list")})
 
 
 @require_perm("view")
@@ -228,7 +229,7 @@ def holiday_add(request, pk):
         audit(request.user, "holiday.added", cal, {"date": h.date, "name": h.name})
         _recompute_calendar_users(cal, request.user)
         return redirect("holiday_list")
-    return render(request, "form.html", {"form": form, "title": f"Add holiday to {cal}", "back_url": reverse("holiday_list")})
+    return render(request, "form.html", {"form": form, "title": _("Add holiday to %(calendar)s") % {"calendar": cal}, "back_url": reverse("holiday_list")})
 
 
 def _recompute_calendar_users(cal, actor):
@@ -263,7 +264,7 @@ def reminder_log(request):
         r = get_object_or_404(qs, pk=request.POST.get("reminder"))
         if r.status == "failed":
             deliver(r)
-            messages.info(request, f"Retried: {r.get_status_display()}.")
+            messages.info(request, _("Retried: %(status)s.") % {"status": r.get_status_display()})
         return redirect(reverse("reminder_log") + "?" + request.GET.urlencode())
     listing = Listing(
         request, qs, area="reminders",
@@ -272,11 +273,11 @@ def reminder_log(request):
             Column("deal", gettext_lazy("Deal"), lambda r: (r.deadline.deal if r.deadline_id else r.checklist_item.deal).internal_id),
             Column("user", gettext_lazy("Recipient"), lambda r: r.user),
             Column("channel", gettext_lazy("Channel"), lambda r: r.get_channel_display()),
-            Column("lead", gettext_lazy("Lead"), lambda r: f"{r.lead_days} d", sort="lead_days", cls="num"),
+            Column("lead", gettext_lazy("Lead"), lambda r: _("%(days)s d") % {"days": r.lead_days}, sort="lead_days", cls="num"),
             Column("rev", gettext_lazy("Deadline rev."), lambda r: r.target_revision, cls="num"),
-            Column("at", gettext_lazy("Scheduled for"), lambda r: timezone.localtime(r.remind_at).strftime("%b %-d, %Y %-I:%M %p"), sort="remind_at"),
+            Column("at", gettext_lazy("Scheduled for"), lambda r: format_day(r.remind_at), sort="remind_at"),
             Column("status", gettext_lazy("Status"), lambda r: r.get_status_display(), sort="status"),
-            Column("ack", gettext_lazy("Acknowledged"), lambda r: "Yes" if r.acknowledged_at else ""),
+            Column("ack", gettext_lazy("Acknowledged"), lambda r: _("Yes") if r.acknowledged_at else ""),
             Column("note", gettext_lazy("Error / reason"), lambda r: r.last_error or r.cancelled_reason),
         ],
         filters=[Filter("status", gettext_lazy("Status"), Reminder.STATUSES, lambda qs, v: qs.filter(status=v))],
@@ -294,7 +295,7 @@ def audit_log(request):
         request, AuditLog.objects.select_related("actor"), area="audit",
         columns=[
             Column("when", gettext_lazy("When"), lambda a: timezone.localtime(a.created_at).strftime("%Y-%m-%d %H:%M:%S"), sort="created_at"),
-            Column("actor", gettext_lazy("User"), lambda a: a.actor or "System"),
+            Column("actor", gettext_lazy("User"), lambda a: a.actor or _("System")),
             Column("action", gettext_lazy("Action"), lambda a: a.action, sort="action"),
             Column("object", gettext_lazy("Record"), lambda a: a.object_repr),
             Column("type", gettext_lazy("Type"), lambda a: a.model_label, default=False),
@@ -345,7 +346,7 @@ def restore(request, kind, pk):
     obj.archived_by = None
     obj.save()
     audit(request.user, f"{kind}.restored", obj)
-    messages.success(request, f"Restored {obj}.")
+    messages.success(request, _("Restored %(object)s.") % {"object": obj})
     return redirect("archived")
 
 
@@ -365,6 +366,6 @@ def jobs(request):
         job.status = Job.STATUS_QUEUED
         job.save()
         run_job(job)
-        messages.info(request, f"Job #{job.pk}: {job.get_status_display()}.")
+        messages.info(request, _("Job #%(number)s: %(status)s.") % {"number": job.pk, "status": job.get_status_display()})
         return redirect("jobs")
     return render(request, "core/jobs.html", {"jobs": Job.objects.order_by("-created_at")[:200]})

@@ -1,0 +1,1 @@
+<label for="{{ f.id_for_label }}">{{ f.label }}</label>{% if 'data-money' in f.field.widget.attrs %}<div class="money-input"><span aria-hidden="true">$</span>{{ f }}</div>{% else %}{{ f }}{% endif %}{% if f.help_text %}<div class="help">{{ f.help_text }}</div>{% endif %}{% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}

@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from core.forms import LocalizedForm
 from core.permissions import require_perm
@@ -34,7 +35,7 @@ def import_list(request):
         try:
             batch = services.create_batch(form.cleaned_data["file"], form.cleaned_data["kind"], request.user)
         except Exception as exc:  # noqa: BLE001 - malformed spreadsheets
-            form.add_error("file", f"Could not read the file: {exc}")
+            form.add_error("file", _("Could not read the file: %(error)s") % {"error": exc})
         else:
             return redirect("import_detail", batch.pk)
     return render(request, "imports/list.html", {"form": form, "batches": ImportBatch.objects.select_related("created_by")[:100]})
@@ -47,7 +48,7 @@ def import_detail(request, pk):
     if request.method == "POST" and batch.status in {"uploaded", "validated"}:
         mapping = {key: request.POST.get(f"map_{key}", "") for key, *_ in fields}
         counts = services.validate_batch(batch, mapping)
-        messages.info(request, f"Validated: {counts['valid']} valid, {counts['invalid']} with errors, {counts['duplicates']} possible duplicates.")
+        messages.info(request, _("Validated: %(valid)s valid, %(invalid)s with errors, %(duplicates)s possible duplicates.") % counts)
         return redirect("import_detail", batch.pk)
     status = request.GET.get("status", "")
     rows = batch.rows.all()
@@ -76,7 +77,7 @@ def import_commit(request, pk):
     batch = get_object_or_404(ImportBatch, pk=pk)
     try:
         committed, skipped = services.commit_batch(batch, request.user)
-        messages.success(request, f"Committed {committed} row(s); {skipped} skipped. Every record created carries this batch as its source.")
+        messages.success(request, _("Committed %(committed)s row(s); %(skipped)s skipped. Every record created carries this batch as its source.") % {"committed": committed, "skipped": skipped})
     except ValueError as exc:
         messages.error(request, str(exc))
     return redirect("import_detail", batch.pk)
@@ -89,9 +90,9 @@ def import_revert(request, pk):
     try:
         reverted, blocked = services.revert_batch(batch, request.user)
         if blocked:
-            messages.warning(request, f"Reverted {reverted} row(s). {blocked} row(s) were kept because their records were edited or used after the import.")
+            messages.warning(request, _("Reverted %(reverted)s row(s). %(blocked)s row(s) were kept because their records were edited or used after the import.") % {"reverted": reverted, "blocked": blocked})
         else:
-            messages.success(request, f"Reverted {reverted} row(s).")
+            messages.success(request, _("Reverted %(reverted)s row(s).") % {"reverted": reverted})
     except ValueError as exc:
         messages.error(request, str(exc))
     return redirect("import_detail", batch.pk)

@@ -11,16 +11,17 @@
     {% icon "search" %}<input type="search" name="q" value="{{ q }}" placeholder="{% translate "Search address or client" %}" aria-label="{% translate "Search address or client" %}"></form>
     <span class="muted" style="font-size:12px">{% blocktranslate count n=rows|length %}{{ n }} deal{% plural %}{{ n }} deals{% endblocktranslate %}</span></div>
   <div class="card-body flush table-wrap"><table class="t deal-table">
-    <thead><tr><th>{% translate "Address" %}</th><th>{% translate "Type" %}</th><th>{% translate "Stage" %}</th><th>{% translate "Date" %}</th><th class="num">{% translate "Price" %}</th>{% if can.commission_view %}<th class="num">{% translate "SKW" %}</th>{% endif %}</tr></thead>
+    <colgroup><col class="deal-address-col"><col class="deal-type-col"><col class="deal-status-col"><col class="deal-date-col"><col class="deal-price-col">{% if can.commission_view %}<col class="deal-skw-col">{% endif %}</colgroup>
+    <thead><tr><th>{% translate "Address" %}</th><th>{% translate "Type" %}</th><th>{% translate "Status" %}</th><th>{% translate "Date" %}</th><th class="num">{% translate "Price" %}</th>{% if can.commission_view %}<th class="num">{% translate "SKW" %}</th>{% endif %}</tr></thead>
     <tbody>
     {% for r in rows %}
       {% ifchanged r.group %}{% if r.group == 1 %}<tr class="group-row"><td colspan="6">{% translate "Closed" %}</td></tr>{% elif r.group == 2 %}<tr class="group-row"><td colspan="6">{% translate "Terminated / lost" %}</td></tr>{% endif %}{% endifchanged %}
       <tr class="{% if r.group > 1 %}row-muted{% endif %}">
         <td><a href="{{ r.deal.get_absolute_url }}"><strong>{{ r.deal.name }}</strong></a>{% if r.deal.client %}<br><small class="muted">{{ r.deal.client }}</small>{% endif %}</td>
-        <td class="nowrap">{{ r.deal.get_transaction_type_display }}{% if r.sides %}<br><small class="muted">{% for s in r.sides %}{% translate s %}{% if not forloop.last %} / {% endif %}{% endfor %}</small>{% endif %}</td>
-        <td>{% translate r.deal.stage.name as sn %}{% pill r.deal.stage.category sn %}</td>
+        <td class="nowrap">{% if r.deal.is_lease %}{% pill "lease" r.deal.get_transaction_type_display tone="blue" %}{% elif r.deal.is_business_asset %}{% translate "Business for sale" as business_label %}{% pill "business" business_label tone="violet" %}{% elif r.deal.transaction_type == 'sale' or r.deal.transaction_type == 'land_sale' %}{% translate "For sale" as sale_label %}{% pill "sale" sale_label tone="amber" %}{% else %}{{ r.deal.get_transaction_type_display }}{% endif %}{% if r.sides %}<br><small class="muted">{% for s in r.sides %}{% translate s %}{% if not forloop.last %} / {% endif %}{% endfor %}</small>{% endif %}</td>
+        <td>{% status_pill r.deal %}</td>
         <td class="nowrap">{% if r.group == 0 %}{% if r.next %}<small class="muted">{% translate r.next.label %}</small><br>{{ r.next.date|dshort }} <small class="muted">{{ r.next.date|relday }}</small>{% else %}—{% endif %}{% else %}{{ r.deal.actual_closing_date|d }}{% endif %}</td>
-        <td class="num nowrap">{% if r.amount is not None %}{{ r.amount|money0 }}{% elif r.asking %}<small class="muted">{% translate "Asking" %}</small> {{ r.asking }}{% else %}—{% endif %}</td>
+        <td class="num nowrap">{{ r.price|default:"—" }}</td>
         {% if r.skw %}<td class="num nowrap">{{ r.skw.expected|money0:"—" }}{% if r.skw.status == "full" %}<br><small style="color:var(--green-fg)">{% translate "Received" %}</small>{% endif %}</td>{% endif %}
       </tr>
     {% empty %}<tr><td colspan="6"><div class="empty">{% if q %}{% translate "No deals match." %}{% else %}{% translate "No deals yet." %}{% if can.edit %} <a href="{% url 'deal_create' %}">{% translate "Create a deal" %}</a>{% endif %}{% endif %}</div></td></tr>{% endfor %}

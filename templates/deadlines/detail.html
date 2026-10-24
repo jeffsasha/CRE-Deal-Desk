@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{{ dl.name }}{% endblock %}
+{% block title %}{{ display_name }}{% endblock %}
 {% block content %}
 <div class="crumbs"><a href="{{ dl.deal.get_absolute_url }}?tab=contract">{{ dl.deal }}</a> {% translate "/ Deadline" %}</div>
-<div class="page-head"><div><h1>{{ dl.name }}</h1>
+<div class="page-head"><div><h1>{{ display_name }}</h1>
   <div class="meta" style="margin-top:6px">{% if dl.state == 'open' %}{% pill dl.computation dl.get_computation_display %}{% else %}{% pill dl.state dl.get_state_display %}{% endif %} <span class="tag">{% if dl.is_contractual %}{% translate "Contractual" %}{% else %}{% translate "Internal target" %}{% endif %}</span> <span class="muted">{{ dl.get_category_display }}</span></div></div>
   {% if can.edit %}<div class="actions"><form method="post" action="{% url 'deadline_recompute' dl.pk %}">{% csrf_token %}<button class="btn">{% translate "Recompute" %}</button></form><a class="btn btn-primary" href="{% url 'deadline_edit' dl.pk %}">{% translate "Edit rule" %}</a></div>{% endif %}</div>
 
@@ -15,29 +15,30 @@
   <div><div class="k">{% translate "Responsible" %}</div><div class="v" style="font-weight:500">{{ dl.responsible_user|default:"—" }}{% if dl.responsible_party %}<br><small class="muted">{{ dl.responsible_party }}</small>{% endif %}</div></div>
   <div><div class="k">{% translate "Rule" %}</div><div class="v" style="font-weight:500">{{ dl.get_confirmation_display }}</div></div>
 </div>
-<div class="notice notice-{% if dl.computation == 'computed' %}info{% elif dl.computation == 'awaiting_trigger' %}warn{% else %}error{% endif %}">{{ dl.computation_note }}</div>
-{% if dl.due_at %}<p class="muted"><small>{% translate "Due" %} {{ dl.due_at|date:"N j, Y, g:i A T" }} {% translate "in" %} {{ dl.time_zone }} {% translate "(stored as an exact instant; daylight saving time handled)." %}</small></p>{% endif %}
+<div class="notice notice-{% if dl.computation == 'computed' %}info{% elif dl.computation == 'awaiting_trigger' %}warn{% else %}error{% endif %}">{{ current_note }}</div>
+{% if current_note != dl.computation_note and dl.computation_note %}<details class="muted"><summary>{% translate "Original calculation note (English)" %}</summary><p>{{ dl.computation_note }}</p></details>{% endif %}
+{% if dl.due_at %}<p class="muted"><small>{% translate "Due" %} {{ dl.due_at|d }} {% translate "in" %} {{ dl.time_zone }} {% translate "(stored as an exact instant; daylight saving time handled)." %}</small></p>{% endif %}
 
 <div class="split">
 <div class="stack">
   <div class="card"><div class="card-head"><h2>{% translate "Rule" %}</h2></div><div class="card-body"><table class="kv">
     <tr><th>{% translate "Type" %}</th><td>{{ dl.get_rule_type_display }}</td></tr>
     {% if dl.rule_type == 'fixed' %}<tr><th>{% translate "Fixed date" %}</th><td>{{ dl.fixed_date|d }}</td></tr>{% endif %}
-    {% if dl.rule_type == 'fixed_term' %}<tr><th>{% translate "Date term" %}</th><td>{{ dl.fixed_date_term_key }}</td></tr>{% endif %}
+    {% if dl.rule_type == 'fixed_term' %}<tr><th>{% translate "Date term" %}</th><td>{{ fixed_date_term_label }}</td></tr>{% endif %}
     {% if triggers %}<tr><th>{% translate "Trigger event(s)" %}</th><td>{% for t in triggers %}{{ t.label|tr }}: {% if t.on %}<strong>{{ t.on|d }}</strong>{% if not t.confirmed %} {% translate "unconfirmed" as pl_label %}{% pill "needs_review" pl_label %}{% endif %}{% else %}{% translate "not recorded" as pl_label %}{% pill "awaiting_trigger" pl_label %}{% if can.edit and 'deadline:' not in t.key %} <a href="{% url 'deal_event' dl.deal.pk %}?key={{ t.key }}">{% translate "Record" %}</a>{% endif %}{% endif %}<br>{% endfor %}</td></tr>{% endif %}
-    {% if dl.rule_type != 'fixed' and dl.rule_type != 'fixed_term' %}<tr><th>{% translate "Period" %}</th><td>{% if dl.offset_term_key %}{% translate "From approved term “" %}{{ dl.offset_term_key }}”{% else %}{{ dl.offset_days }} {% translate "days" %}{% endif %}, {{ dl.get_day_basis_display|lower }}, {% if dl.include_trigger_day %}{% translate "trigger day counted as day 1" %}{% else %}{% translate "trigger day excluded" %}{% endif %}</td></tr>{% endif %}
-    <tr><th>{% translate "Holiday calendar" %}</th><td>{{ dl.holiday_calendar|default:_("None selected") }}</td></tr>
-    <tr><th>{% translate "Weekend / holiday rule" %}</th><td>{{ dl.get_weekend_rule_display }}{% if dl.weekend_rule_source %}<br><small class="muted">{{ dl.weekend_rule_source }}</small>{% endif %}</td></tr>
-    <tr><th>{% translate "Source" %}</th><td>{% if dl.source_version %}<a href="{{ dl.source_version.document.get_absolute_url }}">{{ dl.source_version }}</a>{% if dl.source_page %}{% translate ", p." %} {{ dl.source_page }}{% endif %}{% if dl.source_section %}, {{ dl.source_section }}{% endif %}<br>{% endif %}<small>{{ dl.source_clause|default:"—" }}</small></td></tr>
-    <tr><th>{% translate "Depends on / dependents" %}</th><td>{% for d in dependents %}<a href="{{ d.get_absolute_url }}">{{ d.name }}</a> {% translate "depends on this" %}<br>{% empty %}—{% endfor %}</td></tr>
+    {% if dl.rule_type != 'fixed' and dl.rule_type != 'fixed_term' %}<tr><th>{% translate "Period" %}</th><td>{% if dl.offset_term_key %}{% translate "From approved term “" %}{{ offset_term_label }}”{% else %}{{ dl.offset_days }} {% translate "days" %}{% endif %}, {{ dl.get_day_basis_display|lower }}, {% if dl.include_trigger_day %}{% translate "trigger day counted as day 1" %}{% else %}{% translate "trigger day excluded" %}{% endif %}</td></tr>{% endif %}
+    <tr><th>{% translate "Holiday calendar" %}</th><td>{{ dl.holiday_calendar.name|tr|default:_("None selected") }}</td></tr>
+    <tr><th>{% translate "Weekend / holiday rule" %}</th><td>{{ dl.get_weekend_rule_display }}{% if dl.weekend_rule_source %}<br><small class="muted">{{ dl.weekend_rule_source|tr }}</small>{% endif %}</td></tr>
+    <tr><th>{% translate "Source" %}</th><td>{% if dl.source_version %}<a href="{{ dl.source_version.document.get_absolute_url }}">{{ dl.source_version }}</a>{% if dl.source_page %}{% translate ", p." %} {{ dl.source_page }}{% endif %}{% if dl.source_section %}, {{ dl.source_section }}{% endif %}<br>{% endif %}<small>{{ dl.source_clause|tr|default:"—" }}</small></td></tr>
+    <tr><th>{% translate "Depends on / dependents" %}</th><td>{% for d in dependents %}<a href="{{ d.url }}">{{ d.name }}</a> {% translate "depends on this" %}<br>{% empty %}—{% endfor %}</td></tr>
     <tr><th>{% translate "Linked checklist items" %}</th><td>{% for it in checklist_items %}{{ it.title }} ({{ it.get_status_display }})<br>{% empty %}—{% endfor %}</td></tr>
   </table></div></div>
   <div class="card"><div class="card-head"><h2>{% translate "Change history" %}</h2></div><div class="card-body flush table-wrap"><table class="t">
-    <thead><tr><th>{% translate "Rev." %}</th><th>{% translate "When" %}</th><th>{% translate "Previous" %}</th><th>{% translate "New" %}</th><th>{% translate "Reason" %}</th></tr></thead>
+    <thead><tr><th>{% translate "Rev." %}</th><th>{% translate "When" %}</th><th>{% translate "Previous" context "history value" %}</th><th>{% translate "New" context "history value" %}</th><th>{% translate "Reason" %}</th></tr></thead>
     <tbody>{% for r in revisions %}<tr><td>{{ r.revision }}</td><td class="nowrap">{{ r.changed_at|d }}<br><small class="muted">{{ r.changed_by|default:_("System") }}</small></td>
-      <td>{% if r.previous_date %}<span class="diff-old">{{ r.previous_date|d }}</span>{% else %}<small>{{ r.previous_computation|default:"—" }}</small>{% endif %}</td>
-      <td>{% if r.new_date %}<span class="diff-new">{{ r.new_date|d }}</span>{% else %}<small>{{ r.new_computation }}</small>{% endif %}</td>
-      <td>{{ r.reason }}{% if r.amendment %}<br><a href="{{ r.amendment.get_absolute_url }}"><small>{{ r.amendment }}</small></a>{% endif %}<br><small class="muted">{{ r.explanation|truncatechars:160 }}</small></td></tr>
+      <td>{% if r.previous_date %}<span class="diff-old">{{ r.previous_date|d }}</span>{% else %}<small>{{ r.previous_computation|computation_label|default:"—" }}</small>{% endif %}</td>
+      <td>{% if r.new_date %}<span class="diff-new">{{ r.new_date|d }}</span>{% else %}<small>{{ r.new_computation|computation_label }}</small>{% endif %}</td>
+      <td>{{ r.reason|tr }}{% if r.amendment %}<br><a href="{{ r.amendment.get_absolute_url }}"><small>{{ r.amendment }}</small></a>{% endif %}{% if r.explanation %}<details><summary>{% translate "Original calculation note (English)" %}</summary><small class="muted">{{ r.explanation }}</small></details>{% endif %}</td></tr>
     {% empty %}<tr><td colspan="5"><div class="empty">{% translate "No revisions." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
 </div>
 <div class="stack">

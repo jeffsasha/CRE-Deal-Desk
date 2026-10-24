@@ -23,10 +23,10 @@ RATE_UNITS = [
 ]
 RATE_UNIT_SUFFIX = {
     "usd_total": "",
-    "usd_sf_year": "/SF/yr",
-    "usd_sf_month": "/SF/mo",
-    "usd_month": "/mo",
-    "usd_year": "/yr",
+    "usd_sf_year": _("/SF/yr"),
+    "usd_sf_month": _("/SF/mo"),
+    "usd_month": _("/mo"),
+    "usd_year": _("/yr"),
 }
 
 VERIFICATION_CHOICES = [

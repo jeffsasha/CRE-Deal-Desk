@@ -12,7 +12,6 @@
 {% if DEMO_MODE %}<div class="demo-banner">{% translate "Demo mode — fictional sample data in an isolated database. Nothing here is SKW transaction history." %}</div>{% endif %}
 <div class="neon-stage" data-neon aria-hidden="true"><div class="neon-light"></div></div>
 <div class="neon-veil" data-neon-veil aria-hidden="true"></div>
-<div class="neon-rail" data-neon-rail aria-hidden="true"><div class="neon-tube"></div></div>
 <div class="app">
   <aside class="sidebar">
     <a class="brand" href="{% url 'hero' %}" aria-label="{% translate "SKW DealDesk home" %}">
@@ -54,6 +53,7 @@
       <a class="icon-btn" href="{{ OWNER_GITHUB }}" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">{% include "partials/github_icon.html" %}</a>
       <a class="icon-btn" href="{% url 'notifications' %}" aria-label="{% translate "Notifications" %}" title="{% translate "Notifications" %}">{% icon "bell" %}{% if unread_notifications %}<span class="badge-dot">{{ unread_notifications }}</span>{% endif %}</a>
       <a class="btn btn-exit" href="{% url 'hero' %}" title="{% translate "Exit to opening page" %}">{% icon "logout" %}<span>{% translate "Exit" %}</span></a>
+      <div class="neon-rail" data-neon-rail aria-hidden="true"><div class="neon-tube"></div></div>
     </header>
     <main class="content">
       {% if messages %}<div class="messages">{% for m in messages %}<div class="notice notice-{% if m.tags == 'error' %}error{% elif m.tags == 'warning' %}warn{% elif m.tags == 'success' %}success{% else %}info{% endif %}" {% if m.tags == 'success' or m.tags == 'info' %}data-autohide{% endif %}>{{ m }}</div>{% endfor %}</div>{% endif %}
@@ -79,6 +79,13 @@
 ]</script>
 <template id="cmdk-icons"><span data-i="search">{% icon "search" %}</span><span data-i="plus">{% icon "plus" %}</span><span data-i="deal_list">{% icon "deal_list" %}</span><span data-i="deadline_list">{% icon "deadline_list" %}</span><span data-i="document_list">{% icon "document_list" %}</span><span data-i="alert">{% icon "alert" %}</span><span data-i="bell">{% icon "bell" %}</span><span data-i="sun">{% icon "sun" %}</span><span data-i="moon">{% icon "moon" %}</span><span data-i="monitor">{% icon "monitor" %}</span><span data-i="arrow">{% icon "arrow" %}</span><span data-i="property_list">{% icon "property_list" %}</span><span data-i="contact_list">{% icon "contact_list" %}</span></template>
 <script type="application/json" id="cmdk-search-url">"{% url 'search' %}"</script>
+<div hidden data-ui-messages
+  data-theme-light="{% translate 'Theme: light (click to change)' %}"
+  data-theme-dark="{% translate 'Theme: dark (click to change)' %}"
+  data-theme-system="{% translate 'Theme: system (click to change)' %}"
+  data-stage-reason="{% translate 'Reason for moving this deal to {stage}:' %}"
+  data-stage-error="{% translate 'Stage change was not allowed.' %}"
+  data-page="{% translate 'Page {number}' %}"></div>
 <script src="{% asset 'js/app.js' %}"></script>
 {% block scripts %}{% endblock %}
 </body>

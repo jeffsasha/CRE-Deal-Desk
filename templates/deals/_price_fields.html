@@ -1,0 +1,20 @@
+{% load i18n %}{# Price inputs. `lease` = show lease fields, `sale` = show the Sale price; the New deal page shows both and switches by kind. #}
+{% if sale %}<div class="form-grid"{% if switch %} data-kind-only="sale business"{% endif %}>
+  <div class="field">{% include "deals/_field.html" with f=form.price %}</div>
+</div>{% endif %}
+{% if lease %}<div class="form-grid"{% if switch %} data-kind-only="lease"{% endif %}>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_starting_rent %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_rent_unit %}</div>
+  <div class="field full">{% include "deals/_field.html" with f=form.lease_term_months %}</div>
+  <div class="field full"><div class="help">{% translate "Saved totals use the signed term only: free rent at the start, annual increases every 12 months, and blank free rent or increases as zero. Separately charged NNN, utilities, deposits and TI are excluded. Totals are rounded to cents." %}</div></div>
+  <div class="field full"><label>{{ form.lease_rent_basis.label }}</label>
+    <div class="seg-radio">{% for r in form.lease_rent_basis %}<label>{{ r.tag }}<span>{{ r.choice_label }}</span></label>{% endfor %}</div></div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_nnn_amount %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_area_sf %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_utility_amount %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_utility_unit %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_ti_amount %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_ti_unit %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_free_rent_months %}</div>
+  <div class="field">{% include "deals/_field.html" with f=form.lease_escalation_pct %}</div>
+</div>{% endif %}

@@ -1,13 +1,19 @@
 """Key dates entered by hand from the executed contract.
 
 The user enters the Effective Date and the contract periods; deadlines are computed by
-the rule engine (deadlines/engine.py) exactly as before:
-  sale / business: Feasibility Period = N days after the Effective Date;
-                   Closing Date = a fixed date, or N days after the Effective Date.
+the rule engine (deadlines/engine.py):
+  sale / business: Feasibility Period ends = N days after the Effective Date, or a
+                   fixed date written in the contract;
+                   Closing Date = N days after the Feasibility Period ends, or a fixed
+                   date. With the N-days form an extension of the Feasibility Period
+                   moves the Closing Date too.
   lease:           Commencement Date (fixed date).
-Days are calendar days and the Effective Date itself is not counted. A deadline that
+Days are calendar days and the starting day itself is not counted. A deadline that
 falls on a weekend or holiday is moved to the next business day only when the user
 says the contract provides for it. Superseded values stay in history.
+
+"N days after the Feasibility Period ends" is kept as its own term and uses the
+Feasibility deadline as its trigger, including any contractual weekend adjustment.
 """
 from datetime import timedelta
 
@@ -16,36 +22,68 @@ from django.utils import timezone
 from django.utils.translation import gettext_noop
 
 from core.models import HolidayCalendar
-from deadlines.services import generate_standard_deadlines, recompute, set_state
+from deadlines.services import generate_standard_deadlines, recompute_deal, set_state
 
 from . import services
 from .models import DealEvent, DealTerm, log_activity
 
 # Milestones shown on the dashboard timeline, per deal kind: (label, deadline template keys)
-SALE_MILESTONES = [(gettext_noop("Feasibility Period ends"), ["feasibility_expiration"]),
+SALE_MILESTONES = [(gettext_noop("Feasibility Period ends"), ["feasibility_expiration", "feasibility_fixed"]),
                    (gettext_noop("Closing Date"), ["closing_fixed", "closing_offset"])]
 LEASE_MILESTONES = [(gettext_noop("Commencement Date"), ["lease_commencement"])]
-KEY_TEMPLATES = {"feasibility_expiration", "closing_fixed", "closing_offset", "lease_commencement"}
-CLOSING_TERMS = {"date": "closing_date", "days": "closing_days_after_effective"}
+KEY_TEMPLATES = {"feasibility_expiration", "feasibility_fixed", "closing_fixed", "closing_offset", "lease_commencement"}
+FEASIBILITY_TERMS = {"days": "feasibility_period_days", "date": "feasibility_end_date"}
+CLOSING_AFTER = "closing_days_after_feasibility"
 
 
 def milestone_spec(deal):
     return LEASE_MILESTONES if deal.is_lease else SALE_MILESTONES
 
 
+def _term(terms, key, attr):
+    return getattr(terms[key], attr) if key in terms else None
+
+
 def current_values(deal):
     terms = deal.active_terms()
     ev = DealEvent.objects.filter(deal=deal, key="effective_date").first()
     key_deadlines = deal.deadlines.filter(template_key__in=KEY_TEMPLATES).exclude(state__in=["superseded", "cancelled"])
-    return {
-        "effective_date": ev.occurred_on if ev else None,
-        "feasibility_days": terms["feasibility_period_days"].value_int if "feasibility_period_days" in terms else None,
+    eff = ev.occurred_on if ev else None
+    feas_days = _term(terms, "feasibility_period_days", "value_int")
+    values = {
+        "effective_date": eff,
+        "feasibility_mode": "date" if "feasibility_end_date" in terms else "days",
+        "feasibility_days": feas_days,
+        "feasibility_date": _term(terms, "feasibility_end_date", "value_date"),
         "closing_mode": "date" if "closing_date" in terms else "days",
-        "closing_date": terms["closing_date"].value_date if "closing_date" in terms else None,
-        "closing_days": terms["closing_days_after_effective"].value_int if "closing_days_after_effective" in terms else None,
-        "commencement_date": terms["commencement_date"].value_date if "commencement_date" in terms else None,
+        "closing_date": _term(terms, "closing_date", "value_date"),
+        "closing_days": _term(terms, CLOSING_AFTER, "value_int"),
+        "commencement_date": _term(terms, "commencement_date", "value_date"),
         "next_business_day": any(d.weekend_rule == "next_business_day" for d in key_deadlines),
     }
+    # Older records: Closing written as days after the Effective Date. Show it as days
+    # after the Feasibility Period, which lands on the same date.
+    legacy = _term(terms, "closing_days_after_effective", "value_int")
+    if values["closing_mode"] == "days" and values["closing_days"] is None and legacy is not None:
+        feas_end = _feasibility_offset(values)
+        feasibility = next((d for d in key_deadlines if d.template_key in ("feasibility_fixed", "feasibility_expiration")), None)
+        closing = next((d for d in key_deadlines if d.template_key == "closing_offset"), None)
+        if eff and feasibility and feasibility.current_date:
+            feas_end = (feasibility.current_date - eff).days
+        closing_offset = (closing.current_date - eff).days if closing and closing.current_date and eff else legacy
+        if feas_end is not None and closing_offset >= feas_end:
+            values["closing_days"] = closing_offset - feas_end
+        elif eff:
+            values["closing_mode"], values["closing_date"] = "date", eff + timedelta(days=legacy)
+    return values
+
+
+def _feasibility_offset(values):
+    """Days from the Effective Date to the end of the Feasibility Period, as written."""
+    if values.get("feasibility_mode") == "date":
+        eff, end = values.get("effective_date"), values.get("feasibility_date")
+        return (end - eff).days if eff and end else None
+    return values.get("feasibility_days")
 
 
 def _retire_term(deal, key, actor):
@@ -77,12 +115,24 @@ def save(deal, data, actor):
     if deal.is_lease:
         _set(deal, "commencement_date", data.get("commencement_date"), actor)
     else:
-        _set(deal, "feasibility_period_days", data.get("feasibility_days"), actor)
-        mode = data.get("closing_mode") or "days"
-        value = data.get("closing_date") if mode == "date" else data.get("closing_days")
-        _set(deal, CLOSING_TERMS[mode], value, actor)
-        _retire_term(deal, CLOSING_TERMS["days" if mode == "date" else "date"], actor)
+        fmode = data.get("feasibility_mode") or "days"
+        _set(deal, FEASIBILITY_TERMS[fmode], data.get("feasibility_date") if fmode == "date" else data.get("feasibility_days"), actor)
+        _retire_term(deal, FEASIBILITY_TERMS["days" if fmode == "date" else "date"], actor)
+        if (data.get("closing_mode") or "days") == "date":
+            _set(deal, "closing_date", data.get("closing_date"), actor)
+            _retire_term(deal, CLOSING_AFTER, actor)
+            _retire_term(deal, "closing_days_after_effective", actor)
+        else:
+            _set(deal, CLOSING_AFTER, data.get("closing_days"), actor)
+            _retire_term(deal, "closing_date", actor)
+            _retire_term(deal, "closing_days_after_effective", actor)
 
+    _rebuild(deal, data, actor)
+    services.sync_deal(deal, actor)
+    return key_deadlines(deal)
+
+
+def _rebuild(deal, data, actor):
     # Deadlines whose term is no longer active are cancelled (kept in history).
     active = deal.active_terms()
     for d in deal.deadlines.filter(template_key__in=KEY_TEMPLATES, state="open"):
@@ -91,6 +141,13 @@ def save(deal, data, actor):
             set_state(d, "cancelled", actor, "Contract term removed on the key dates form")
 
     generate_standard_deadlines(deal, actor=actor)
+
+    if CLOSING_AFTER in active:
+        feasibility = deal.deadlines.filter(template_key__in=["feasibility_fixed", "feasibility_expiration"]).exclude(state__in=["cancelled", "superseded"]).first()
+        for closing in deal.deadlines.filter(template_key="closing_offset", state="open"):
+            closing.offset_term_key = CLOSING_AFTER
+            closing.trigger_keys = [f"deadline:{feasibility.pk}"] if feasibility else ["feasibility_end"]
+            closing.save(update_fields=["offset_term_key", "trigger_keys"])
 
     business = HolidayCalendar.objects.filter(code="us-federal").first()
     for d in deal.deadlines.filter(template_key__in=KEY_TEMPLATES, state="open"):
@@ -101,10 +158,7 @@ def save(deal, data, actor):
             d.weekend_rule, d.weekend_rule_source = "none", ""
         d.confirmation = "confirmed"
         d.save(update_fields=["weekend_rule", "holiday_calendar", "weekend_rule_source", "confirmation", "updated_at"])
-    for d in deal.deadlines.filter(state="open"):
-        recompute(d, actor=actor, reason="Key dates updated")
-    services.sync_deal(deal, actor)
-    return key_deadlines(deal)
+    recompute_deal(deal, actor=actor, reason="Key dates updated")
 
 
 def key_deadlines(deal):
@@ -123,10 +177,16 @@ def timeline(deal, deadlines=None, today=None):
     by_key = {d.template_key: d for d in deadlines}
     spec = milestone_spec(deal)
     points = []
+    closing_after = None
     for label, keys in spec:
         d = next((by_key[k] for k in keys if k in by_key), None)
-        points.append({"label": label, "date": d.current_date if d else None, "deadline": d,
-                       "awaiting": bool(d and d.current_date is None)})
+        awaiting = bool(d and d.current_date is None)
+        if d is None and "closing_offset" in keys:
+            # Written as days after the Feasibility Period, which has no date yet.
+            if closing_after is None:
+                closing_after = deal.terms.filter(key=CLOSING_AFTER, status=DealTerm.STATUS_ACTIVE).exists()
+            awaiting = closing_after
+        points.append({"label": label, "date": d.current_date if d else None, "deadline": d, "awaiting": awaiting})
     replaced = {}
     if not deal.is_lease:
         for ext in deal.extensions.all():
@@ -209,20 +269,24 @@ def _current(deal, milestone):
 
 
 def _move(values, milestone, new_date):
+    """Write the new date back in the contract's own form. A Closing Date extension
+    always names a date, so the Closing Date becomes a fixed date."""
     eff = values["effective_date"]
     if milestone == "feasibility":
-        values["feasibility_days"] = (new_date - eff).days
-    elif values["closing_mode"] == "date":
-        values["closing_date"] = new_date
+        if values["feasibility_mode"] == "date":
+            values["feasibility_date"] = new_date
+        else:
+            values["feasibility_days"] = (new_date - eff).days
     else:
-        values["closing_days"] = (new_date - eff).days
+        values["closing_mode"], values["closing_date"] = "date", new_date
 
 
 @transaction.atomic
-def extend(deal, milestone, actor, new_date=None, days=None, shift_closing=False, note=""):
+def extend(deal, milestone, actor, new_date=None, days=None, note=""):
     """Extend the Feasibility Period or the Closing Date to new_date (or by `days`
-    from the current date). With shift_closing, a Feasibility extension moves the
-    Closing Date by the same number of days. Returns the DateExtension rows made."""
+    from the current date). When the Closing Date is written as N days after the
+    Feasibility Period, a Feasibility extension moves it as well; a fixed Closing
+    Date stays. Returns the DateExtension rows made."""
     from .models import DateExtension
 
     if deal.is_lease:
@@ -236,18 +300,17 @@ def extend(deal, milestone, actor, new_date=None, days=None, shift_closing=False
     new = new_date or old + timedelta(days=days)
     if new <= old:
         raise ExtensionError(gettext_noop("The new date must be later than the current date."))
-    moves = [(milestone, old, new, note)]
-    if milestone == "feasibility" and shift_closing:
-        closing = _current(deal, "closing")
-        if closing:
-            moves.append(("closing", closing, closing + (new - old), note or "Moved with the Feasibility Period extension"))
-    for key, _old, target, _note in moves:
-        _move(values, key, target)
+    closing_before = _current(deal, "closing")
+    _move(values, milestone, new)
     save(deal, values, actor)
-    made = []
-    for key, was, _target, why in moves:
+    made = [(milestone, old, note)]
+    closing_after = _current(deal, "closing")
+    if milestone == "feasibility" and closing_before and closing_after and closing_after != closing_before:
+        made.append(("closing", closing_before, "Moved with the Feasibility Period extension"))
+    rows = []
+    for key, was, why in made:
         landed = _current(deal, key)  # may differ if the contract moves weekend dates
-        made.append(DateExtension.objects.create(deal=deal, milestone=key, previous_date=was, new_date=landed,
+        rows.append(DateExtension.objects.create(deal=deal, milestone=key, previous_date=was, new_date=landed,
                                                  note=why, created_by=actor))
         log_activity(deal, f"{dict(DateExtension.MILESTONES)[key]} extended: {was} -> {landed}", actor=actor)
-    return made
+    return rows

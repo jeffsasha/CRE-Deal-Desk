@@ -19,9 +19,10 @@ How it works day to day (menu: Dashboard, Deals, Commissions, Contacts, Settings
 - **A deal is its address.** New deal = kind (sale / lease / business), who the brokerage represents, and the street address. The property record behind it is found or created automatically, so every deal at the same address shares its history.
 - **Deals page:** closed totals at the top (sales, lease consideration, the brokerage commission, with rolling numbers), then one table: open deals first, closed and terminated / lost at the end. Search by address or client.
 
-- **Dashboard, top to bottom:** **Under Contract** — one timeline per deal (Effective Date → Feasibility Period → Closing Date, or Commencement Date for leases) with today's position, the next milestone and the brokerage's Commission; **Listings** — every property the brokerage has on the market for a seller or landlord, with asking price, days on market and listing expiration (red within 30 days); then buyer / tenant searches not yet under contract.
-- **Listings:** a deal where the brokerage represents the seller or landlord and that is not yet Under Contract (new stage **Listed**). Enter the listing date, asking price or rent and the listing agreement expiration; the expiration goes on the calendar with reminders. When the deal goes Under Contract it moves up to the timeline section.
-- **Key dates:** on each deal, enter the Effective Date and the contract periods by hand (Feasibility Period in days; Closing Date as a fixed date or days after the Effective Date). The rule engine calculates the dates: calendar days, the Effective Date itself not counted, weekends and holidays moved only when you tick that the contract says so. Changes keep their history.
+- **Dashboard:** active deals with their prices and a key-date timeline (Effective Date → Feasibility Period → Closing Date, or Commencement Date for leases), followed by upcoming deadlines. There is no separate Listings card.
+- **Status:** Active, Closed, or Terminated. Progress is shown by the timeline. New deal can also record an already closed transaction with its actual closing date.
+- **Prices:** enter sale price or lease rent when creating a deal; click the price on its page to edit. Leases support rent units, NNN/Gross, utilities, free rent, TI allowance, and annual escalation. Money inputs group thousands and show two decimals; invalid or oversized amounts are rejected.
+- **Key dates:** Feasibility is days after Effective Date or a fixed date. Closing is a fixed date or days after Feasibility ends; relative Closing follows Feasibility changes and extensions. Calendar days exclude the starting day. Contractual weekend/holiday adjustments are applied to Feasibility before counting days to Closing. Prior values remain in history.
 - **Commission:** per deal, only the brokerage's expected amount and the payments received. A wrong payment is reversed, never deleted.
 
 ## Stack and why
@@ -118,11 +119,11 @@ Demo mode uses its own database and storage (`var-demo/`). It loads a handful of
 .venv/bin/python manage.py test tests
 ```
 
-There are 106 tests: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), brokerage Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
+The test suite covers: the deadline rule engine (calendar and business days, trigger-day inclusion, holidays, weekend rules, DST), key dates entered by hand (history, reminders, weekend rule), brokerage Commission entry and reversal, listings, commission arithmetic, reporting totals, import duplicates and reversal, permissions, reminders, and an end-to-end run of the demo data through the HTTP layer in English and Chinese.
 
 ## Languages (中 / EN)
 
-The switch in the top bar changes the whole interface between English and Simplified Chinese; the choice is remembered per browser. Text you enter (deal names, notes, deadline names) is shown as entered, and computed explanations such as deadline rule text stay in English.
+The switch in the top bar changes the whole interface between English and Simplified Chinese; the choice is remembered per browser. Text you enter (deal names, notes, custom deadline names) is shown as entered. Standard labels, units, messages, and current deadline explanations follow the selected language. Original historical calculation notes remain available in English for reference.
 
 After adding or changing interface text:
 

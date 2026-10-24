@@ -126,6 +126,18 @@ class Deal(TimeStamped, Archivable, Imported):
     lease_starting_rent = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
     lease_rent_unit = models.CharField(max_length=20, choices=RATE_UNITS, blank=True)
     lease_total_consideration_cents = models.BigIntegerField(null=True, blank=True)
+    # Lease economics entered with the deal (all optional). The NNN charge uses the
+    # rent's unit; utilities and TI have their own.
+    LEASE_BASES = [("nnn", "NNN"), ("gross", "Gross")]
+    TI_UNITS = [("usd_total", _("Lump sum ($)")), ("usd_sf", _("$/SF"))]
+    lease_rent_basis = models.CharField(max_length=10, choices=LEASE_BASES, blank=True)
+    lease_nnn_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    lease_utility_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    lease_utility_unit = models.CharField(max_length=20, choices=RATE_UNITS, default="usd_month", blank=True)
+    lease_free_rent_months = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    lease_ti_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    lease_ti_unit = models.CharField(max_length=20, choices=TI_UNITS, default="usd_total", blank=True)
+    lease_escalation_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     financing_terms = models.TextField(blank=True)
     FINANCING_STATUS = [
@@ -191,6 +203,16 @@ class Deal(TimeStamped, Archivable, Imported):
         return self.stage.category == Stage.CATEGORY_ACTIVE and self.archived_at is None
 
     @property
+    def status_key(self):
+        """The only statuses shown: active (incl. on hold), closed, terminated (incl. lost)."""
+        cat = self.stage.category
+        if cat == Stage.CATEGORY_CLOSED:
+            return "closed"
+        if cat in (Stage.CATEGORY_TERMINATED, Stage.CATEGORY_LOST):
+            return "terminated"
+        return "active"
+
+    @property
     def primary_property(self):
         link = self.deal_properties.select_related("property").order_by("-is_primary", "id").first()
         return link.property if link else None
@@ -241,6 +263,7 @@ PARTY_ROLES = [
 
 
 class DealParty(models.Model):
+    name = models.CharField(max_length=255, blank=True)
     deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="parties")
     role = models.CharField(max_length=30, choices=PARTY_ROLES)
     organization = models.ForeignKey("crm.Organization", null=True, blank=True, on_delete=models.PROTECT)
@@ -253,9 +276,16 @@ class DealParty(models.Model):
     class Meta:
         ordering = ["role", "id"]
 
+    @property
+    def display_name(self):
+        if self.name:
+            return self.name
+        if self.contact_id:
+            return self.contact.full_name
+        return str(self.organization) if self.organization_id else "—"
+
     def __str__(self):
-        who = self.contact or self.organization
-        return f"{self.get_role_display()}: {who}"
+        return f"{self.get_role_display()}: {self.display_name}"
 
 
 class Representation(models.Model):

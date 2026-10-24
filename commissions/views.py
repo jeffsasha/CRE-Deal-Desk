@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext as _
 
 from core.audit import audit, diff, snapshot
 from core.listing import Column, Filter, Listing
@@ -54,8 +54,8 @@ def ledger_list(request):
             Column("deal", gettext_lazy("Deal"), lambda e: e.agreement.deal.name),
             Column("recipient", gettext_lazy("Recipient"), lambda e: e.allocation.recipient_name if e.allocation else ""),
             Column("reference", gettext_lazy("Reference"), lambda e: e.reference),
-            Column("rev", gettext_lazy("Reversal"), lambda e: f"Reverses #{e.reverses_id}" if e.reverses_id else ("Reversed" if e.is_reversed else "")),
-            Column("by", gettext_lazy("Entered by"), lambda e: e.created_by or "Import", default=False),
+            Column("rev", gettext_lazy("Reversal"), lambda e: _("Reverses #%(number)s") % {"number": e.reverses_id} if e.reverses_id else (_("Reversed") if e.is_reversed else "")),
+            Column("by", gettext_lazy("Entered by"), lambda e: e.created_by or _("Import"), default=False),
             Column("id", "#", lambda e: e.pk, default=False),
         ],
         search_fields=["reference", "notes", "agreement__deal__name", "allocation__recipient_name"],
@@ -67,7 +67,7 @@ def ledger_list(request):
         return listing.export_csv("commission-ledger")
     return render(request, "core/list_page.html", {"listing": listing, "title": gettext_lazy("Commission ledger"),
                                                    "subtitle": gettext_lazy("Every cash movement. Entries are never edited; corrections are reversals."),
-                                                   "actions": [("Agreements", reverse("commission_list"))]})
+                                                   "actions": [(gettext_lazy("Agreements"), reverse("commission_list"))]})
 
 
 def agreement_form(request, pk=None):
@@ -82,7 +82,7 @@ def agreement_form(request, pk=None):
         if not obj:
             messages.info(request, gettext_lazy("Agreement saved. Next, record the division of the gross commission (including SKW's share) and the installments."))
         return redirect(a)
-    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit commission agreement") if obj else "New commission agreement",
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit commission agreement") if obj else gettext_lazy("New commission agreement"),
                                          "back_url": obj.get_absolute_url() if obj else reverse("commission_list")})
 
 
@@ -113,7 +113,7 @@ def agreement_sub(request, pk, kind, item=None):
     if request.method == "POST":
         if request.POST.get("delete") and instance:
             if kind != "adjustment" and instance.ledgerentry_set.exists():
-                messages.error(request, f"This {label.lower()} has ledger entries and cannot be removed.")
+                messages.error(request, _("This %(item)s has ledger entries and cannot be removed.") % {"item": _(label)})
                 return redirect(a)
             audit(request.user, f"commission.{kind}_removed", a, {label: str(instance)})
             instance.delete()
@@ -124,7 +124,7 @@ def agreement_sub(request, pk, kind, item=None):
             obj.save()
             audit(request.user, f"commission.{kind}_saved", a, {label: str(obj)})
             return redirect(a)
-    return render(request, "form.html", {"form": form, "title": f"{label} — {a.title}", "back_url": a.get_absolute_url(),
+    return render(request, "form.html", {"form": form, "title": _("%(label)s — %(agreement)s") % {"label": _(label), "agreement": a.title}, "back_url": a.get_absolute_url(),
                                          "delete_allowed": bool(instance)})
 
 
@@ -142,7 +142,7 @@ def entry_create(request, pk):
             return redirect(a)
         except ValidationError as exc:
             form.add_error(None, " ".join(exc.messages))
-    return render(request, "form.html", {"form": form, "title": f"Record ledger entry — {a.title}", "back_url": a.get_absolute_url()})
+    return render(request, "form.html", {"form": form, "title": _("Record ledger entry — %(agreement)s") % {"agreement": a.title}, "back_url": a.get_absolute_url()})
 
 
 def entry_reverse(request, pk):
@@ -156,8 +156,8 @@ def entry_reverse(request, pk):
             return redirect(entry.agreement)
         except ValidationError as exc:
             form.add_error(None, " ".join(exc.messages))
-    return render(request, "form.html", {"form": form, "title": f"Reverse entry #{entry.pk}", "back_url": entry.agreement.get_absolute_url(),
-                                         "notice": f"Reversing: {entry}. The original stays in the ledger; a reversal entry offsets it."})
+    return render(request, "form.html", {"form": form, "title": _("Reverse entry #%(number)s") % {"number": entry.pk}, "back_url": entry.agreement.get_absolute_url(),
+                                         "notice": _("Reversing: %(entry)s. The original stays in the ledger; a reversal entry offsets it.") % {"entry": entry}})
 
 
 def agreement_archive(request, pk):
@@ -169,5 +169,5 @@ def agreement_archive(request, pk):
         a.save()
         audit(request.user, "commission.agreement_archived", a, note=request.POST.get("reason", ""))
         return redirect("commission_list")
-    return render(request, "confirm.html", {"title": f"Archive {a}", "back_url": a.get_absolute_url(), "reason_required": True,
+    return render(request, "confirm.html", {"title": _("Archive %(object)s") % {"object": a}, "back_url": a.get_absolute_url(), "reason_required": True,
                                             "message": gettext_lazy("Archived agreements are excluded from reports but kept with their ledger; they can be restored.")})

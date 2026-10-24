@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Edit" %} · {{ deal.name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ deal.get_absolute_url }}">← {{ deal.name }}</a></div>
+<div class="page-head"><div><h1>{% translate "Edit deal" %}</h1></div></div>
+<form method="post" class="card" style="max-width:720px">{% csrf_token %}
+  <div class="card-body">
+    {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <div class="form-grid">
+      <div class="field full">{% include "deals/_field.html" with f=form.name %}</div>
+      <div class="field">{% include "deals/_field.html" with f=form.client %}</div>
+    </div>
+    <h3 class="nd-sub">{% if deal.is_lease %}{% translate "Rent" %}{% else %}{% translate "Price" %}{% endif %}</h3>
+    {% if deal.is_lease %}{% include "deals/_price_fields.html" with lease=1 %}{% else %}{% include "deals/_price_fields.html" with sale=1 %}{% endif %}
+    <div class="form-grid" style="margin-top:14px"><div class="field full">{% include "deals/_field.html" with f=form.description %}</div></div>
+    <div class="form-actions"><button class="btn btn-primary">{% translate "Save" %}</button><a class="btn" href="{{ deal.get_absolute_url }}">{% translate "Cancel" %}</a></div>
+  </div>
+</form>
+{% endblock %}

@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from django import template
 from django.utils import timezone
+from django.utils.translation import gettext, ngettext
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -54,14 +55,14 @@ def money(cents, unknown="Unknown"):
 def money0(cents, unknown="Unknown"):
     if isinstance(cents, Total):
         text = format_cents(cents.known, show_cents=False)
-        return text + (f" + {cents.unknown_count} unknown" if cents.unknown_count else "")
+        return text + (" + " + ngettext("%(count)s unknown", "%(count)s unknown", cents.unknown_count) % {"count": cents.unknown_count} if cents.unknown_count else "")
     return format_cents(cents, show_cents=False, unknown=unknown)
 
 
 @register.filter
 def rate(amount, unit):
     if amount is None:
-        return "Unknown"
+        return gettext("Unknown")
     return f"${amount:,.2f}{RATE_UNIT_SUFFIX.get(unit, '')}"
 
 
@@ -170,6 +171,16 @@ def pill(key, label=None, tone=None):
     return format_html('<span class="pill pill-{}">{}</span>', tone, label if label is not None else key)
 
 
+STATUS_LABELS = {"active": "Active", "closed": "Closed", "terminated": "Terminated"}
+
+
+@register.simple_tag
+def status_pill(deal):
+    """The deal's status: Active, Closed or Terminated."""
+    key = deal.status_key
+    return pill(key, STATUS_LABELS[key], {"active": "blue", "closed": "green", "terminated": "gray"}[key])
+
+
 @register.filter
 def tone(key):
     return PILL_TONES.get(key, "gray")
@@ -206,7 +217,7 @@ def url_with(context, **changes):
 def sf(value):
     if value is None:
         return "—"
-    return f"{value:,.0f} SF"
+    return f"{value:,.0f}" + gettext(" SF")
 
 
 @register.simple_tag
@@ -243,3 +254,10 @@ ICONS = {
     "upload": '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
     "link": '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
 }
+
+
+@register.filter
+def computation_label(value):
+    labels = {"computed": gettext("Computed"), "awaiting_trigger": gettext("Awaiting trigger"),
+              "needs_review": gettext("Needs review")}
+    return labels.get(value, value)

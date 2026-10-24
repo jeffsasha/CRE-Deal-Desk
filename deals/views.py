@@ -60,7 +60,7 @@ def deal_list(request):
     terminated / lost. A deal is its address; there is no separate property list."""
     from commissions import simple
 
-    from . import keydates, listing, stats
+    from . import keydates, pricing, stats
 
     q = request.GET.get("q", "").strip()
     deals = Deal.objects.active().select_related("stage").prefetch_related("representations")
@@ -81,7 +81,7 @@ def deal_list(request):
             amount = d.executed_contract_price_cents
         rows.append({
             "deal": d, "group": group, "next": tl["next"] if tl else None,
-            "amount": amount, "asking": listing.asking_display(d) if group == 0 and amount is None else None,
+            "amount": amount, "price": pricing.headline(d),
             "sides": [r.get_side_display() for r in d.representations.all() if r.is_skw],
             "skw": simple.for_deal(d) if show_money else None,
         })
@@ -140,11 +140,9 @@ def deal_create(request):
     form = NewDealForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         deal = services.create_guided_deal(request.user, form.cleaned_data)
-        from . import listing
-
-        if listing.section(deal) == "listing":
-            messages.success(request, _("Deal %(id)s created. Enter the listing details.") % {"id": deal.internal_id})
-            return redirect("deal_listing", pk=deal.pk)
+        if deal.is_closed:
+            messages.success(request, _("Deal %(id)s added as closed.") % {"id": deal.internal_id})
+            return redirect(deal)
         messages.success(request, _("Deal %(id)s created. Enter its key dates.") % {"id": deal.internal_id})
         return redirect("deal_key_dates", pk=deal.pk)
     return render(request, "deals/new.html", {
@@ -161,13 +159,17 @@ def deal_edit(request, pk):
     before = snapshot(deal, TRACKED)
     form = DealForm(request.POST or None, instance=deal)
     if request.method == "POST" and form.is_valid():
+        from . import pricing
+
         deal = form.save()
+        pricing.save(deal, form.cleaned_data, request.user)
         changes = diff(deal, before, TRACKED)
         if changes:
             audit(request.user, "deal.updated", deal, changes)
             log_activity(deal, "Deal details updated: " + ", ".join(changes), actor=request.user)
+        messages.success(request, gettext_lazy("Saved."))
         return redirect(deal)
-    return render(request, "form.html", {"form": form, "title": f"Edit {deal.name}", "back_url": deal.get_absolute_url()})
+    return render(request, "deals/edit.html", {"form": form, "deal": deal})
 
 
 TABS = [("overview", gettext_lazy("Overview")), ("parties", gettext_lazy("Parties")), ("checklist", gettext_lazy("Checklist")),
@@ -186,7 +188,7 @@ def deal_detail(request, pk):
     open_items = deal.checklist_items.filter(status__in=["not_started", "requested", "in_progress", "received", "under_review", "blocked"])
     from commissions import simple
 
-    from . import keydates, listing
+    from . import keydates, pricing
 
     key = keydates.key_deadlines(deal)
     ctx = {
@@ -196,14 +198,10 @@ def deal_detail(request, pk):
         "tl": keydates.timeline(deal, key, today),
         "other_deadlines": [d for d in deadlines if d.state == "open" and d.template_key not in keydates.KEY_TEMPLATES],
         "skw": simple.for_deal(deal) if has_perm(request.user, "commission.view") else None,
-        # Closed deals keep the listing card only if listing details were recorded.
-        "listing": {"show": listing.is_listing_side(deal) and (not deal.is_closed or bool(deal.listing_date)
-                                                                or deal.asking_price_cents is not None),
-                    "asking": listing.asking_display(deal),
-                    "dom": listing.days_on_market(deal, today), "contract": listing.under_contract(deal)},
+        "price_text": pricing.headline(deal),
+        "lease_details": pricing.lease_details(deal) if deal.is_lease else [],
         "open_item_count": open_items.count(),
         "blocked_items": open_items.filter(status="blocked"),
-        "stage_form": StageChangeForm(initial={"stage": deal.stage}),
     }
     if tab == "parties":
         ctx["parties"] = deal.parties.select_related("organization", "contact")
@@ -250,7 +248,28 @@ def deal_stage(request, pk):
         return redirect(deal)
     if request.headers.get("X-Requested-With") == "fetch":
         return HttpResponse("ok")
-    messages.success(request, f"Stage changed to {stage.name}.")
+    messages.success(request, _("Stage changed to %(stage)s.") % {"stage": _(stage.name)})
+    return redirect(deal)
+
+
+@require_POST
+@require_perm("edit")
+def deal_status(request, pk):
+    """Terminate an active deal (with a reason) or reopen a closed / terminated one."""
+    deal = get_object_or_404(Deal, pk=pk)
+    action = request.POST.get("action")
+    if action == "terminate":
+        reason = request.POST.get("reason", "").strip()
+        if not reason:
+            messages.error(request, gettext_lazy("Enter a reason to terminate the deal."))
+            return redirect(deal)
+        services.change_stage(deal, Stage.objects.get(key="terminated"), request.user, reason)
+        messages.success(request, gettext_lazy("Deal terminated."))
+    elif action == "reopen":
+        services.change_stage(deal, Stage.objects.get(key=services.ACTIVE_STAGE), request.user)
+        messages.success(request, gettext_lazy("Deal reopened."))
+    else:
+        return HttpResponseBadRequest("Unknown action.")
     return redirect(deal)
 
 
@@ -265,13 +284,12 @@ def deal_close(request, pk):
                                 total_cents=form.cleaned_data["total"], allocations=form.allocations(),
                                 note=form.cleaned_data["note"])
             messages.success(request, gettext_lazy("Deal closed."))
-            return redirect(f"{deal.get_absolute_url()}?tab=closing")
+            return redirect(deal)
         except ValidationError as exc:
             form.add_error(None, " ".join(exc.messages))
-    return render(request, "form.html", {"form": form, "title": f"Close {deal.name}",
-                                         "back_url": f"{deal.get_absolute_url()}?tab=closing",
-                                         "notice": gettext_lazy("Closing records the actual date and deal-level consideration. A proposed or scheduled closing is not a closed transaction."),
-                                         "submit_label": gettext_lazy("Close deal")})
+    return render(request, "form.html", {"form": form, "title": _("Mark closed") + f" · {deal.name}",
+                                         "back_url": deal.get_absolute_url(),
+                                         "submit_label": gettext_lazy("Mark closed")})
 
 
 @require_edit_on_post
@@ -285,7 +303,7 @@ def deal_archive(request, pk):
         audit(request.user, "deal.archived", deal, note=request.POST.get("reason", ""))
         messages.success(request, gettext_lazy("Deal archived. It can be restored from Settings → Archived records."))
         return redirect("deal_list")
-    return render(request, "confirm.html", {"title": f"Archive {deal}", "back_url": deal.get_absolute_url(),
+    return render(request, "confirm.html", {"title": _("Archive %(object)s") % {"object": deal}, "back_url": deal.get_absolute_url(),
                                             "message": gettext_lazy("Archived deals are hidden from lists and excluded from reports. Nothing is deleted; you can restore it."),
                                             "reason_required": True, "submit_label": gettext_lazy("Archive deal"), "danger": True})
 
@@ -340,7 +358,7 @@ def deal_subrecord(request, pk, kind, item=None):
             if kind != "activity":
                 log_activity(deal, f"{label} {'updated' if instance else 'added'}: {obj}", actor=request.user)
             return redirect(back)
-    return render(request, "form.html", {"form": form, "title": f"{'Edit' if instance else 'Add'} {label.lower()} — {deal.name}",
+    return render(request, "form.html", {"form": form, "title": _("%(action)s %(item)s — %(deal)s") % {"action": _("Edit") if instance else _("Add"), "item": _(label), "deal": deal.name},
                                          "back_url": back, "delete_allowed": bool(instance) and kind not in {"price", "activity"}})
 
 
@@ -361,9 +379,9 @@ def deal_event(request, pk):
             services.record_event(deal, d["key"], d["occurred_on"], request.user, status=d["status"],
                                   evidence_note=d["evidence_note"],
                                   occurred_time=d["occurred_time"])
-            messages.success(request, f"{event_label(d['key'])} recorded. Dependent deadlines were recomputed.")
+            messages.success(request, _("%(event)s recorded. Dependent deadlines were recomputed.") % {"event": _(event_label(d["key"]))})
             return redirect(back)
-    return render(request, "form.html", {"form": form, "title": f"Record event — {deal.name}", "back_url": back,
+    return render(request, "form.html", {"form": form, "title": _("Record event — %(deal)s") % {"deal": deal.name}, "back_url": back,
                                          "notice": gettext_lazy("Deadlines that depend on this event are computed from the date you enter here. Never substitute the date a file was uploaded.")})
 
 
@@ -378,7 +396,7 @@ def deal_term(request, pk):
         services.set_term(deal, d["key"], d["typed"], request.user, note=d.get("note") or "Entered manually")
         messages.success(request, gettext_lazy("Contract term approved. Dependent deadlines were recomputed."))
         return redirect(back)
-    return render(request, "form.html", {"form": form, "title": f"Enter contract term — {deal.name}", "back_url": back,
+    return render(request, "form.html", {"form": form, "title": _("Enter contract term — %(deal)s") % {"deal": deal.name}, "back_url": back,
                                          "notice": gettext_lazy("Manual entry is always available. Enter only values stated in an executed agreement; superseded values are kept in history."),
                                          "submit_label": gettext_lazy("Approve term")})
 
@@ -478,7 +496,7 @@ def issue_form(request, pk=None):
                                           notes="Requested credit — not an approved price change.")
         return redirect(obj)
     back = issue.get_absolute_url() if issue else (f"{deal.get_absolute_url()}?tab=issues" if deal else (prop.get_absolute_url() if prop else "/"))
-    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit issue") if issue else "Record issue", "back_url": back})
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit issue") if issue else gettext_lazy("Record issue"), "back_url": back})
 
 
 @require_perm("view")
@@ -502,7 +520,7 @@ def issue_statement(request, pk):
         if issue.deal:
             log_activity(issue.deal, f"Statement recorded on issue '{issue.title}' from {st.party}", actor=request.user)
     else:
-        messages.error(request, "Statement not saved: " + "; ".join(f"{k}: {v[0]}" for k, v in form.errors.items()))
+        messages.error(request, _("Statement not saved: ") + "; ".join(f"{k}: {v[0]}" for k, v in form.errors.items()))
     return redirect(issue)
 
 
@@ -560,7 +578,7 @@ def deal_extend(request, pk):
         c = form.cleaned_data
         try:
             keydates.extend(deal, c["milestone"], request.user, new_date=c.get("new_date"), days=c.get("days"),
-                            shift_closing=c.get("shift_closing"), note=c.get("note", ""))
+                            note=c.get("note", ""))
         except keydates.ExtensionError as e:
             form.add_error(None, _(str(e)))
         else:
@@ -626,21 +644,3 @@ def deal_receipt_reverse(request, pk, entry):
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
     return redirect(deal)
-
-
-@require_edit_on_post
-def deal_listing(request, pk):
-    from . import listing
-    from .forms import ListingForm
-
-    require(request.user, "edit")
-    deal = get_object_or_404(Deal, pk=pk)
-    initial = {"listing_date": deal.listing_date, "listing_expires_on": deal.listing_expires_on,
-               "asking_price": deal.asking_price_cents, "asking_price_unit": deal.asking_price_unit or "usd_total"}
-    form = ListingForm(request.POST or None, initial=initial)
-    if request.method == "POST" and form.is_valid():
-        listing.save(deal, form.cleaned_data, request.user)
-        messages.success(request, gettext_lazy("Listing details saved."))
-        return redirect(deal)
-    return render(request, "form.html", {"form": form, "title": _("Listing details"), "subtitle": deal.name,
-                                         "back_url": deal.get_absolute_url(), "max_width": "640px"})

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="crumbs"><a href="{{ deal.get_absolute_url }}">← {{ deal.name }}</a></div>
 <div class="page-head"><div><h1>{% translate "Extend a date" %}</h1>
-  <div class="sub">{% translate "Record an extension of the Feasibility Period or the Closing Date. The earlier date stays on the timeline." %}</div></div></div>
+  <div class="sub">{% translate "Record an extension of the Feasibility Period or the Closing Date. The earlier date stays on the timeline. A Closing Date written as days after the Feasibility Period moves with it." %}</div></div></div>
 <div class="card" style="max-width:640px"><div class="card-body">
   <form method="post" class="extend-form">{% csrf_token %}
     {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
@@ -32,16 +32,3 @@
   </tbody></table></div></div>
 {% endif %}
 {% endblock %}
-{% block scripts %}<script>
-(function () {
-  var form = document.querySelector(".extend-form");
-  if (!form) return;
-  function sync() {
-    var m = form.querySelector('input[name="milestone"]:checked');
-    var shift = form.querySelector('[data-field="shift_closing"]');
-    if (shift) shift.style.display = m && m.value === "feasibility" ? "" : "none";
-  }
-  form.addEventListener("change", sync);
-  sync();
-})();
-</script>{% endblock %}

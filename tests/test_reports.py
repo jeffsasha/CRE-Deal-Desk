@@ -116,7 +116,7 @@ class LedgerReconciliationTests(DeskTestCase):
 
 class ClosedTotalsTests(DeskTestCase):
     """Deals page header: sales and lease consideration kept apart, each deal once,
-    commission on the deals that closed in the period."""
+    actual commission received in the period, regardless of closing year."""
 
     def test_totals_by_year(self):
         from commissions import simple
@@ -144,7 +144,7 @@ class ClosedTotalsTests(DeskTestCase):
         self.client.force_login(broker)
         resp = self.client.get(reverse("deal_list") + "?period=2025")
         self.assertContains(resp, 'data-odo="400000000"')
-        self.assertContains(resp, "$163,092")
+        self.assertContains(resp, 'data-odo="16000000"')
         resp = self.client.get(reverse("deal_detail", args=[sale.pk]))
         self.assertContains(resp, "SKW commission earned")
         self.assertContains(resp, "$4,000,000")

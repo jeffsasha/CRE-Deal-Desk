@@ -15,7 +15,7 @@
   <thead><tr><th>{% translate "Deal" %}</th><th class="hide-sm">{% translate "Stage" %}</th><th class="num">{% translate "Expected" %}</th><th class="num">{% translate "Received" %}</th><th class="num hide-sm">{% translate "Outstanding" %}</th><th>{% translate "Status" %}</th></tr></thead>
   <tbody>{% for deal, c in rows %}<tr>
     <td><a href="{{ deal.get_absolute_url }}">{{ deal.name }}</a><br><small class="muted">{{ deal.get_transaction_type_display }}</small></td>
-    <td class="hide-sm">{% translate deal.stage.name as sn %}{% pill deal.stage.category sn %}</td>
+    <td class="hide-sm">{% status_pill deal %}</td>
     <td class="num">{{ c.expected|money0:"—" }}</td>
     <td class="num">{{ c.received|money0 }}</td>
     <td class="num hide-sm">{{ c.outstanding|money0:"—" }}</td>

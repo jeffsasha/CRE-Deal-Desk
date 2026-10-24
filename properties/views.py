@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext as _
 
 from core.audit import audit, diff, snapshot
 from core.choices import PROPERTY_TYPES
@@ -60,7 +60,7 @@ def property_form(request, pk=None):
         audit(request.user, "property.updated" if prop else "property.created", obj, diff(obj, before, TRACKED) if prop else None)
         messages.success(request, gettext_lazy("Property saved."))
         return redirect(obj)
-    return render(request, "form.html", {"form": form, "title": f"Edit {prop}" if prop else "New property",
+    return render(request, "form.html", {"form": form, "title": _("Edit %(object)s") % {"object": prop} if prop else gettext_lazy("New property"),
                                          "back_url": prop.get_absolute_url() if prop else reverse("property_list")})
 
 
@@ -135,9 +135,9 @@ def property_archive(request, pk):
         prop.archived_by = request.user
         prop.save()
         audit(request.user, "property.archived", prop, note=request.POST.get("reason", ""))
-        messages.success(request, f"{prop} archived. Its deals and history are unchanged and it can be restored from Settings.")
+        messages.success(request, _("%(property)s archived. Its deals and history are unchanged and it can be restored from Settings.") % {"property": prop})
         return redirect("property_list")
-    return render(request, "confirm.html", {"title": f"Archive {prop}", "back_url": prop.get_absolute_url(),
+    return render(request, "confirm.html", {"title": _("Archive %(object)s") % {"object": prop}, "back_url": prop.get_absolute_url(),
                                             "message": gettext_lazy("Archiving hides the property from active lists. Deal history, documents and facts are preserved and the property can be restored."),
                                             "reason_required": True, "submit_label": gettext_lazy("Archive")})
 

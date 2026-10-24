@@ -4,6 +4,8 @@ All stored money amounts are integer cents. `None` means *unknown* and is never
 coerced to zero: totals report how many inputs were unknown instead.
 """
 import re
+
+from django.utils.translation import gettext, ngettext
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
@@ -47,7 +49,7 @@ def percent_of(cents, percent):
 
 def format_cents(cents, unknown="Unknown", show_cents=True):
     if cents is None:
-        return unknown
+        return gettext(unknown)
     sign = "-" if cents < 0 else ""
     cents = abs(int(cents))
     dollars, rem = divmod(cents, 100)
@@ -82,5 +84,5 @@ class Total:
     def display(self):
         text = format_cents(self.known)
         if self.unknown_count:
-            text += f" + {self.unknown_count} unknown"
+            text += " + " + ngettext("%(count)s unknown", "%(count)s unknown", self.unknown_count) % {"count": self.unknown_count}
         return text
