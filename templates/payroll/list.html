@@ -11,18 +11,36 @@
   <div class="metric"><div class="label">{% translate "All recorded net pay" %}</div><div class="value odo" data-odo="{{ all_total }}">{{ all_total|money }}</div></div>
   <div class="metric"><div class="label">{% translate "Months recorded" %}</div><div class="value odo" data-odo="{{ recorded_months }}">{{ recorded_months }}<span class="salary-month-count"> / 12</span></div></div>
 </div>
+<div class="salary-charts">
 <section class="card salary-chart-card">
   <div class="card-head"><div><h2>{% translate "Monthly take-home pay" %}</h2><p class="salary-chart-note">{% translate "Grouped by the month worked, not the pay date. Unrecorded months are not treated as zero." %}</p></div><span class="muted">USD</span></div>
   <div class="card-body salary-chart-scroll">
     <div class="salary-chart" aria-label="{% translate 'Monthly net salary chart' %}">
       {% for month in months %}<div class="salary-chart-column" data-month="{{ month.date|date:'Y-m' }}" title="{{ month.date|date:'Y-m' }}: {% if month.total != None %}{{ month.total|money }}{% else %}{% translate 'Not entered' %}{% endif %}">
-        <div class="salary-bar-value">{% if month.total != None %}{{ month.total|money }}{% else %}<span class="muted">—</span>{% endif %}</div>
-        <div class="salary-bar-track">{% if month.total != None %}<div class="salary-bar" style="--salary-height:{{ month.height }}" aria-hidden="true"></div>{% else %}<div class="salary-bar-missing" aria-hidden="true"></div>{% endif %}</div>
+        <div class="salary-bar-value">{% if month.total != None %}{{ month.total|money0 }}{% else %}<span class="muted">—</span>{% endif %}</div>
+        <div class="salary-bar-track">{% if month.total != None %}<div class="salary-bar" style="--salary-height:{{ month.height }};--salary-index:{{ forloop.counter0 }}" aria-hidden="true"></div>{% else %}<div class="salary-bar-missing" aria-hidden="true"></div>{% endif %}</div>
         <div class="salary-bar-label">{{ month.date|date:'M' }}</div>
       </div>{% endfor %}
     </div>
   </div>
 </section>
+<section class="card salary-chart-card salary-trend-card">
+  <div class="card-head"><div><h2>{% translate "Salary trend" %}</h2><p class="salary-chart-note">{% translate "Monthly net pay. Gaps mean no record has been entered." %}</p></div><span class="muted">USD</span></div>
+  <div class="card-body salary-chart-scroll">
+    <div class="salary-trend">
+      <svg class="salary-trend-svg" viewBox="0 0 600 174" preserveAspectRatio="none" role="img" aria-labelledby="salary-trend-title salary-trend-description">
+        <title id="salary-trend-title">{% translate "Monthly salary trend" %} — {{ year }}</title>
+        <desc id="salary-trend-description">{% translate "Monthly net pay. Gaps mean no record has been entered." %}</desc>
+        <g class="salary-trend-grid" aria-hidden="true"><path d="M25 30H575 M25 100H575 M25 170H575"/></g>
+        {% for path in curve_paths %}<path class="salary-trend-line" d="{{ path }}" pathLength="1"/>{% endfor %}
+        {% for month in months %}{% if month.total != None %}<circle class="salary-trend-point" cx="{{ month.x }}" cy="{{ month.y }}" r="4" tabindex="0" aria-label="{{ month.date|date:'Y-m' }}: {{ month.total|money }}"><title>{{ month.date|date:'Y-m' }}: {{ month.total|money }}</title></circle>{% endif %}{% endfor %}
+      </svg>
+      <div class="salary-trend-labels" aria-hidden="true">{% for month in months %}<span>{{ month.date|date:'M' }}</span>{% endfor %}</div>
+      {% if not recorded_months %}<div class="salary-trend-empty">{% translate "No salary records for this year yet." %}</div>{% endif %}
+    </div>
+  </div>
+</section>
+</div>
 <section class="card salary-records-card">
   <div class="card-head"><h2>{% if show_archived %}{% translate "Archived salary records" %}{% else %}{% translate "Paychecks" %}{% endif %}</h2>
     <a class="btn btn-sm" href="?year={{ year }}{% if not show_archived %}&archived=1{% endif %}">{% if show_archived %}{% translate "Show active records" %}{% else %}{% translate "Show archived records" %}{% endif %}</a></div>

@@ -18,8 +18,8 @@ class SalaryTests(DeskTestCase):
         return Paycheck.objects.create(owner=owner or self.owner, **data)
 
     def payload(self, **changes):
-        data = {"pay_month": "2025-12", "paid_on": "2026-01-15", "net_pay": "1,234.56",
-                "hours": "160.50", "employer": "Test Employer", "check_number": "TEST-1"}
+        data = {"pay_month_0": "2025", "pay_month_1": "12", "net_pay": "1,234.56",
+                "employer": "Test Employer"}
         data.update(changes)
         return data
 
@@ -32,17 +32,23 @@ class SalaryTests(DeskTestCase):
         self.assertContains(response, "data-editor-page")
         self.assertContains(response, 'name="net_pay"')
         self.assertNotContains(response, 'id="edit-dialog"')
+        self.assertContains(response, 'name="pay_month_0"')
+        self.assertContains(response, 'name="pay_month_1"')
+        for removed in ("paid_on", "check_number", "hours"):
+            self.assertNotContains(response, f'name="{removed}"')
 
     def test_values_are_exact_and_owned_by_current_user(self):
         from payroll.models import Paycheck
         other = self.user("broker")
-        response = self.client.post(reverse("salary_create") + "?editor=1", self.payload(owner=other.pk))
+        response = self.client.post(reverse("salary_create") + "?editor=1", self.payload(owner=other.pk, paid_on="2026-01-15", check_number="IGNORED", hours="160.50"))
         self.assertEqual(response.status_code, 302)
         row = Paycheck.objects.get()
         self.assertEqual(row.owner, self.owner)
         self.assertEqual(row.pay_month, date(2025, 12, 1))
         self.assertEqual(row.net_pay_cents, 123456)
-        self.assertEqual(str(row.hours), "160.50")
+        self.assertIsNone(row.hours)
+        self.assertIsNone(row.paid_on)
+        self.assertEqual(row.check_number, "")
         page = self.client.get(response.url)
         self.assertContains(page, "$1,234.56")
 
@@ -72,11 +78,11 @@ class SalaryTests(DeskTestCase):
             self.assertEqual(self.client.post(url, self.payload()).status_code, 404)
         self.assertEqual(self.client.get(reverse("salary_edit", args=[hidden.pk])).status_code, 404)
 
-    def test_duplicate_check_and_invalid_amount_stay_in_dialog(self):
+    def test_invalid_amount_and_month_stay_in_dialog(self):
         from payroll.models import Paycheck
         self.record()
-        for payload in (self.payload(), self.payload(check_number="OTHER", net_pay="-1"),
-                        self.payload(check_number="OTHER", net_pay="letters"), self.payload(check_number="OTHER", pay_month="2025-13")):
+        for payload in (self.payload(net_pay="-1"), self.payload(net_pay="letters"),
+                        self.payload(pay_month_1="13"), self.payload(pay_month_0=""), self.payload(pay_month_1="")):
             response = self.client.post(reverse("salary_create") + "?editor=1", payload)
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, "data-editor-page")
@@ -84,11 +90,14 @@ class SalaryTests(DeskTestCase):
         self.assertEqual(Paycheck.objects.count(), 1)
 
     def test_edit_recalculates_chart_and_archive_can_be_restored(self):
-        row = self.record()
+        row = self.record(hours="160.50")
         response = self.client.post(reverse("salary_edit", args=[row.pk]) + "?editor=1", self.payload(net_pay="2,345.67"))
         self.assertEqual(response.status_code, 302)
         row.refresh_from_db()
         self.assertEqual(row.net_pay_cents, 234567)
+        self.assertEqual(row.paid_on, date(2026, 1, 15))
+        self.assertEqual(row.check_number, "TEST-1")
+        self.assertEqual(str(row.hours), "160.50")
         archive = reverse("salary_archive", args=[row.pk])
         self.assertEqual(self.client.get(archive).status_code, 405)
         self.client.post(archive, {"action": "archive"})
@@ -105,3 +114,26 @@ class SalaryTests(DeskTestCase):
             self.assertEqual(self.client.get(reverse("salary_list")).status_code, 403)
             self.assertEqual(self.client.post(reverse("salary_create"), self.payload()).status_code, 403)
             self.assertNotContains(self.client.get(reverse("dashboard")), 'href="/salary/"')
+
+    def test_curve_keeps_missing_months_separate_and_zero_pay_visible(self):
+        from payroll.views import salary_curve
+        months = [{"total": value} for value in (None, 10000, 20000, None, 0, None)]
+        paths = salary_curve(months, 20000)
+        self.assertEqual(paths, ["M 75,100.00 C 100,100.00 100,30.00 125,30.00", "M 225,170.00"])
+        self.assertNotIn("y", months[0])
+        self.assertEqual(months[4]["y"], "170.00")
+        self.assertEqual(salary_curve([{"total": None}] * 12, 1), [])
+        self.record()
+        response = self.client.get(reverse("salary_list"), {"year": "2025"})
+        self.assertContains(response, "salary-trend-svg")
+        self.assertContains(response, "salary-trend-point", count=1)
+        self.assertContains(response, "salary-charts")
+
+    def test_editing_imported_check_employer_conflict_stays_in_dialog(self):
+        row = self.record(employer="Other Employer")
+        self.record()
+        response = self.client.post(reverse("salary_edit", args=[row.pk]) + "?editor=1", self.payload())
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].non_field_errors())
+        row.refresh_from_db()
+        self.assertEqual(row.employer, "Other Employer")

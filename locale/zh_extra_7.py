@@ -438,3 +438,11 @@ ZH.update({
     "Show active records": "查看正常记录", "Show archived records": "查看已归档记录", "From pay stub photo": "由工资单照片录入",
     "No archived salary records for this year.": "该年份没有已归档的薪资记录。", "No salary records for this year yet.": "该年份尚未录入薪资。",
 })
+
+# Salary trend view
+ZH.update({
+    'Salary trend': '工资走势', 'Monthly salary trend': '月度工资走势',
+    'Monthly net pay. Gaps mean no record has been entered.': '每月税后工资，空缺表示尚未录入。',
+})
+
+ZH.update({'Select the year and month the salary belongs to.': '选择这笔工资所属的年份和月份。'})

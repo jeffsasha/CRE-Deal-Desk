@@ -1,31 +1,48 @@
+from datetime import date
+
 from django import forms
+from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from core.fields import MoneyField
-from core.forms import DateInput, LocalizedForm
+from core.forms import LocalizedForm
 from .models import Paycheck
 
 
-class MonthInput(forms.DateInput):
-    # A year-month text field stays language-neutral across browser/OS locales.
-    input_type = "text"
+class YearMonthWidget(forms.MultiWidget):
+    def __init__(self, attrs=None):
+        years = [("", _("Year"))] + [(year, str(year)) for year in range(timezone.localdate().year + 5, 2024, -1)]
+        months = [("", _("Month"))] + [(month, f"{month:02d}") for month in range(1, 13)]
+        super().__init__([forms.Select(choices=years, attrs={"aria-label": _("Year")}),
+                          forms.Select(choices=months, attrs={"aria-label": _("Month")})], attrs)
 
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("format", "%Y-%m")
-        super().__init__(*args, **kwargs)
-        self.attrs.update({"placeholder": "YYYY-MM", "maxlength": 7, "pattern": r"[0-9]{4}-(0[1-9]|1[0-2])"})
+    def decompress(self, value):
+        return [value.year, value.month] if value else [None, None]
+
+    def id_for_label(self, id_):
+        return f"{id_}_0" if id_ else ""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return format_html('<div class="salary-month-picker">{}</div>', super().render(name, value, attrs, renderer))
+
+
+class SalaryMonthField(forms.MultiValueField):
+    def __init__(self, **kwargs):
+        super().__init__(fields=[forms.IntegerField(min_value=2025, max_value=9999),
+                                 forms.IntegerField(min_value=1, max_value=12)], widget=YearMonthWidget(), **kwargs)
+
+    def compress(self, values):
+        return date(values[0], values[1], 1) if values else None
 
 
 class PaycheckForm(LocalizedForm):
     full_width = ("notes",)
 
-    pay_month = forms.DateField(label=_("Salary month"), input_formats=["%Y-%m"], widget=MonthInput(),
-                               help_text=_("The month worked, which may differ from the pay date."))
+    pay_month = SalaryMonthField(label=_("Salary month"),
+                                 help_text=_("Select the year and month the salary belongs to."))
     net_pay = MoneyField(label=_("Net pay (after tax)"), required=True,
                          help_text=_("Enter the NET PAY amount, not gross wages or year-to-date totals."))
-    paid_on = forms.DateField(label=_("Pay date"), required=False, widget=DateInput())
-    check_number = forms.CharField(label=_("Check number"), max_length=60, required=False)
-    hours = forms.DecimalField(label=_("Hours worked"), max_digits=7, decimal_places=2, min_value=0, max_value=744, required=False)
     employer = forms.CharField(label=_("Employer"), max_length=160, initial="SKW Realty LLC")
     notes = forms.CharField(label=_("Notes"), max_length=2000, required=False, widget=forms.Textarea(attrs={"rows": 3}))
 
@@ -36,16 +53,6 @@ class PaycheckForm(LocalizedForm):
             kwargs["initial"] = {name: getattr(instance, name) for name in self.base_fields if name != "net_pay"}
             kwargs["initial"]["net_pay"] = instance.net_pay_cents
         super().__init__(*args, **kwargs)
-
-    def clean(self):
-        data = super().clean()
-        if data.get("check_number") and data.get("employer"):
-            matches = Paycheck.objects.filter(owner=self.owner, employer=data["employer"], check_number=data["check_number"])
-            if self.instance:
-                matches = matches.exclude(pk=self.instance.pk)
-            if matches.exists():
-                self.add_error("check_number", _("This check is already recorded, including archived records."))
-        return data
 
     def save(self):
         row = self.instance or Paycheck(owner=self.owner)

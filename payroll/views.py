@@ -18,6 +18,31 @@ from .forms import PaycheckForm
 from .models import Paycheck
 
 
+def salary_curve(months, scale):
+    """Smooth only between adjacent recorded months; leave missing months as gaps."""
+    paths, path, previous = [], [], None
+    for index, month in enumerate(months):
+        month["x"] = str(25 + index * 50)
+        if month["total"] is None:
+            if path:
+                paths.append(" ".join(path))
+            path, previous = [], None
+            continue
+        x = 25 + index * 50
+        y = 170 - month["total"] * 140 / scale
+        month["y"] = f"{y:.2f}"
+        if previous is None:
+            path.append(f"M {x},{y:.2f}")
+        else:
+            px, py = previous
+            # Horizontal tangents keep each segment within its two actual values.
+            path.append(f"C {px + 25},{py:.2f} {x - 25},{y:.2f} {x},{y:.2f}")
+        previous = x, y
+    if path:
+        paths.append(" ".join(path))
+    return paths
+
+
 @never_cache
 @vary_on_headers("X-Workspace-Navigation")
 @require_perm("salary.manage")
@@ -36,11 +61,12 @@ def salary_list(request):
     scale = max(totals.values(), default=0) or 1
     months = [{"date": date(year, month, 1), "total": totals.get(month),
                "height": totals.get(month, 0) * 10000 // scale} for month in range(1, 13)]
+    curve_paths = salary_curve(months, scale)
     archived = request.GET.get("archived") == "1"
     records = owned.filter(pay_month__year=year, archived_at__isnull=not archived)
     context = {"year": year, "years": years, "months": months, "year_total": sum(totals.values()),
                "all_total": active.aggregate(total=Sum("net_pay_cents"))["total"] or 0,
-               "recorded_months": len(totals), "records": records, "show_archived": archived}
+               "curve_paths": curve_paths, "recorded_months": len(totals), "records": records, "show_archived": archived}
     return render(request, "payroll/list.html", context)
 
 
@@ -54,7 +80,7 @@ def salary_form(request, pk=None):
             with transaction.atomic():
                 row = form.save()
         except (IntegrityError, ValidationError):
-            form.add_error("check_number", _("This check is already recorded, including archived records."))
+            form.add_error(None, _("This check is already recorded, including archived records."))
         else:
             messages.success(request, _("Salary record saved."))
             return redirect(row)
