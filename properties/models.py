@@ -49,7 +49,7 @@ class Property(TimeStamped, Archivable, Imported):
     @property
     def address(self):
         line = self.street + (f", Suite {self.suite}" if self.suite else "")
-        return f"{line}, {self.city}, {self.state} {self.postal_code}".strip()
+        return ", ".join(part for part in (line, self.city, f"{self.state} {self.postal_code}".strip()) if part)
 
 
 class Parcel(models.Model):

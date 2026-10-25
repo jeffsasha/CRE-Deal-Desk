@@ -16,7 +16,7 @@ class GuidedNewDealTests(DeskTestCase):
         self.client.force_login(self.broker)
 
     def post(self, **data):
-        base = {"status": "active", "street": "100 Test Ave", "city": "Houston", "lease_type": "lease"}
+        base = {"status": "active", "street": "100 Test Ave", "lease_type": "lease"}
         base.update(data)
         return self.client.post(reverse("deal_create"), base)
 
@@ -42,18 +42,18 @@ class GuidedNewDealTests(DeskTestCase):
 
     def test_clients_and_parties(self):
         Organization.objects.create(name="Existing Tenant LLC", is_client=True)
-        self.post(kind="lease", side="both", suite="210", client_a="existing tenant llc", client_b="New Landlord LP")
+        self.post(kind="lease", side="both", street="100 Test Ave, Suite 210, Houston, TX", client_a="existing tenant llc", client_b="New Landlord LP")
         d = self.created()
         roles = dict(d.parties.values_list("role", "organization__name"))
         self.assertEqual(roles["tenant"], "Existing Tenant LLC")  # matched, not duplicated
         self.assertEqual(roles["landlord"], "New Landlord LP")
         self.assertEqual(Organization.objects.filter(name__iexact="existing tenant llc").count(), 1)
-        self.assertEqual(d.deal_properties.get().space.suite, "210")
-        self.assertEqual(d.name, "100 Test Ave Ste 210, Houston, TX")  # the deal is its address
+        self.assertIsNone(d.deal_properties.get().space)
+        self.assertEqual(d.name, "100 Test Ave, Suite 210, Houston, TX")  # preserve the complete address
 
     def test_same_address_reuses_the_property(self):
-        self.post(kind="sale", side="seller", street="4008 Ade St", zip_code="77063")
-        self.post(kind="lease", side="landlord", street="4008 ADE STREET")
+        self.post(kind="sale", side="seller", street="4008 Ade St, Houston, TX 77063")
+        self.post(kind="lease", side="landlord", street="4008 ADE STREET, HOUSTON, TX 77063")
         first, second = Deal.objects.order_by("pk")
         self.assertEqual(first.primary_property, second.primary_property)
         self.assertEqual(first.name, "4008 Ade St, Houston, TX 77063")

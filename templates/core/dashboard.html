@@ -7,7 +7,7 @@
     <h1>{% translate "Today" %}</h1>
     <div class="sub">{{ today|longdate }}</div>
   </div>
-  <div class="actions">{% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div>
+  <div class="actions">{% if can.edit %}<a data-editor data-editor-redirect class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div>
 </div>
 
 <div class="summary-row">
@@ -27,7 +27,7 @@
   <div class="progress-list">
   {% for r in progress.rows %}{% include "core/_deal_row.html" %}
   {% empty %}
-    <div class="empty">{% translate "No active deals." %}{% if can.edit %} <a href="{% url 'deal_create' %}">{% translate "Create a deal" %}</a>{% endif %}</div>
+    <div class="empty">{% translate "No active deals." %}{% if can.edit %} <a data-editor data-editor-redirect href="{% url 'deal_create' %}">{% translate "Create a deal" %}</a>{% endif %}</div>
   {% endfor %}
   </div>
 </div>

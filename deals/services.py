@@ -293,18 +293,17 @@ def create_guided_deal(actor, data):
     """Create a deal from the guided New Deal form: transaction type, property,
     clients and our representation are derived from a few choices."""
     from crm.models import Organization
-    from properties.models import Property, Space
+    from properties.models import Property
 
     from .models import DealParty, Representation
 
     from imports.services import _find_property
 
     kind, side = data["kind"], data["side"]
-    street, city = data["street"].strip(), (data.get("city") or "Houston").strip()
-    prop = _find_property("", street, city)
+    street = data["street"].strip()
+    prop = _find_property("", street, "")
     if prop is None:
-        prop = Property.objects.create(name=street, street=street, city=city, state="TX",
-                                       postal_code=(data.get("zip_code") or "").strip(), property_type="other")
+        prop = Property.objects.create(name=street, street=street, city="", state="", property_type="other")
         audit(actor, "property.created", prop)
     ttype = transaction_type_for(kind, side, data.get("lease_type"), prop.property_type)
     sides = SIDE_MAP[(kind, side)]
@@ -321,14 +320,10 @@ def create_guided_deal(actor, data):
     from .models import TRANSACTION_TYPES
 
     type_label = str(dict(TRANSACTION_TYPES)[ttype])
-    suite = (data.get("suite") or "").strip()
-    name = ", ".join(x for x in [street + (f" Ste {suite}" if suite else ""), city, " ".join(
-        x for x in ["TX", (data.get("zip_code") or "").strip()] if x)] if x)
     broker = actor if getattr(actor, "role", "") in {"admin", "broker"} else None
-    deal = Deal.objects.create(name=name[:255], transaction_type=ttype, stage=Stage.objects.get(key=ACTIVE_STAGE),
+    deal = Deal.objects.create(name=street, transaction_type=ttype, stage=Stage.objects.get(key=ACTIVE_STAGE),
                                responsible_broker=broker, client=clients[0][1] if clients else None)
-    space = Space.objects.get_or_create(property=prop, suite=suite)[0] if suite else None
-    deal.deal_properties.create(property=prop, space=space, is_primary=True)
+    deal.deal_properties.create(property=prop, is_primary=True)
     for role in sides:
         Representation.objects.create(deal=deal, side=role, is_skw=True, broker_user=broker)
     for role, org in clients:

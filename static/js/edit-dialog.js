@@ -94,7 +94,8 @@
           })));
         } catch (error) { /* The normal reload still updates all saved values. */ }
         dialog.close();
-        location.reload();
+        if (opener && opener.hasAttribute("data-editor-redirect")) location.assign(url.href);
+        else location.reload();
       } else failed();
       return;
     }

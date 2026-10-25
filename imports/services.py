@@ -348,8 +348,8 @@ def validate_contact_row(row):
 def _find_property(name, street, city):
     if street:
         key = norm_address(street, city)
-        for p in Property.objects.filter(archived_at__isnull=True).only("id", "street", "city", "name"):
-            if norm_address(p.street, p.city) == key or (not city and norm_address(p.street) == norm_address(street)):
+        for p in Property.objects.filter(archived_at__isnull=True).only("id", "street", "city", "name", "suite", "state", "postal_code"):
+            if norm_address(p.street, p.city) == key or (not city and key in (norm_address(p.street), norm_address(p.address))):
                 return p
     if name:
         return Property.objects.filter(name__iexact=name, archived_at__isnull=True).first()

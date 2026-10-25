@@ -21,6 +21,7 @@ How it works day to day (menu: Dashboard, Deals, Commissions, Settings):
 
 - **Dashboard:** active deals with their prices and a key-date timeline (Effective Date → Feasibility Period → Closing Date, or Commencement Date for leases), followed by upcoming deadlines. There is no separate Listings card.
 - **Status:** Active, Closed, or Terminated. Progress is shown by the timeline. New deal can also record an already closed transaction with its actual closing date.
+- **New deals:** open in a card dialog from Dashboard, Deals or the command palette. Enter the complete address in Street address, including suite/city/ZIP when needed; no separate address fields or automatic city suffix. Saving opens the new deal, and cancelling keeps the current page.
 - **Prices:** enter sale price or lease rent when creating a deal; click the price on its page to edit. Leases support rent units, NNN/Gross, utilities, free rent, TI allowance, and annual escalation. Money inputs group thousands and show two decimals; invalid or oversized amounts are rejected.
 - **Key dates:** Feasibility is days after Effective Date or a fixed date. Closing is a fixed date or days after Feasibility ends; relative Closing follows Feasibility changes and extensions. Calendar days exclude the starting day. Contractual weekend/holiday adjustments are applied to Feasibility before counting days to Closing. Prior values remain in history.
 - **Commission:** per deal, only the brokerage's expected amount and the payments received. A wrong payment is reversed, never deleted.

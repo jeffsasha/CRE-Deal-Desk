@@ -336,10 +336,7 @@ class NewDealForm(LocalizedForm):
     side = forms.ChoiceField(choices=[(s, s) for s in ALL_SIDES], widget=forms.RadioSelect)
     lease_type = forms.ChoiceField(choices=LEASE_TYPES_CHOICES, required=False, initial="lease")
     # A deal is its address: the property record behind it is found or created from it.
-    street = forms.CharField(label=_("Street address"))
-    suite = forms.CharField(required=False, label=_("Suite"))
-    city = forms.CharField(initial="Houston", label=_("City"))
-    zip_code = forms.CharField(required=False, label=_("ZIP"))
+    street = forms.CharField(label=_("Street address"), max_length=255)
     client_a = forms.CharField(required=False)
     client_b = forms.CharField(required=False)
     # Active, or already closed (to record a past transaction).

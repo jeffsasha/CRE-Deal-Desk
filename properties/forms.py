@@ -9,6 +9,12 @@ from .models import FACT_CATALOG, AskingPrice, OperatingCharge, Parcel, Property
 class PropertyForm(StyledModelForm):
     full_width = ("legal_description", "notes")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Street address may already contain the complete address.
+        for name in ("city", "state"):
+            self.fields[name].required = False
+
     class Meta:
         model = Property
         fields = ["name", "property_type", "street", "suite", "city", "state", "postal_code", "county",

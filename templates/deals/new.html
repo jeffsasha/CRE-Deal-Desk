@@ -47,9 +47,6 @@
     <div class="card"><div class="card-body">
       <div class="form-grid">
         <div class="field full"><label for="id_street">{% translate "Street address" %}</label>{{ form.street }}{% for e in form.street.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
-        <div class="field"><label for="id_suite">{% translate "Suite" %}</label>{{ form.suite }}</div>
-        <div class="field"><label for="id_city">{% translate "City" %}</label>{{ form.city }}{% for e in form.city.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
-        <div class="field"><label for="id_zip_code">{% translate "ZIP" %}</label>{{ form.zip_code }}</div>
         <div class="field"><label for="id_client_a" data-client-label="a">{% translate "Client" %}</label>{{ form.client_a }}</div>
         <div class="field" data-client-b><label for="id_client_b" data-client-label="b">{% translate "Other client" %}</label>{{ form.client_b }}</div>
       </div>

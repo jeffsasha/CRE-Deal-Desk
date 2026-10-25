@@ -3,7 +3,7 @@
 {% block title %}{% translate "Deals" %}{% endblock %}
 {% block content %}
 <div class="page-head"><div><h1>{% translate "Deals" %}</h1></div>
-<div class="actions">{% if can.edit %}<a class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div></div>
+<div class="actions">{% if can.edit %}<a data-editor data-editor-redirect class="btn btn-primary" href="{% url 'deal_create' %}">{% icon "plus" %}{% translate "New deal" %}</a>{% endif %}</div></div>
 {% include "partials/closed_hero.html" %}
 
 <div class="card">
@@ -24,7 +24,7 @@
         <td class="num nowrap">{{ r.price|default:"—" }}</td>
         {% if r.skw %}<td class="num nowrap">{{ r.skw.expected|money0:"—" }}{% if r.skw.status == "full" %}<br><small style="color:var(--green-fg)">{% translate "Received" %}</small>{% endif %}</td>{% endif %}
       </tr>
-    {% empty %}<tr><td colspan="6"><div class="empty">{% if q %}{% translate "No deals match." %}{% else %}{% translate "No deals yet." %}{% if can.edit %} <a href="{% url 'deal_create' %}">{% translate "Create a deal" %}</a>{% endif %}{% endif %}</div></td></tr>{% endfor %}
+    {% empty %}<tr><td colspan="6"><div class="empty">{% if q %}{% translate "No deals match." %}{% else %}{% translate "No deals yet." %}{% if can.edit %} <a data-editor data-editor-redirect href="{% url 'deal_create' %}">{% translate "Create a deal" %}</a>{% endif %}{% endif %}</div></td></tr>{% endfor %}
     </tbody>
   </table></div>
 </div>

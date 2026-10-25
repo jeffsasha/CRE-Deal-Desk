@@ -53,3 +53,8 @@ body.editor-page { min-height: 0; height: auto; background: var(--surface); }
   .edit-dialog-status::before { animation: none; }
   .edit-dialog-close:active { transform: none; }
 }
+
+.editor-page .new-deal .tiles-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 480px) {
+  .editor-page .new-deal .tiles-3 { grid-template-columns: minmax(0, 1fr); }
+}

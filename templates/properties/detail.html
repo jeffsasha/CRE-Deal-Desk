@@ -10,7 +10,7 @@
   </div>
   <div class="actions">
     {% if can.edit %}
-      <a class="btn" href="{% url 'deal_create' %}?property={{ p.pk }}">{% icon "plus" %}{% translate "New deal on this property" %}</a>
+      <a data-editor data-editor-redirect class="btn" href="{% url 'deal_create' %}?property={{ p.pk }}">{% icon "plus" %}{% translate "New deal on this property" %}</a>
       <a data-editor class="btn" href="{% url 'property_edit' p.pk %}">{% translate "Edit" %}</a>
       {% if not p.archived_at %}<a class="btn btn-danger" href="{% url 'property_archive' p.pk %}">{% translate "Archive" %}</a>{% endif %}
     {% endif %}

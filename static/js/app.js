@@ -431,7 +431,12 @@
       close();
       if (it.theme) { applyTheme(it.theme); return; }
       startProgress();
-      window.location.href = it.url;
+      var link = document.createElement("a");
+      link.href = it.url;
+      if (it.editor) { link.setAttribute("data-editor", ""); link.setAttribute("data-editor-redirect", ""); }
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
     input.addEventListener("input", function () { active = 0; render(); clearTimeout(timer); timer = setTimeout(fetchRemote, 140); });
     input.addEventListener("keydown", function (e) {

@@ -146,6 +146,8 @@ def deal_create(request):
             messages.success(request, _("Deal %(id)s added as closed.") % {"id": deal.internal_id})
             return redirect(deal)
         messages.success(request, _("Deal %(id)s created. Enter its key dates.") % {"id": deal.internal_id})
+        if request.GET.get("editor") == "1":
+            return redirect(deal)
         return redirect("deal_key_dates", pk=deal.pk)
     return render(request, "deals/new.html", {
         "form": form, "kinds": KIND_CHOICES, "sides": SIDE_CHOICES, "client_labels": CLIENT_LABELS,
