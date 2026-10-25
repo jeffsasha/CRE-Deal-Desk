@@ -11,12 +11,12 @@
 </div>
 
 <div class="summary-row">
-  <a class="metric {% if deadlines.overdue.0 %}bad{% endif %}" href="{{ deadlines.overdue.1 }}"><div class="label">{% translate "Overdue" %}</div><div class="value">{{ deadlines.overdue.0 }}</div></a>
-  <a class="metric {% if deadlines.week.0 %}warn{% endif %}" href="{{ deadlines.week.1 }}"><div class="label">{% translate "Due in 7 days" %}</div><div class="value">{{ deadlines.week.0 }}</div></a>
-  <a class="metric" href="{% url 'deal_list' %}"><div class="label">{% translate "Open deals" %}</div><div class="value">{{ open_deals }}</div></a>
+  <a class="metric {% if deadlines.overdue.0 %}bad{% endif %}" href="{{ deadlines.overdue.1 }}"><div class="label">{% translate "Overdue" %}</div><div class="value odo" data-odo="{{ deadlines.overdue.0 }}">{{ deadlines.overdue.0 }}</div></a>
+  <a class="metric {% if deadlines.week.0 %}warn{% endif %}" href="{{ deadlines.week.1 }}"><div class="label">{% translate "Due in 7 days" %}</div><div class="value odo" data-odo="{{ deadlines.week.0 }}">{{ deadlines.week.0 }}</div></a>
+  <a class="metric" href="{% url 'deal_list' %}"><div class="label">{% translate "Open deals" %}</div><div class="value odo" data-odo="{{ open_deals }}">{{ open_deals }}</div></a>
   {% if fin %}
-  <a class="metric" href="{% url 'commission_list' %}"><div class="label">{% translate "SKW commission expected" %}</div><div class="value">{{ fin.expected|money0 }}</div>{% if fin.expected_unknown %}<div class="note">{% blocktranslate count n=fin.expected_unknown %}+ {{ n }} deal not entered{% plural %}+ {{ n }} deals not entered{% endblocktranslate %}</div>{% endif %}</a>
-  <a class="metric" href="{% url 'commission_list' %}"><div class="label">{% blocktranslate with y=fin.year %}Received in {{ y }}{% endblocktranslate %}</div><div class="value">{{ fin.received_year|money0 }}</div></a>
+  <a class="metric" href="{% url 'commission_list' %}"><div class="label">{% translate "SKW commission expected" %}</div><div class="value odo" data-odo="{{ fin.expected }}">{{ fin.expected|money0 }}</div>{% if fin.expected_unknown %}<div class="note">{% blocktranslate count n=fin.expected_unknown %}+ {{ n }} deal not entered{% plural %}+ {{ n }} deals not entered{% endblocktranslate %}</div>{% endif %}</a>
+  <a class="metric" href="{% url 'commission_list' %}"><div class="label">{% blocktranslate with y=fin.year %}Received in {{ y }}{% endblocktranslate %}</div><div class="value odo" data-odo="{{ fin.received_year }}">{{ fin.received_year|money0 }}</div></a>
   {% endif %}
 </div>
 

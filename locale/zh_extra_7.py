@@ -418,3 +418,23 @@ ZH.update({
     "Mint surfaces, violet details and monospace typography.": "薄荷底色与暮紫细节，采用等宽文字风格。",
     "Deep charcoal, red and electric blue with sharp corners.": "深炭灰搭配赤红与电光蓝，采用利落直角。",
 })
+
+
+ZH.update({
+    "My salary": "我的薪资", "Manage own salary records": "管理本人的薪资记录",
+    "Salary month": "工资所属月份", "Pay date": "发薪日", "Net pay (after tax)": "税后实发工资",
+    "Hours worked": "工时", "Employer": "雇主", "Check number": "支票号",
+    "Choose the salary month, without a day.": "请选择工资所属月份，无需填写日期。",
+    "The month worked, which may differ from the pay date.": "按工作所属月份填写，可能与发薪月份不同。",
+    "Enter the NET PAY amount, not gross wages or year-to-date totals.": "填写工资单的 NET PAY（税后实发），不要填写税前工资或年度累计额。",
+    "This check is already recorded, including archived records.": "这张支票已录入，请检查现有记录及已归档记录。",
+    "Salary record saved.": "薪资记录已保存。", "Edit salary": "编辑薪资", "Add monthly salary": "录入月度工资",
+    "Salary record archived.": "薪资记录已归档。", "Salary record restored.": "薪资记录已恢复。",
+    "Personal take-home pay, separate from brokerage commissions.": "记录个人税后实发工资，与公司交易佣金分开统计。",
+    "Salary year": "工资年份", "%(year)s net pay": "%(year)s 年税后工资",
+    "All recorded net pay": "累计税后工资", "Months recorded": "已录入月份", "Monthly take-home pay": "每月税后工资",
+    "Grouped by the month worked, not the pay date. Unrecorded months are not treated as zero.": "按工资所属月份汇总。未录入的月份不作为零工资计算。",
+    "Monthly net salary chart": "每月税后工资柱状图", "Archived salary records": "已归档的薪资记录", "Paychecks": "工资单明细",
+    "Show active records": "查看正常记录", "Show archived records": "查看已归档记录", "From pay stub photo": "由工资单照片录入",
+    "No archived salary records for this year.": "该年份没有已归档的薪资记录。", "No salary records for this year yet.": "该年份尚未录入薪资。",
+})

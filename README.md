@@ -24,6 +24,7 @@ How it works day to day (menu: Dashboard, Deals, Commissions, Settings):
 - **New deals:** open in a card dialog from Dashboard, Deals or the command palette. Enter the complete address in Street address, including suite/city/ZIP when needed; no separate address fields or automatic city suffix. Saving opens the new deal, and cancelling keeps the current page.
 - **Prices:** enter sale price or lease rent when creating a deal; click the price on its page to edit. Leases support rent units, NNN/Gross, utilities, free rent, TI allowance, and annual escalation. Money inputs group thousands and show two decimals; invalid or oversized amounts are rejected.
 - **Key dates:** Feasibility is days after Effective Date or a fixed date. Closing is a fixed date or days after Feasibility ends; relative Closing follows Feasibility changes and extensions. Calendar days exclude the starting day. Contractual weekend/holiday adjustments are applied to Feasibility before counting days to Closing. Prior values remain in history.
+- **My salary:** personal take-home pay is kept separate from brokerage commissions and scoped to the signed-in account. Add or edit monthly records in a card dialog; monthly columns use the salary period, preserving unrecorded months as gaps. Pay date, check number and hours can be retained; archived records can be restored.
 - **Commission:** per deal, only the brokerage's expected amount and the payments received. A wrong payment is reversed, never deleted.
 - **Theme colours:** Settings offers twelve preview cards: Blue grey, the original Ultraviolet, Sunset, Indigo, Minimal mono, Ocean mist, Teal and gold, Lemon mono, Rose, Ice and orange, Mint and violet, and Crimson mecha. Rose intentionally keeps the supplied light backgrounds in both modes; Crimson mecha stays dark in both. Supplied palettes retain their light/dark colours, corner style and shadows. Colour palette and light/dark/system mode are independent, apply immediately and persist per browser, including opening pages and form dialogs.
 - **Smooth navigation:** Dashboard, Deals, Commissions and Settings replace only the main content. Deal tabs switch in place, preserving unsaved inputs; browser back/forward and keyboard tab navigation are supported. Secondary deal forms open in a closable animated card.
@@ -161,6 +162,7 @@ deals/        deals, stages, parties, representation, key dates (keydates.py), p
 documents/    database tables only (kept so older records stay valid); there is no upload
 deadlines/    engine.py (pure rules), services (revisions, preview), reminders, calendar export
 checklists/   transaction-specific staged workflow, autosaving task status and history; legacy models remain compatible
+payroll/      private per-user salary records, monthly net-pay columns and card-dialog entry
 commissions/  brokerage expected / received per deal (simple.py) on top of agreements and the append-only ledger (ledger.py)
 imports/      CSV/XLSX mapping, validation, duplicate detection, commit, safe reversal
 reports/      volume and financial reports with drill-down to the source records

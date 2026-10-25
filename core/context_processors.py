@@ -7,9 +7,10 @@ NAV = [
     ("dashboard", _("Dashboard"), "view"),
     ("deal_list", _("Deals"), "view"),
     ("commission_list", _("Commissions"), "commission.view"),
+    ("salary_list", _("My salary"), "salary.manage"),
     ("settings_index", _("Settings"), "view"),
 ]
-WORKSPACE_ROUTES = {"dashboard", "deal_list", "commission_list", "settings_index"}
+WORKSPACE_ROUTES = {"dashboard", "deal_list", "commission_list", "settings_index", "salary_list"}
 
 THEME_OPTIONS = [
     ("blue-grey", _("Blue grey"), _("Calm"), _("Cool blues and neutral grey surfaces.")),

@@ -1,0 +1,40 @@
+{% extends workspace_base|default:"base.html" %}
+{% load i18n %}
+{% block title %}{% translate "My salary" %}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{% translate "My salary" %}</h1><div class="sub">{% translate "Personal take-home pay, separate from brokerage commissions." %}</div></div>
+  <a data-editor data-editor-redirect class="btn btn-primary" href="{% url 'salary_create' %}">{% icon "plus" %}{% translate "Add monthly salary" %}</a>
+</div>
+<div class="salary-year-picker actions" aria-label="{% translate 'Salary year' %}">{% for option in years %}<a class="btn btn-sm {% if option == year %}btn-primary{% endif %}" href="?year={{ option }}{% if show_archived %}&archived=1{% endif %}" {% if option == year %}aria-current="page"{% endif %}>{{ option }}</a>{% endfor %}</div>
+<div class="summary-row salary-summary">
+  <div class="metric"><div class="label">{% blocktranslate %}{{ year }} net pay{% endblocktranslate %}</div><div class="value odo" data-odo="{{ year_total }}">{{ year_total|money }}</div></div>
+  <div class="metric"><div class="label">{% translate "All recorded net pay" %}</div><div class="value odo" data-odo="{{ all_total }}">{{ all_total|money }}</div></div>
+  <div class="metric"><div class="label">{% translate "Months recorded" %}</div><div class="value odo" data-odo="{{ recorded_months }}">{{ recorded_months }}<span class="salary-month-count"> / 12</span></div></div>
+</div>
+<section class="card salary-chart-card">
+  <div class="card-head"><div><h2>{% translate "Monthly take-home pay" %}</h2><p class="salary-chart-note">{% translate "Grouped by the month worked, not the pay date. Unrecorded months are not treated as zero." %}</p></div><span class="muted">USD</span></div>
+  <div class="card-body salary-chart-scroll">
+    <div class="salary-chart" aria-label="{% translate 'Monthly net salary chart' %}">
+      {% for month in months %}<div class="salary-chart-column" data-month="{{ month.date|date:'Y-m' }}" title="{{ month.date|date:'Y-m' }}: {% if month.total != None %}{{ month.total|money }}{% else %}{% translate 'Not entered' %}{% endif %}">
+        <div class="salary-bar-value">{% if month.total != None %}{{ month.total|money }}{% else %}<span class="muted">—</span>{% endif %}</div>
+        <div class="salary-bar-track">{% if month.total != None %}<div class="salary-bar" style="--salary-height:{{ month.height }}" aria-hidden="true"></div>{% else %}<div class="salary-bar-missing" aria-hidden="true"></div>{% endif %}</div>
+        <div class="salary-bar-label">{{ month.date|date:'M' }}</div>
+      </div>{% endfor %}
+    </div>
+  </div>
+</section>
+<section class="card salary-records-card">
+  <div class="card-head"><h2>{% if show_archived %}{% translate "Archived salary records" %}{% else %}{% translate "Paychecks" %}{% endif %}</h2>
+    <a class="btn btn-sm" href="?year={{ year }}{% if not show_archived %}&archived=1{% endif %}">{% if show_archived %}{% translate "Show active records" %}{% else %}{% translate "Show archived records" %}{% endif %}</a></div>
+  <div class="card-body flush table-wrap"><table class="t salary-table"><thead><tr><th>{% translate "Salary month" %}</th><th>{% translate "Pay date" %}</th><th class="num">{% translate "Net pay (after tax)" %}</th><th class="num">{% translate "Hours worked" %}</th><th>{% translate "Check number" %}</th><th>{% translate "Employer" %}</th><th></th></tr></thead><tbody>
+    {% for row in records %}<tr>
+      <td><strong>{{ row.pay_month|date:'Y-m' }}</strong>{% if row.source_reference %}<div class="salary-source">{% translate "From pay stub photo" %}</div>{% endif %}</td>
+      <td>{{ row.paid_on|d }}</td><td class="num salary-net">{{ row.net_pay_cents|money }}</td><td class="num">{{ row.hours|default_if_none:'—' }}</td>
+      <td>{{ row.check_number|default:'—' }}</td><td>{{ row.employer }}</td>
+      <td><div class="actions salary-row-actions">{% if not show_archived %}<a data-editor data-editor-redirect class="btn btn-sm" href="{% url 'salary_edit' row.pk %}">{% translate "Edit" %}</a>{% endif %}
+        <form method="post" action="{% url 'salary_archive' row.pk %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" name="action" value="{% if show_archived %}restore{% else %}archive{% endif %}">{% if show_archived %}{% translate "Restore" %}{% else %}{% translate "Archive" %}{% endif %}</button></form>
+      </div></td>
+    </tr>{% empty %}<tr><td colspan="7"><div class="empty">{% if show_archived %}{% translate "No archived salary records for this year." %}{% else %}{% translate "No salary records for this year yet." %}{% endif %}</div></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

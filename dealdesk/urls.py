@@ -9,6 +9,7 @@ from deals import views as deals
 from imports import views as imports
 from properties import views as properties
 from reports import views as reports
+from payroll import views as payroll
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
@@ -22,6 +23,12 @@ urlpatterns = [
     path("notifications/", core.notifications, name="notifications"),
     path("notifications/<int:pk>/read/", core.notification_read, name="notification_read"),
     path("views/save/", core.save_view, name="save_view"),
+
+    # Private personal salary
+    path("salary/", payroll.salary_list, name="salary_list"),
+    path("salary/new/", payroll.salary_form, name="salary_create"),
+    path("salary/<int:pk>/edit/", payroll.salary_form, name="salary_edit"),
+    path("salary/<int:pk>/archive/", payroll.salary_archive, name="salary_archive"),
 
     # Settings
     path("settings/", core.settings_index, name="settings_index"),

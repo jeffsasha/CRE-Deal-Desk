@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "commissions",
     "imports",
     "reports",
+    "payroll",
 ]
 
 MIDDLEWARE = [

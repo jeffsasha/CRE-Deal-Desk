@@ -6780,3 +6780,143 @@ msgstr "请启用 JavaScript 后切换主题配色。"
 #: templates/partials/appearance_settings.html:11
 msgid "Follow system"
 msgstr "跟随系统"
+
+#: core/context_processors.py:10 templates/payroll/list.html:3
+#: templates/payroll/list.html:5
+msgid "My salary"
+msgstr "我的薪资"
+
+#: payroll/forms.py:20 payroll/models.py:14 templates/payroll/list.html:29
+msgid "Salary month"
+msgstr "工资所属月份"
+
+#: payroll/forms.py:21
+msgid "The month worked, which may differ from the pay date."
+msgstr "按工作所属月份填写，可能与发薪月份不同。"
+
+#: payroll/forms.py:22 templates/payroll/list.html:29
+msgid "Net pay (after tax)"
+msgstr "税后实发工资"
+
+#: payroll/forms.py:23
+msgid "Enter the NET PAY amount, not gross wages or year-to-date totals."
+msgstr "填写工资单的 NET PAY（税后实发），不要填写税前工资或年度累计额。"
+
+#: payroll/forms.py:24 payroll/models.py:15 templates/payroll/list.html:29
+#| msgid "key date"
+msgid "Pay date"
+msgstr "发薪日"
+
+#: payroll/forms.py:25 payroll/models.py:20 templates/payroll/list.html:29
+#| msgid "Page {number}"
+msgid "Check number"
+msgstr "支票号"
+
+#: payroll/forms.py:26 payroll/models.py:17 templates/payroll/list.html:29
+msgid "Hours worked"
+msgstr "工时"
+
+#: payroll/forms.py:27 payroll/models.py:19 templates/payroll/list.html:29
+msgid "Employer"
+msgstr "雇主"
+
+#: payroll/forms.py:45 payroll/views.py:57
+msgid "This check is already recorded, including archived records."
+msgstr "这张支票已录入，请检查现有记录及已归档记录。"
+
+#: payroll/models.py:36
+msgid "Choose the salary month, without a day."
+msgstr "请选择工资所属月份，无需填写日期。"
+
+#: payroll/views.py:59
+#| msgid "Payment recorded."
+msgid "Salary record saved."
+msgstr "薪资记录已保存。"
+
+#: payroll/views.py:61
+#| msgid "Edit deal"
+msgid "Edit salary"
+msgstr "编辑薪资"
+
+#: payroll/views.py:61 templates/payroll/list.html:6
+msgid "Add monthly salary"
+msgstr "录入月度工资"
+
+#: payroll/views.py:76
+#| msgid "Payment recorded."
+msgid "Salary record archived."
+msgstr "薪资记录已归档。"
+
+#: payroll/views.py:76
+#| msgid "Archived records (restore)"
+msgid "Salary record restored."
+msgstr "薪资记录已恢复。"
+
+#: templates/payroll/list.html:5
+msgid "Personal take-home pay, separate from brokerage commissions."
+msgstr "记录个人税后实发工资，与公司交易佣金分开统计。"
+
+#: templates/payroll/list.html:8
+msgid "Salary year"
+msgstr "工资年份"
+
+#: templates/payroll/list.html:10
+#, python-format
+msgid "%(year)s net pay"
+msgstr "%(year)s 年税后工资"
+
+#: templates/payroll/list.html:11
+#| msgid "recorded fact"
+msgid "All recorded net pay"
+msgstr "累计税后工资"
+
+#: templates/payroll/list.html:12
+#| msgid "Not recorded"
+msgid "Months recorded"
+msgstr "已录入月份"
+
+#: templates/payroll/list.html:15
+msgid "Monthly take-home pay"
+msgstr "每月税后工资"
+
+#: templates/payroll/list.html:15
+msgid ""
+"Grouped by the month worked, not the pay date. Unrecorded months are not "
+"treated as zero."
+msgstr "按工资所属月份汇总。未录入的月份不作为零工资计算。"
+
+#: templates/payroll/list.html:17
+msgid "Monthly net salary chart"
+msgstr "每月税后工资柱状图"
+
+#: templates/payroll/list.html:27
+#| msgid "Archived records"
+msgid "Archived salary records"
+msgstr "已归档的薪资记录"
+
+#: templates/payroll/list.html:27
+#| msgid "checklist"
+msgid "Paychecks"
+msgstr "工资单明细"
+
+#: templates/payroll/list.html:28
+#| msgid "Archived records"
+msgid "Show active records"
+msgstr "查看正常记录"
+
+#: templates/payroll/list.html:28
+#| msgid "Archived records"
+msgid "Show archived records"
+msgstr "查看已归档记录"
+
+#: templates/payroll/list.html:31
+msgid "From pay stub photo"
+msgstr "由工资单照片录入"
+
+#: templates/payroll/list.html:37
+msgid "No archived salary records for this year."
+msgstr "该年份没有已归档的薪资记录。"
+
+#: templates/payroll/list.html:37
+msgid "No salary records for this year yet."
+msgstr "该年份尚未录入薪资。"

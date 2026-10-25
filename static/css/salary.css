@@ -1,0 +1,23 @@
+.salary-year-picker { margin: -4px 0 18px; }
+.salary-summary { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.salary-summary .value { font-size: clamp(25px,3vw,36px); }
+.salary-month-count { font: 500 14px var(--font); color: var(--text-3); }
+.salary-chart-card { margin: 0 0 20px; }
+.salary-chart-note { color: var(--text-3); font-size: 12px; line-height: 1.5; font-weight: 400; margin: 5px 0 0; }
+.salary-chart-scroll { overflow-x: auto; }
+.salary-chart { display: grid; grid-template-columns: repeat(12,minmax(0,1fr)); gap: 10px; min-width: 820px; }
+.salary-chart-column { display: grid; grid-template-rows: 26px 220px 28px; min-width: 0; }
+.salary-bar-value { text-align: center; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-2); white-space: nowrap; }
+.salary-bar-track { display: flex; justify-content: center; align-items: end; border-bottom: 1px solid var(--border-strong); background: repeating-linear-gradient(to top, transparent 0 54px,var(--border) 54px 55px); }
+.salary-bar { height: calc(var(--salary-height) * .01%); min-height: 2px; width: 68%; max-width: 48px; background: var(--accent); border-radius: var(--radius-sm) var(--radius-sm) 0 0; transform-origin: bottom; animation: salary-column 600ms var(--ease) both; box-shadow: inset 0 1px 0 var(--hairline-top); }
+.salary-chart-column:hover .salary-bar { background: var(--accent-hover); }
+.salary-bar-missing { border-top: 2px dashed var(--border-strong); width: 50%; height: 1px; }
+.salary-bar-label { text-align: center; color: var(--text-3); font-size: 12px; padding-top: 7px; }
+.salary-table { min-width: 780px; }
+.salary-net { font-variant-numeric: tabular-nums; font-weight: 600; }
+.salary-source { color: var(--text-3); font-size: 11px; margin-top: 3px; }
+.salary-row-actions { justify-content: end; flex-wrap: nowrap; }
+.salary-row-actions form { margin: 0; }
+@keyframes salary-column { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@media (max-width: 640px) { .salary-summary { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .salary-bar { animation: none; } }
