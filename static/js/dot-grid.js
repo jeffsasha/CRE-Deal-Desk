@@ -3,7 +3,7 @@
 (function () {
   if (document.body.hasAttribute('data-editor-page')) return;
   const settings = {
-    dotSize: 4, gap: 18, baseColor: '#3a3446', activeColor: '#ffffff',
+    dotSize: 4, gap: 18, baseColor: '#53677b', activeColor: '#ffffff',
     shape: 'circle', proximity: 170, strength: 0.35, bounce: 0.6, tension: 0.55,
     returnDuration: 0.7, shockRadius: 320, shockStrength: 0.5, swell: 0.3,
     stretch: 0.5, glow: 0.45, fade: 0, opacity: 1,

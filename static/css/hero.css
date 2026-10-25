@@ -36,11 +36,11 @@
 .hero-stats { display: flex; gap: 34px; flex-wrap: wrap; margin-bottom: 34px; }
 .hero-stats .hv { font-family: "Source Serif 4", Georgia, serif; font-size: 38px; font-weight: 700; color: #fbf6ee; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .hero-stats .hk { font-size: 12.5px; color: rgba(244,236,224,.65); margin-top: 4px; }
-.hero-cta { display: inline-flex; align-items: center; gap: 12px; padding: 15px 26px; border-radius: 999px; background: #a51c30; color: #fbf6ee;
-  font-size: 16px; font-weight: 600; text-decoration: none; box-shadow: 0 10px 30px -8px rgba(165,28,48,.7), inset 0 1px 0 rgba(255,255,255,.2);
+.hero-cta { display: inline-flex; align-items: center; gap: 12px; padding: 15px 26px; border-radius: 999px; background: var(--accent); color: var(--on-accent);
+  font-size: 16px; font-weight: 600; text-decoration: none; box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--accent) 70%, transparent), inset 0 1px 0 rgba(255,255,255,.2);
   transition: transform .2s cubic-bezier(.34,1.4,.64,1), background-color .2s ease, box-shadow .2s ease; }
 .hero-cta span { transition: transform .2s ease; }
-.hero-cta:hover { background: #c22a40; color: #fff; transform: translateY(-2px); box-shadow: 0 16px 36px -8px rgba(194,42,64,.8); }
+.hero-cta:hover { background: var(--accent-hover); color: var(--on-accent); transform: translateY(-2px); box-shadow: 0 16px 36px -8px color-mix(in srgb, var(--accent) 80%, transparent); }
 .hero-cta:hover span { transform: translateX(4px); }
 .hero-hint { margin-top: 16px; font-size: 12.5px; color: rgba(244,236,224,.5); }
 
@@ -60,7 +60,7 @@
   .hero-shade { background: linear-gradient(180deg, rgba(7,10,24,.2) 0%, rgba(7,10,24,.75) 60%); }
 }
 
-/* RotatingText (React Bits port): letters slide through a masked line on a crimson block. */
+/* RotatingText (React Bits port): letters slide through a masked line on a primary-colour block. */
 .text-rotate { display: inline-flex; flex-wrap: wrap; white-space: pre-wrap; position: relative; vertical-align: bottom; }
 .text-rotate-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .text-rotate-line { display: inline-flex; }
@@ -68,7 +68,7 @@
 .text-rotate-element { display: inline-block; }
 .text-rotate-space { white-space: pre; }
 .text-rotate-highlight { box-sizing: content-box; flex-wrap: nowrap; justify-content: center; overflow: hidden; padding: 0.06em 0.3em 0.02em;
-  border-radius: 0.16em; transition: width 520ms cubic-bezier(0.22, 1.15, 0.36, 1); box-shadow: 0 10px 30px -10px rgba(165, 28, 48, .65); }
+  border-radius: 0.16em; transition: width 520ms cubic-bezier(0.22, 1.15, 0.36, 1); box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--accent) 65%, transparent); }
 .text-rotate-highlight-content { display: flex; flex-shrink: 0; white-space: pre; }
 @media (prefers-reduced-motion: reduce) { .text-rotate-highlight { transition: none; } }
 
@@ -76,7 +76,7 @@
   color: #fbf6ee; margin: -4px 0 18px; display: flex; flex-wrap: nowrap; white-space: nowrap; align-items: center; }
 .hero-rotate > span:first-child { margin-right: .28em; }  /* "Every" — then the word */
 .hero-rotate > span:last-child { margin-left: .1em; }      /* punctuation hugs the word block */
-.hero-rotate .text-rotate { font-style: italic; }
+.hero-rotate .text-rotate { font-style: italic; color: var(--on-accent); }
 
 /* Let the destination neon reveal paint normally; page snapshots sit above its veil. */
 @view-transition { navigation: none; }
@@ -86,7 +86,7 @@
 .hero-rotate-words:not(.text-rotate) {
   display: inline-flex; flex-shrink: 0; overflow: hidden;
   padding: .06em .3em .02em; border-radius: .16em;
-  background: #a51c30; color: #fff; font-style: italic;
-  box-shadow: 0 10px 30px -10px rgba(165, 28, 48, .65);
+  background: var(--accent); color: var(--on-accent); font-style: italic;
+  box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--accent) 65%, transparent);
 }
 .hero-rotate-words:not(.text-rotate) > [data-word]:first-child { padding-bottom: .08em; }

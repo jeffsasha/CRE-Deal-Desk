@@ -4,6 +4,8 @@
     try {
       var t = localStorage.getItem("dd-theme");
       if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      var p = localStorage.getItem("dd-palette");
+      if (["blue-grey", "ultraviolet", "sunset", "indigo", "minimal", "ocean", "teal-gold", "lemon", "rose", "ice-orange", "mint-violet", "mecha"].indexOf(p) !== -1) document.documentElement.setAttribute("data-palette", p);
     } catch (e) {}
     /* Neon Reveal: ignite on the first main page after the opening page (or the
        first main page of a visit); later pages show the tube already lit. */

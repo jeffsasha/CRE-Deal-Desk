@@ -3,6 +3,7 @@
 {% block title %}{% translate "Settings" %}{% endblock %}
 {% block content %}
 <div class="page-head"><div><h1>{% translate "Settings" %}</h1></div></div>
+{% include "partials/appearance_settings.html" %}
 <div class="card" style="max-width:640px"><div class="card-body flush"><table class="t settings-list"><tbody>
   <tr><td><a href="{% url 'import_list' %}"><strong>{% translate "Historical imports" %}</strong></a><br><small class="muted">{% translate "Add past deals from a CSV or Excel file; a batch can be reverted." %}</small></td></tr>
   <tr><td><a href="{% url 'reminder_settings' %}"><strong>{% translate "Reminder defaults" %}</strong></a><br><small class="muted">{% translate "currently" %} {{ reminder_days|join:", " }} {% translate "days before" %}</small></td></tr>

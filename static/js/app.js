@@ -10,37 +10,67 @@
     return m ? decodeURIComponent(m[1]) : "";
   }
 
-  // ---- Theme: light → dark → system, persisted per browser -----------------
-  function storedTheme() {
-    try { return localStorage.getItem("dd-theme") || "system"; } catch (e) { return "system"; }
+  // ---- Independent colour palette and light/dark mode, saved per browser ----
+  var themeModes = ["light", "dark", "system"], paletteNames = ["blue-grey", "ultraviolet", "sunset", "indigo", "minimal", "ocean", "teal-gold", "lemon", "rose", "ice-orange", "mint-violet", "mecha"];
+  function currentMode() { return root.getAttribute("data-theme") || "system"; }
+  function savePreference(key, value) {
+    try { localStorage.setItem(key, value); return true; } catch (error) { return false; }
   }
-  function showThemeIcon(mode) {
+  function syncAppearance() {
+    var mode = currentMode(), palette = root.getAttribute("data-palette") || "blue-grey";
     document.querySelectorAll("[data-theme-icon]").forEach(function (el) {
       el.hidden = el.getAttribute("data-theme-icon") !== mode;
     });
     var btn = document.querySelector("[data-theme-toggle]");
     if (btn) btn.title = uiText("theme-" + mode, "Theme: " + mode + " (click to change)");
+    document.querySelectorAll("[data-palette-choice]").forEach(function (input) { input.checked = input.value === palette; });
+    document.querySelectorAll("[data-appearance-choice]").forEach(function (input) { input.checked = input.value === mode; });
+  }
+  function appearanceFeedback(saved) {
+    var settings = document.querySelector("[data-theme-settings]");
+    if (settings) settings.querySelector("[data-theme-feedback]").textContent = saved ? settings.dataset.saved : settings.dataset.unsaved;
   }
   function applyTheme(mode) {
+    if (themeModes.indexOf(mode) === -1) return;
     var commit = function () {
       if (mode === "system") root.removeAttribute("data-theme");
       else root.setAttribute("data-theme", mode);
-      try { localStorage.setItem("dd-theme", mode); } catch (e) {}
-      showThemeIcon(mode);
+      var saved = savePreference("dd-theme", mode);
+      syncAppearance();
+      appearanceFeedback(saved);
     };
     if (document.startViewTransition && !reduceMotion) {
       root.classList.add("theme-switching");
       var t = document.startViewTransition(commit);
       t.finished.finally(function () { root.classList.remove("theme-switching"); });
-    } else {
-      commit();
-    }
+    } else commit();
   }
-  showThemeIcon(storedTheme());
-  document.addEventListener("click", function (e) {
-    if (!e.target.closest("[data-theme-toggle]")) return;
-    var order = ["light", "dark", "system"];
-    applyTheme(order[(order.indexOf(storedTheme()) + 1) % order.length]);
+  syncAppearance();
+  document.addEventListener("workspace:content", syncAppearance);
+  document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-theme-toggle]")) applyTheme(themeModes[(themeModes.indexOf(currentMode()) + 1) % themeModes.length]);
+  });
+  document.addEventListener("change", function (event) {
+    var input = event.target;
+    if (input.matches("[data-appearance-choice]")) applyTheme(input.value);
+    if (input.matches("[data-palette-choice]") && paletteNames.indexOf(input.value) !== -1) {
+      root.setAttribute("data-palette", input.value);
+      var saved = savePreference("dd-palette", input.value);
+      syncAppearance();
+      appearanceFeedback(saved);
+    }
+  });
+  // Other tabs and embedded forms keep the same preferences without reloading.
+  window.addEventListener("storage", function (event) {
+    if (event.key !== null && event.key !== "dd-theme" && event.key !== "dd-palette") return;
+    try {
+      var mode = localStorage.getItem("dd-theme"), palette = localStorage.getItem("dd-palette");
+      if (mode === "light" || mode === "dark") root.setAttribute("data-theme", mode);
+      else root.removeAttribute("data-theme");
+      if (paletteNames.indexOf(palette) !== -1) root.setAttribute("data-palette", palette);
+      else root.removeAttribute("data-palette");
+      syncAppearance();
+    } catch (error) { /* Current choices still work when storage is unavailable. */ }
   });
 
   // ---- Mobile navigation ----------------------------------------------------

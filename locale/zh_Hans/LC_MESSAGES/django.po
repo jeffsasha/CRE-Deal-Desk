@@ -6595,3 +6595,188 @@ msgstr "加载中…"
 
 msgid "Unable to open this form. Please try again."
 msgstr "暂时无法打开，请关闭后重试。"
+
+#: core/context_processors.py:15
+msgid "Blue grey"
+msgstr "蓝灰"
+
+#: core/context_processors.py:15
+msgid "Calm"
+msgstr "沉静"
+
+#: core/context_processors.py:15
+msgid "Cool blues and neutral grey surfaces."
+msgstr "清爽蓝色搭配中性灰色背景。"
+
+#: core/context_processors.py:16
+msgid "Ultraviolet original"
+msgstr "紫夜原版"
+
+#: core/context_processors.py:16
+msgid "Original"
+msgstr "原版"
+
+#: core/context_processors.py:16
+msgid "Original violet surfaces, pink light and crimson accents."
+msgstr "最初的紫色背景、粉紫灯光与深红色按钮。"
+
+#: core/context_processors.py:17
+msgid "Sunset"
+msgstr "橙蓝"
+
+#: core/context_processors.py:17
+msgid "Warm"
+msgstr "温暖"
+
+#: core/context_processors.py:17
+msgid "Warm orange accents with slate blue details."
+msgstr "温暖橙色主调，搭配深蓝色细节。"
+
+#: core/context_processors.py:18
+msgid "Indigo"
+msgstr "靛紫"
+
+#: core/context_processors.py:18
+msgid "Elegant"
+msgstr "优雅"
+
+#: core/context_processors.py:18
+msgid "Indigo accents on crisp light or deep blue surfaces."
+msgstr "靛紫主色，搭配清爽浅色或深蓝色背景。"
+
+#: core/context_processors.py:19
+msgid "Minimal mono"
+msgstr "极简黑白"
+
+#: core/context_processors.py:19
+msgid "Minimal"
+msgstr "极简"
+
+#: core/context_processors.py:19
+msgid "Black and white, sharp corners and almost no shadow."
+msgstr "黑白配色、利落直角与轻盈无影效果。"
+
+#: core/context_processors.py:20
+msgid "Ocean mist"
+msgstr "雾海蓝"
+
+#: core/context_processors.py:20
+msgid "Professional"
+msgstr "专业"
+
+#: core/context_processors.py:20
+msgid "Soft ocean blues, slate surfaces and gentle corners."
+msgstr "柔和海蓝与灰蓝背景，搭配舒缓圆角。"
+
+#: core/context_processors.py:21
+msgid "Teal and gold"
+msgstr "青金"
+
+#: core/context_processors.py:21
+msgid "Crisp"
+msgstr "利落"
+
+#: core/context_processors.py:21
+msgid "Deep teal with golden details and sharp corners."
+msgstr "深青色搭配金色细节，采用利落直角。"
+
+#: core/context_processors.py:22
+msgid "Lemon mono"
+msgstr "柠檬黑白"
+
+#: core/context_processors.py:22
+msgid "Playful"
+msgstr "活泼"
+
+#: core/context_processors.py:22
+msgid "Lemon yellow, black and white, with generous rounded corners."
+msgstr "柠檬黄搭配黑白底色，采用饱满大圆角。"
+
+#: core/context_processors.py:23
+msgid "Rose"
+msgstr "玫瑰粉"
+
+#: core/context_processors.py:23
+msgid "Soft"
+msgstr "柔和"
+
+#: core/context_processors.py:23
+msgid "Rose pink, gentle shadows and softly rounded corners."
+msgstr "玫瑰粉搭配柔和阴影与圆润边角。"
+
+#: core/context_processors.py:24
+#| msgid "Rent and operating charges"
+msgid "Ice and orange"
+msgstr "冰蓝橙"
+
+#: core/context_processors.py:24
+#| msgid "Retry #"
+msgid "Retro"
+msgstr "复古"
+
+#: core/context_processors.py:24
+msgid "Icy blues, warm orange details and a monospace feel."
+msgstr "冰蓝色搭配暖橙细节与等宽文字风格。"
+
+#: core/context_processors.py:25
+msgid "Mint and violet"
+msgstr "薄荷暮紫"
+
+#: core/context_processors.py:25
+msgid "Fresh"
+msgstr "清新"
+
+#: core/context_processors.py:25
+msgid "Mint surfaces, violet details and monospace typography."
+msgstr "薄荷底色与暮紫细节，采用等宽文字风格。"
+
+#: core/context_processors.py:26
+msgid "Crimson mecha"
+msgstr "赤焰机甲"
+
+#: core/context_processors.py:26
+msgid "Bold"
+msgstr "鲜明"
+
+#: core/context_processors.py:26
+msgid "Deep charcoal, red and electric blue with sharp corners."
+msgstr "深炭灰搭配赤红与电光蓝，采用利落直角。"
+
+#: templates/partials/appearance_settings.html:3
+msgid "Theme applied and saved in this browser."
+msgstr "主题已应用，并已在当前浏览器保存。"
+
+#: templates/partials/appearance_settings.html:4
+msgid ""
+"Theme applied. Browser storage is unavailable, so it may reset after "
+"reloading."
+msgstr "主题已应用。当前浏览器无法保存设置，刷新后可能恢复默认。"
+
+#: templates/partials/appearance_settings.html:6
+msgid "Theme colours"
+msgstr "主题配色"
+
+#: templates/partials/appearance_settings.html:6
+msgid ""
+"Choose a palette. Changes apply immediately and are saved in this browser."
+msgstr "选择配色后立即生效，并在当前浏览器自动保存。"
+
+#: templates/partials/appearance_settings.html:8
+msgid "Light"
+msgstr "浅色"
+
+#: templates/partials/appearance_settings.html:9
+msgid "Dark"
+msgstr "深色"
+
+#: templates/partials/appearance_settings.html:13
+msgid "Colour palette"
+msgstr "配色方案"
+
+#: templates/partials/appearance_settings.html:24
+msgid "Enable JavaScript to change the colour palette."
+msgstr "请启用 JavaScript 后切换主题配色。"
+
+#: templates/partials/appearance_settings.html:11
+msgid "Follow system"
+msgstr "跟随系统"

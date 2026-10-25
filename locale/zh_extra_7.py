@@ -380,3 +380,41 @@ ZH.update({
     "Loading…": "加载中…",
     "Unable to open this form. Please try again.": "暂时无法打开，请关闭后重试。"
 })
+
+
+ZH.update({
+    "Theme colours": "主题配色",
+    "Choose a palette. Changes apply immediately and are saved in this browser.": "选择配色后立即生效，并在当前浏览器自动保存。",
+    "Colour palette": "配色方案",
+    "Light": "浅色", "Dark": "深色", "Follow system": "跟随系统",
+    "Blue grey": "蓝灰", "Ultraviolet original": "紫夜原版", "Sunset": "橙蓝",
+    "Calm": "沉静", "Original": "原版", "Warm": "温暖",
+    "Cool blues and neutral grey surfaces.": "清爽蓝色搭配中性灰色背景。",
+    "Original violet surfaces, pink light and crimson accents.": "最初的紫色背景、粉紫灯光与深红色按钮。",
+    "Warm orange accents with slate blue details.": "温暖橙色主调，搭配深蓝色细节。",
+    "Theme applied and saved in this browser.": "主题已应用，并已在当前浏览器保存。",
+    "Theme applied. Browser storage is unavailable, so it may reset after reloading.": "主题已应用。当前浏览器无法保存设置，刷新后可能恢复默认。",
+    "Enable JavaScript to change the colour palette.": "请启用 JavaScript 后切换主题配色。",
+})
+
+
+ZH.update({
+    "Indigo": "靛紫", "Minimal mono": "极简黑白", "Ocean mist": "雾海蓝", "Teal and gold": "青金", "Lemon mono": "柠檬黑白",
+    "Elegant": "优雅", "Minimal": "极简", "Professional": "专业", "Crisp": "利落", "Playful": "活泼",
+    "Indigo accents on crisp light or deep blue surfaces.": "靛紫主色，搭配清爽浅色或深蓝色背景。",
+    "Black and white, sharp corners and almost no shadow.": "黑白配色、利落直角与轻盈无影效果。",
+    "Soft ocean blues, slate surfaces and gentle corners.": "柔和海蓝与灰蓝背景，搭配舒缓圆角。",
+    "Deep teal with golden details and sharp corners.": "深青色搭配金色细节，采用利落直角。",
+    "Lemon yellow, black and white, with generous rounded corners.": "柠檬黄搭配黑白底色，采用饱满大圆角。",
+})
+
+
+ZH.update({"Rose": "玫瑰粉", "Soft": "柔和", "Rose pink, gentle shadows and softly rounded corners.": "玫瑰粉搭配柔和阴影与圆润边角。"})
+
+
+ZH.update({
+    "Ice and orange": "冰蓝橙", "Mint and violet": "薄荷暮紫", "Crimson mecha": "赤焰机甲", "Retro": "复古", "Fresh": "清新", "Bold": "鲜明",
+    "Icy blues, warm orange details and a monospace feel.": "冰蓝色搭配暖橙细节与等宽文字风格。",
+    "Mint surfaces, violet details and monospace typography.": "薄荷底色与暮紫细节，采用等宽文字风格。",
+    "Deep charcoal, red and electric blue with sharp corners.": "深炭灰搭配赤红与电光蓝，采用利落直角。",
+})

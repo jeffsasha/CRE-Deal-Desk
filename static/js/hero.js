@@ -36,7 +36,6 @@ const loadImg = src => new Promise(resolve => {
   img.src = src;
 });
 
-const CRIMSON = '#a51c30';
 const SERIF = '"Source Serif 4", Georgia, serif';
 const SANS = 'Inter, -apple-system, "Segoe UI", sans-serif';
 
@@ -134,7 +133,8 @@ async function badgeImages(el) {
   k.fillStyle = '#1d1d1f';
   k.font = `700 104px ${SERIF}`;
   k.fillText(d.name, W / 2, 830);
-  k.fillStyle = CRIMSON;
+  // The printed badge uses dark ink on white in every UI theme.
+  k.fillStyle = '#293352';
   k.font = `600 44px ${SANS}`;
   k.fillText(d.line1.toUpperCase(), W / 2, 910);
   k.fillStyle = '#6a6a6a';
@@ -198,7 +198,7 @@ if (rotating) {
     effect: 'slide',
     direction: 'up',
     highlight: true,
-    highlightColor: '#a51c30',
+    highlightColor: 'var(--accent)',
     staggerFrom: 'last',
     staggerDuration: 0.025,
     rotationInterval: 2400

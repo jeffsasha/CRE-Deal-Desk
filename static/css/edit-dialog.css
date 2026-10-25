@@ -3,8 +3,8 @@ html:has(#edit-dialog) { scrollbar-gutter: stable; }
   position: fixed; inset: 0; margin: auto; padding: 0;
   width: min(720px, calc(100vw - 32px)); max-width: none;
   max-height: calc(100dvh - 32px); overflow: hidden;
-  border: 1px solid var(--border-strong); border-radius: 14px;
-  background: var(--surface); color: var(--text); box-shadow: var(--shadow-pop);
+  border: 1px solid var(--border-strong); border-radius: var(--dialog-radius);
+  background: var(--popover); color: var(--popover-text); box-shadow: var(--shadow-pop);
   opacity: 0; transform: translateY(10px) scale(.985);
   transition: opacity 180ms ease-out, transform 220ms cubic-bezier(.2, .8, .2, 1),
     display 220ms allow-discrete, overlay 220ms allow-discrete;
@@ -58,3 +58,5 @@ body.editor-page { min-height: 0; height: auto; background: var(--surface); }
 @media (max-width: 480px) {
   .editor-page .new-deal .tiles-3 { grid-template-columns: minmax(0, 1fr); }
 }
+
+body.editor-page { --surface: var(--popover); --text: var(--popover-text); }

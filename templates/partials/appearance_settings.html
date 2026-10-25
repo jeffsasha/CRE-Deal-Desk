@@ -1,0 +1,25 @@
+{% load i18n %}
+<section class="appearance-settings" data-theme-settings
+  data-saved="{% translate 'Theme applied and saved in this browser.' %}"
+  data-unsaved="{% translate 'Theme applied. Browser storage is unavailable, so it may reset after reloading.' %}">
+  <div class="appearance-head">
+    <div><h2>{% translate "Theme colours" %}</h2><p>{% translate "Choose a palette. Changes apply immediately and are saved in this browser." %}</p></div>
+    <fieldset class="appearance-modes"><legend>{% translate "Appearance" %}</legend><div class="appearance-mode-options">
+      <label><input type="radio" name="appearance" value="light" data-appearance-choice>{% translate "Light" %}</label>
+      <label><input type="radio" name="appearance" value="dark" data-appearance-choice>{% translate "Dark" %}</label>
+      <label><input type="radio" name="appearance" value="system" data-appearance-choice>{% translate "Follow system" %}</label>
+    </div></fieldset>
+  </div>
+  <fieldset class="palette-options"><legend>{% translate "Colour palette" %}</legend><div class="palette-grid">
+    {% for key, name, tag, description in theme_options %}
+    <label class="palette-card" data-palette-preview="{{ key }}">
+      <input type="radio" name="palette" value="{{ key }}" data-palette-choice aria-label="{{ name }}">
+      <span class="palette-top"><span class="palette-tag">{{ tag }}</span><span class="palette-selected" aria-hidden="true">✓</span></span>
+      {% include "partials/palette_swatches.html" %}
+      <span class="palette-name">{{ name }}</span><span class="palette-description">{{ description }}</span>
+    </label>
+    {% endfor %}
+  </div></fieldset>
+  <p class="appearance-feedback" data-theme-feedback role="status" aria-live="polite"></p>
+  <noscript><p class="muted">{% translate "Enable JavaScript to change the colour palette." %}</p></noscript>
+</section>
