@@ -10,9 +10,9 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
+from django.views.decorators.vary import vary_on_headers
 from django.utils.translation import gettext_lazy
 
-from crm.models import Contact, Organization
 from deadlines.models import Reminder
 from deadlines.reminders import acknowledge, deliver
 from deals.models import Deal, Stage
@@ -73,6 +73,7 @@ def brand_photo(request):
     return response
 
 
+@vary_on_headers("X-Workspace-Navigation")
 @require_perm("view")
 def dashboard(request):
     data = dash.build(request.user, request.GET)
@@ -90,10 +91,6 @@ def search(request):
         results["Properties"] = Property.objects.filter(
             Q(name__icontains=q) | Q(street__icontains=q) | Q(city__icontains=q) | Q(parcels__parcel_id__icontains=q)
         ).distinct()[:25]
-        results["Contacts"] = Contact.objects.filter(
-            Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(email__icontains=q) | Q(organization__name__icontains=q)
-        ).select_related("organization")[:25]
-        results["Companies"] = Organization.objects.filter(name__icontains=q)[:25]
     return render(request, "core/search.html", {"q": q, "results": results})
 
 
@@ -109,8 +106,6 @@ def quick_search(request):
             out.append({"group": str(_("Deals")), "label": d.name, "hint": f"{d.internal_id} · {d.stage.name}", "url": d.get_absolute_url(), "icon": "deal_list"})
         for p in Property.objects.active().filter(Q(name__icontains=q) | Q(street__icontains=q))[:5]:
             out.append({"group": str(_("Properties")), "label": p.name, "hint": p.city, "url": p.get_absolute_url(), "icon": "property_list"})
-        for c in Contact.objects.active().filter(Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(organization__name__icontains=q)).select_related("organization")[:5]:
-            out.append({"group": str(_("Contacts")), "label": c.full_name, "hint": c.organization.name if c.organization_id else "", "url": c.get_absolute_url(), "icon": "contact_list"})
     return JsonResponse({"results": out})
 
 
@@ -149,6 +144,7 @@ def save_view(request):
 
 # --- Settings ---------------------------------------------------------------
 
+@vary_on_headers("X-Workspace-Navigation")
 @require_perm("view")
 def settings_index(request):
     from deadlines.reminders import default_reminder_days
@@ -322,8 +318,6 @@ def archived(request):
     data = {
         "deals": Deal.objects.archived(),
         "properties": Property.objects.archived(),
-        "contacts": Contact.objects.archived(),
-        "organizations": Organization.objects.archived(),
         "agreements": CommissionAgreement.objects.archived() if has_perm(request.user, "commission.view") else [],
     }
     return render(request, "core/archived.html", data)
@@ -334,8 +328,7 @@ def archived(request):
 def restore(request, kind, pk):
     from commissions.models import CommissionAgreement
 
-    models = {"deal": Deal, "property": Property, "contact": Contact,
-              "organization": Organization, "agreement": CommissionAgreement}
+    models = {"deal": Deal, "property": Property, "agreement": CommissionAgreement}
     model = models.get(kind)
     if model is None:
         return redirect("archived")

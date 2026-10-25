@@ -156,6 +156,9 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 16px 0; }
 .badge-dot { position: absolute; top: 3px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--accent); color: var(--on-accent); font-size: 10px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--bg); }
 .user-chip { font-size: 12.5px; color: var(--text-2); }
 .content { padding: 24px 28px 64px; max-width: 1480px; width: 100%; view-transition-name: page; }
+.content { transition: opacity 120ms var(--ease); }
+.content.workspace-loading { opacity: .65; }
+.content h1[tabindex="-1"]:focus { outline: none; }
 .menu-toggle { display: none; }
 .demo-banner { background: var(--amber-bg); color: var(--amber-fg); font-weight: 500; font-size: 12px; text-align: center; padding: 6px 12px; border-bottom: 1px solid var(--border); }
 
@@ -322,6 +325,12 @@ details.dropdown .menu label { display: flex; gap: 8px; align-items: center; fon
 .tabs a.on { color: var(--text); }
 .tabs a .tab-ind { position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); view-transition-name: tab-indicator; }
 .tabs .count { font-size: 11px; color: var(--text-3); margin-left: 5px; padding: 0 5px; border-radius: 999px; background: var(--surface-3); }
+.deal-tabs { position: relative; }
+.deal-tab-panels { overflow-anchor: none; }
+.deal-tabs-indicator { position: absolute; left: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--text); pointer-events: none; transition: transform 200ms var(--ease), width 200ms var(--ease); }
+.deal-tab-panel[hidden], [data-checklist-status][hidden] { display: none; }
+.deal-tab-panel:not([hidden]) { animation: deal-tab-in 180ms var(--ease); }
+@keyframes deal-tab-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 
 /* Deal header */
 .deal-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-start; }
@@ -458,7 +467,7 @@ html.theme-switching::view-transition-new(root) { animation: 260ms var(--ease) b
   .app { grid-template-columns: 1fr; }
   .sidebar { position: fixed; z-index: 50; left: 0; top: 0; width: 272px; transform: translateX(-100%); transition: transform var(--t-slow) var(--ease); box-shadow: var(--shadow-pop); view-transition-name: none; }
   body.nav-open .sidebar { transform: none; }
-  body.nav-open::after { content: ""; position: fixed; inset: 0; background: var(--scrim); z-index: 40; animation: fade-in var(--t) var(--ease); }
+  body.nav-open .app::after { content: ""; position: fixed; inset: 0; background: var(--scrim); z-index: 40; animation: fade-in var(--t) var(--ease); }
   .menu-toggle { display: inline-flex; }
   .topbar { padding: 8px 16px; }
   .topbar .user-chip, .search-trigger .kbd { display: none; }
@@ -714,15 +723,14 @@ html[lang^="zh"] body { font-family: "Inter", -apple-system, "PingFang SC", "Hir
 
 .app { position: relative; z-index: 1; }
 .neon-stage { position: fixed; top: 56px; right: 0; bottom: 0; left: 236px; z-index: 0; pointer-events: none; }
-.neon-light { position: absolute; inset: 9px 0 0;
-  background:
-    radial-gradient(ellipse 58% 62% at 50% 0%, var(--neon-core), var(--neon-mid) 42%, var(--neon-deep) 72%, transparent 100%),
-    linear-gradient(180deg, var(--neon-wash), transparent 75%);
-  /* Soft sides, so the light never shows a straight edge while it spreads. */
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
-  transform-origin: 50% 0;
-  animation: neon-hum 5.5s ease-in-out infinite alternate; }
+/* Static dots remain available if WebGL2 is unavailable. */
+.dot-grid { position: absolute; inset: 18px 0 0; opacity: .14; background: radial-gradient(circle, #3a3446 0 2px, transparent 2px) center / 22px 22px; }
+:root[data-theme="dark"] .dot-grid { opacity: .4; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .dot-grid { opacity: .4; }
+}
+.dot-grid.is-rendered { background: none; }
+.dot-grid__canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
 /* The sticky header owns the tube, so scrolling cannot detach it from the bar.
    The opaque rail keeps scrolling text from showing through the tube. */
 .neon-rail { position: absolute; top: 100%; right: 0; left: 0; height: 18px; z-index: 1;
@@ -810,11 +818,12 @@ table.t tbody tr:hover td:first-child { box-shadow: inset 2px 0 0 var(--neon-tub
 @media (max-width: 640px) { .btn-exit span { display: none; } }
 body.nav-open .neon-rail, body.nav-open .neon-veil { display: none; }
 
-/* Inner sections follow the card's rounded corners so their backgrounds (table
-   headers, toolbars, hovered rows) don't show square corners past the rim. */
+/* Clip at the card itself: a collapsed final section can leave a square-edged
+   table as the visible bottom. Keep floating menus outside listing cards. */
+.card:not(:has(.dropdown, .pop)) { overflow: clip; }
 .card > :first-child { border-top-left-radius: inherit; border-top-right-radius: inherit; }
 .card > :last-child { border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; }
-.card > .card-body.flush, .card > .table-wrap, .card > .card-body.flush > .table-wrap:last-child { overflow: hidden; }
+.card > .progress-list, .card > .card-body.flush, .card > .table-wrap, .card > .card-body.flush > .table-wrap:last-child { overflow: hidden; }
 .card > .card-body.flush.table-wrap { overflow-x: auto; }
 
 /* Money input with a fixed $ in front. */

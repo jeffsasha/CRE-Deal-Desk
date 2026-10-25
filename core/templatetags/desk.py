@@ -89,7 +89,7 @@ def d(value):
         value = timezone.localtime(value)
         if _zh():
             return f"{value.year}年{value.month}月{value.day}日 {value:%H:%M}"
-        return f"{value:%b} {value.day}, {value.year} {value:%-I:%M %p}"
+        return f"{value:%b} {value.day}, {value.year} {value:%I:%M %p}"
     if isinstance(value, date):
         if _zh():
             return f"{value.year}年{value.month}月{value.day}日"

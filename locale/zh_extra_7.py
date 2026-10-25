@@ -373,3 +373,10 @@ ZH.update({
     "Enter the leased area to calculate rent quoted per square foot.": "按平方英尺报价时，请填写租赁面积，以便计算租金总额。",
     "Saved totals use the signed term only: free rent at the start, annual increases every 12 months, and blank free rent or increases as zero. Separately charged NNN, utilities, deposits and TI are excluded. Totals are rounded to cents.": "保存时按已签租期计算：免租从租期开始扣除，每满 12 个月按年递增率调整；免租或递增留空按 0 计算。另收的 NNN、水电、押金及装修补贴不计入；最终总额取到美分。",
 })
+
+# Inline editor controls
+ZH.update({
+    "Close": "关闭",
+    "Loading…": "加载中…",
+    "Unable to open this form. Please try again.": "暂时无法打开，请关闭后重试。"
+})

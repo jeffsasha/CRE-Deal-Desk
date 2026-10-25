@@ -7,12 +7,14 @@ NAV = [
     ("dashboard", _("Dashboard"), "view"),
     ("deal_list", _("Deals"), "view"),
     ("commission_list", _("Commissions"), "commission.view"),
-    ("contact_list", _("Contacts & Companies"), "view"),
     ("settings_index", _("Settings"), "view"),
 ]
+WORKSPACE_ROUTES = {"dashboard", "deal_list", "commission_list", "settings_index"}
 
 
 def workspace(request):
+    route = getattr(getattr(request, "resolver_match", None), "url_name", "")
+    workspace_page = route if route in WORKSPACE_ROUTES else ""
     user = getattr(request, "user", None)
     perms = {}
     unread = 0
@@ -29,4 +31,7 @@ def workspace(request):
         "can": perms,
         "nav_items": nav,
         "unread_notifications": unread,
+        "workspace_page": workspace_page,
+        "workspace_routes": WORKSPACE_ROUTES,
+        "workspace_base": "workspace_fragment.html" if workspace_page and request.headers.get("X-Workspace-Navigation") == "1" else "base.html",
     }

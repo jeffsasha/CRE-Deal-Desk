@@ -64,6 +64,8 @@ class TemplateItem(models.Model):
 
 class ChecklistItem(models.Model):
     deal = models.ForeignKey("deals.Deal", on_delete=models.CASCADE, related_name="checklist_items")
+    workflow_key = models.CharField(max_length=120, blank=True, default="")
+    workflow_financial = models.BooleanField(default=False, editable=False)
     template_item = models.ForeignKey(TemplateItem, null=True, blank=True, on_delete=models.SET_NULL)
     category = models.CharField(max_length=80)
     title = models.CharField(max_length=255)
@@ -93,6 +95,7 @@ class ChecklistItem(models.Model):
 
     class Meta:
         ordering = ["order", "id"]
+        constraints = [models.UniqueConstraint(fields=["deal", "workflow_key"], condition=~models.Q(workflow_key=""), name="unique_deal_workflow_task")]
 
     def __str__(self):
         return self.title

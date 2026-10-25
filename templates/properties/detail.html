@@ -11,7 +11,7 @@
   <div class="actions">
     {% if can.edit %}
       <a class="btn" href="{% url 'deal_create' %}?property={{ p.pk }}">{% icon "plus" %}{% translate "New deal on this property" %}</a>
-      <a class="btn" href="{% url 'property_edit' p.pk %}">{% translate "Edit" %}</a>
+      <a data-editor class="btn" href="{% url 'property_edit' p.pk %}">{% translate "Edit" %}</a>
       {% if not p.archived_at %}<a class="btn btn-danger" href="{% url 'property_archive' p.pk %}">{% translate "Archive" %}</a>{% endif %}
     {% endif %}
   </div>
@@ -52,7 +52,7 @@
     <div class="card"><div class="card-head"><h2>{% translate "Key details" %}</h2></div><div class="card-body"><table class="kv">
       <tr><th>{% translate "Units" %}</th><td>{{ p.units|default:"—" }}</td></tr>
       <tr><th>{% translate "Occupancy" %}</th><td>{{ p.occupancy_percent|pct }}</td></tr>
-      <tr><th>{% translate "Owner (company)" %}</th><td>{% if p.owner %}<a href="{{ p.owner.get_absolute_url }}">{{ p.owner }}</a>{% else %}—{% endif %}</td></tr>
+      <tr><th>{% translate "Owner (company)" %}</th><td>{% if p.owner %}{{ p.owner }}{% else %}—{% endif %}</td></tr>
       <tr><th>{% translate "Legal description" %}</th><td>{{ p.legal_description|default:"—"|linebreaksbr }}</td></tr>
       <tr><th>{% translate "Current asking" %}</th><td>{% for a in asking|slice:":2" %}{{ a.get_kind_display }}: {{ a.amount|rate:a.unit }} <small class="muted">{% translate "since" %} {{ a.effective_date|d }}</small><br>{% empty %}—{% endfor %}</td></tr>
     </table>{% if p.notes %}<hr><div class="text-2" style="white-space:pre-wrap">{{ p.notes }}</div>{% endif %}</div></div>
@@ -63,7 +63,7 @@
 </div>
 
 {% elif tab == 'facts' %}
-<div class="actions" style="margin-bottom:10px">{% if can.edit %}<a class="btn btn-primary" href="{% url 'property_sub' p.pk 'fact' %}">{% translate "Add fact" %}</a>{% endif %}</div>
+<div class="actions" style="margin-bottom:10px">{% if can.edit %}<a data-editor class="btn btn-primary" href="{% url 'property_sub' p.pk 'fact' %}">{% translate "Add fact" %}</a>{% endif %}</div>
 {% for group, items in fact_groups.items %}
 <div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ group }}</h2></div><div class="card-body flush table-wrap"><table class="t">
 <thead><tr><th>{% translate "Fact" %}</th><th>{% translate "Value" %}</th><th>{% translate "Verification" %}</th><th>{% translate "Source" %}</th><th>{% translate "Last verified" %}</th><th></th></tr></thead>
@@ -71,7 +71,7 @@
 <td>{{ f.value }} {{ f.unit }}</td><td>{% pill f.verification f.get_verification_display %}</td>
 <td>{{ f.source|default:"—" }}{% if f.source_document %}<br><a href="{{ f.source_document.get_absolute_url }}"><small>{{ f.source_document }}</small></a>{% endif %}</td>
 <td class="nowrap">{% if f.verified_on %}{{ f.verified_on|d }}{% if f.verified_by %}<br><small class="muted">{{ f.verified_by }}</small>{% endif %}{% else %}—{% endif %}</td>
-<td>{% if can.edit %}<a class="btn btn-sm" href="{% url 'property_sub_edit' p.pk 'fact' f.pk %}">{% translate "Edit" %}</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+<td>{% if can.edit %}<a data-editor class="btn btn-sm" href="{% url 'property_sub_edit' p.pk 'fact' f.pk %}">{% translate "Edit" %}</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
 {% empty %}<div class="card"><div class="empty">{% translate "No facts recorded. Add zoning/use, flood, industrial, or restaurant/retail facts with their sources." %}</div></div>{% endfor %}
 
 {% elif tab == 'parcels' %}

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends workspace_base|default:"base.html" %}
 {% load i18n %}
 {% block title %}{% translate "Deals" %}{% endblock %}
 {% block content %}

@@ -15,15 +15,15 @@
 {% else %}
 <div class="actions" style="margin-bottom:10px">
   <div class="segmented"><a class="{% if not status_filter %}on{% endif %}" href="?tab=checklist">{% translate "All" %}</a><a class="{% if status_filter == 'open' %}on{% endif %}" href="?tab=checklist&status=open">{% translate "Open" %}</a><a class="{% if status_filter == 'blocked' %}on{% endif %}" href="?tab=checklist&status=blocked">{% translate "Blocked" %}</a></div>
-  {% if can.edit %}<a class="btn btn-sm" href="{% url 'checklist_item_create' deal.pk %}">{% translate "Add item" %}</a>{% endif %}
+  {% if can.edit %}<a data-editor class="btn btn-sm" href="{% url 'checklist_item_create' deal.pk %}">{% translate "Add item" %}</a>{% endif %}
 </div>
 {% for category, items in checklist_groups.items %}
 <div class="card" style="margin-bottom:12px"><div class="card-head"><h2>{{ category }}</h2></div><div class="card-body flush table-wrap"><table class="t">
 <thead><tr><th style="width:34%">{% translate "Item" %}</th><th>{% translate "Status" %}</th><th>{% translate "Owner / outside party" %}</th><th class="hide-sm">{% translate "Requested" %}</th><th class="hide-sm">{% translate "Received" %}</th><th class="hide-sm">{% translate "Reviewed" %}</th><th class="hide-sm">{% translate "Approved" %}</th><th>{% translate "Due / follow-up" %}</th></tr></thead>
 <tbody>
-{% for it in items %}{% if not status_filter or status_filter == 'open' and it.is_open or status_filter == it.status %}
-<tr class="{% if it.status == 'blocked' or it.is_overdue %}row-alert{% elif it.is_follow_up_due %}row-warn{% elif not it.is_open %}row-muted{% endif %}">
-  <td>{% if can.edit %}<a href="{% url 'checklist_item_edit' it.pk %}">{{ it.title }}</a>{% else %}{{ it.title }}{% endif %}
+{% for it in items %}
+<tr data-checklist-status="{{ it.status }}" data-checklist-open="{{ it.is_open|yesno:'true,false' }}"{% if status_filter and status_filter != it.status %}{% if status_filter != 'open' or not it.is_open %} hidden{% endif %}{% endif %} class="{% if it.status == 'blocked' or it.is_overdue %}row-alert{% elif it.is_follow_up_due %}row-warn{% elif not it.is_open %}row-muted{% endif %}">
+  <td>{% if can.edit %}<a data-editor href="{% url 'checklist_item_edit' it.pk %}">{{ it.title }}</a>{% else %}{{ it.title }}{% endif %}
     {% if it.status == 'not_applicable' %}<br><small class="muted">{{ it.not_applicable_reason }}</small>{% endif %}
     {% if it.status == 'blocked' %}<br><small style="color:var(--red-fg)">{{ it.blocked_reason }}</small>{% endif %}
     {% if it.unresolved_issues %}<br><small style="color:var(--amber-fg)">{% translate "Unresolved" %}: {{ it.unresolved_issues|truncatechars:90 }}</small>{% endif %}
@@ -32,7 +32,7 @@
   <td>{{ it.owner|default:"—" }}{% if it.outside_party or it.outside_party_note %}<br><small class="muted">{{ it.outside_party|default:it.outside_party_note }}</small>{% endif %}</td>
   <td class="hide-sm nowrap">{{ it.requested_on|dshort }}</td><td class="hide-sm nowrap">{{ it.received_on|dshort }}</td><td class="hide-sm nowrap">{{ it.reviewed_on|dshort }}</td><td class="hide-sm nowrap">{{ it.approved_on|dshort }}</td>
   <td class="nowrap">{% if it.deadline %}<a href="{{ it.deadline.get_absolute_url }}">{{ it.deadline.current_date|dshort }}</a>{% else %}{{ it.due_date|dshort }}{% endif %}{% if it.follow_up_on %}<br><small class="muted">{% translate "follow up" %} {{ it.follow_up_on|dshort }}</small>{% endif %}</td>
-</tr>{% endif %}{% endfor %}
+</tr>{% endfor %}
 </tbody></table></div></div>
 {% endfor %}
 {% endif %}

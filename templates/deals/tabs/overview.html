@@ -1,6 +1,6 @@
 {% load i18n %}<div class="split">
   <div class="stack">
-    <div class="card"><div class="card-head"><h2>{% translate "Key dates" %}</h2>{% if can.edit %}<div class="actions">{% if not deal.is_lease and tl.start and not deal.is_closed %}<a class="btn btn-sm" href="{% url 'deal_extend' deal.pk %}">{% translate "Extend" %}</a>{% endif %}<a class="btn btn-sm btn-primary" href="{% url 'deal_key_dates' deal.pk %}">{% if tl.start %}{% translate "Edit key dates" %}{% else %}{% translate "Enter key dates" %}{% endif %}</a></div>{% endif %}</div>
+    <div class="card key-dates-card"><div class="card-head"><h2>{% translate "Key dates" %}</h2><div class="actions">{% if can.edit %}{% if not deal.is_lease and tl.start and not deal.is_closed %}<a data-editor class="btn btn-sm" href="{% url 'deal_extend' deal.pk %}">{% translate "Extend" %}</a>{% endif %}<a data-editor class="btn btn-sm btn-primary" href="{% url 'deal_key_dates' deal.pk %}">{% if tl.start %}{% translate "Edit key dates" %}{% else %}{% translate "Enter key dates" %}{% endif %}</a>{% endif %}<button type="button" class="btn btn-sm workflow-toggle" data-workflow-toggle aria-expanded="false" aria-controls="workflow-checklist" aria-label="{{ workflow.text.title }}" title="{{ workflow.text.title }}">{% icon "checklist_list" %}<span class="workflow-count" data-workflow-count>{{ workflow.done }}/{{ workflow.total }}</span><span class="workflow-chevron" aria-hidden="true">⌄</span></button></div></div>
       <div class="card-body">
         {% include "partials/timeline.html" %}
         {% with exts=deal.extensions.all %}{% if exts %}<ul class="ext-list">{% for x in exts %}<li><span class="muted">{{ x.get_milestone_display|tr }}</span> {% translate "extended" %} {{ x.previous_date|dshort }} → <strong>{{ x.new_date|dshort }}</strong> <small class="muted">+{{ x.days }}d{% if x.note %} · {{ x.note|tr }}{% endif %}</small></li>{% endfor %}</ul>{% endif %}{% endwith %}
@@ -10,7 +10,7 @@
       {% for dl in other_deadlines %}<tr class="{% if dl.is_overdue %}row-alert{% endif %}"><td><a href="{{ dl.get_absolute_url }}">{{ dl.name|tr }}</a></td>
         <td class="nowrap">{% if dl.current_date %}<strong>{{ dl.current_date|dshort }}</strong> <small class="muted">{{ dl.current_date|relday }}</small>{% else %}{% pill dl.computation dl.get_computation_display %}{% endif %}</td></tr>{% endfor %}
       </tbody></table></div>{% endif %}
-      {% if can.edit %}<div class="card-foot"><a class="btn btn-sm btn-ghost" href="{% url 'deadline_create' %}?deal={{ deal.pk }}">{% icon "plus" %}{% translate "Add another date" %}</a></div>{% endif %}
+      {% include "checklists/panel.html" %}
     </div>
 
     {% if deal.description %}<div class="card"><div class="card-head"><h2>{% translate "Notes" %}</h2></div><div class="card-body"><div style="white-space:pre-wrap">{{ deal.description }}</div></div></div>{% endif %}
@@ -49,8 +49,8 @@
     {% endif %}
 
     <div class="card"><div class="card-head"><h2>{% translate "Status" %}</h2></div><div class="card-body"><table class="kv">
-      <tr><th>{% translate "Client" %}</th><td>{% if deal.client %}<a href="{{ deal.client.get_absolute_url }}">{{ deal.client }}</a>{% else %}—{% endif %}</td></tr>
-      <tr><th>{% translate "Open checklist items" %}</th><td><a href="?tab=checklist">{{ open_item_count }}</a></td></tr>
+      <tr><th>{% translate "Client" %}</th><td>{% if deal.client %}{{ deal.client }}{% else %}—{% endif %}</td></tr>
+      <tr><th>{{ workflow.text.title }}</th><td><button type="button" class="workflow-inline-open" data-workflow-open><span data-workflow-count>{{ workflow.done }}/{{ workflow.total }}</span></button></td></tr>
       {% if deal.next_action %}<tr><th>{% translate "Next action" %}</th><td>{{ deal.next_action }}{% if deal.next_action_due %} · {{ deal.next_action_due|dshort }}{% endif %}</td></tr>{% endif %}
       {% if deal.termination_reason %}<tr><th>{% translate "Termination / lost reason" %}</th><td>{{ deal.termination_reason }}</td></tr>{% endif %}
     </table></div></div>

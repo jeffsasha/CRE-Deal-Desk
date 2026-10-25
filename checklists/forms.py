@@ -1,5 +1,6 @@
 from core.forms import StyledModelForm
 from core.models import User
+from core.permissions import has_perm
 from crm.models import Contact
 
 from .models import ChecklistItem, ChecklistTemplate, TemplateItem
@@ -15,13 +16,15 @@ class ChecklistItemForm(StyledModelForm):
             "status": "Received does not mean reviewed or approved — each has its own status and date.",
         }
 
-    def __init__(self, *args, deal=None, **kwargs):
+    def __init__(self, *args, deal=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         deal = deal or self.instance.deal
         self.fields["owner"].queryset = User.objects.filter(is_active=True).exclude(role="read_only")
         self.fields["outside_party"].queryset = Contact.objects.active()
         self.fields["deadline"].queryset = deal.deadlines.exclude(state__in=["superseded", "cancelled"])
         self.fields["depends_on"].queryset = deal.checklist_items.exclude(pk=self.instance.pk or 0)
+        if not has_perm(user, "commission.view"):
+            self.fields["depends_on"].queryset = self.fields["depends_on"].queryset.filter(workflow_financial=False)
 
 
 class TemplateForm(StyledModelForm):

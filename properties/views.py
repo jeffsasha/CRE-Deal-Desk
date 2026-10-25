@@ -31,7 +31,7 @@ def property_list(request):
             Column("land", gettext_lazy("Land SF"), lambda p: f"{p.land_area_sf:,.0f}" if p.land_area_sf else "—", sort="land_area_sf", cls="num", default=False),
             Column("owner", gettext_lazy("Owner"), lambda p: p.ownership_entity or p.owner or "—", default=False),
             Column("deals", gettext_lazy("Deals"), lambda p: p.deal_links.count(), cls="num"),
-            Column("updated", gettext_lazy("Updated"), lambda p: timezone.localtime(p.updated_at).strftime("%b %-d, %Y"), sort="updated_at"),
+            Column("updated", gettext_lazy("Updated"), lambda p: timezone.localtime(p.updated_at).strftime("%b %d, %Y"), sort="updated_at"),
         ],
         search_fields=["name", "street", "city", "county", "parcels__parcel_id", "ownership_entity", "notes"],
         filters=[

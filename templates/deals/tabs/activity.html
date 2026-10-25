@@ -1,5 +1,5 @@
 {% load i18n %}<div class="split">
-  <div class="card"><div class="card-head"><h2>{% translate "Activity log" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_sub' deal.pk 'activity' %}">{% translate "Record email / call / note" %}</a>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>{% translate "Activity log" %}</h2>{% if can.edit %}<a data-editor class="btn btn-sm btn-primary" href="{% url 'deal_sub' deal.pk 'activity' %}">{% translate "Record email / call / note" %}</a>{% endif %}</div>
     <div class="card-body"><ul class="timeline">
     {% for a in activities %}<li><div class="when">{{ a.occurred_at|d }}<br><span class="tag">{{ a.get_kind_display }}</span></div>
       <div><strong>{{ a.summary }}</strong>{% if a.direction != 'internal' %} <small class="muted">({{ a.get_direction_display|lower }}{% if a.counterparties %} — {{ a.counterparties }}{% endif %})</small>{% endif %}

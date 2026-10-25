@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% load i18n %}
-{% block title %}{% translate "Contacts & Companies" %}{% endblock %}
-{% block content %}
-<div class="page-head"><div><h1>{% translate "Contacts & Companies" %}</h1><div class="sub">{% translate "Title companies, escrow officers, surveyors, inspectors, lenders, attorneys, clients and counterparties." %}{% if not can.client_details %} {% translate "Client contact details are restricted for your role." %}{% endif %}</div></div>
-<div class="actions">{% if can.edit %}<a class="btn" href="{% url 'organization_create' %}">{% translate "New company" %}</a><a class="btn btn-primary" href="{% url 'contact_create' %}">{% translate "New contact" %}</a>{% endif %}</div></div>
-<nav class="tabs"><a class="{% if tab != 'companies' %}on{% endif %}" href="?tab=people">{% if tab != 'companies' %}<span class="tab-ind"></span>{% endif %}{% translate "People" %}</a><a class="{% if tab == 'companies' %}on{% endif %}" href="?tab=companies">{% if tab == 'companies' %}<span class="tab-ind"></span>{% endif %}{% translate "Companies" %}</a></nav>
-{% include "partials/listing.html" with hide_export=can.client_details|yesno:",1" %}
-{% endblock %}

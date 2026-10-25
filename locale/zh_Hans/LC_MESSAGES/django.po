@@ -6586,3 +6586,12 @@ msgstr "截至今日未结：应收款/未付分配款"
 #: templates/reports/index.html:23
 msgid "unpaid distributions"
 msgstr "未付分配款"
+
+msgid "Close"
+msgstr "关闭"
+
+msgid "Loading…"
+msgstr "加载中…"
+
+msgid "Unable to open this form. Please try again."
+msgstr "暂时无法打开，请关闭后重试。"

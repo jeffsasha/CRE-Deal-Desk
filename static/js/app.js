@@ -65,6 +65,9 @@
 
   // ---- Forms: confirmation, progress ------------------------------------------
   document.addEventListener("submit", function (e) {
+    if (e.target.matches(".lang-switch")) {
+      e.target.querySelector('[name="next"]').value = location.pathname + location.search;
+    }
     var msg = (e.submitter && e.submitter.getAttribute("data-confirm")) || e.target.getAttribute("data-confirm");
     if (msg && !window.confirm(msg)) { e.preventDefault(); return; }
     if ((e.target.method || "").toLowerCase() === "post") startProgress();
@@ -96,11 +99,13 @@
   });
 
   // ---- Clickable table rows (the first cell's link) ----------------------------
-  document.querySelectorAll("table.t tbody tr").forEach(function (tr) {
-    var first = tr.querySelector("td:first-child a[href]");
-    if (!first) return;
-    tr.setAttribute("data-href", first.getAttribute("href"));
-  });
+  function enhanceRows(scope) {
+    scope.querySelectorAll("table.t tbody tr").forEach(function (tr) {
+      var first = tr.querySelector("td:first-child a[href]");
+      if (first) tr.setAttribute("data-href", first.getAttribute("href"));
+    });
+  }
+  enhanceRows(document);
   document.addEventListener("click", function (e) {
     var tr = e.target.closest("tr[data-href]");
     if (!tr || e.target.closest("a, button, input, select, textarea, label, form, summary")) return;
@@ -153,8 +158,11 @@
       s.strip.style.transform = "translateY(" + (-s.target * 5) + "%)";
     });
   }
-  var odos = document.querySelectorAll(".odo[data-odo]");
-  if (odos.length && !reduceMotion) {
+  var odoObserver;
+  function enhanceNumbers(scope) {
+    if (odoObserver) odoObserver.disconnect();
+    var odos = scope.querySelectorAll(".odo[data-odo]");
+    if (!odos.length || reduceMotion) return;
     var pending = [];
     odos.forEach(function (el) {
       var strips = buildOdometer(el);
@@ -165,11 +173,14 @@
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) { if (en.isIntersecting) { start(en.target); io.unobserve(en.target); } });
       }, { threshold: 0.4 });
+      odoObserver = io;
       pending.forEach(function (el) { io.observe(el); });
     } else {
       pending.forEach(start);
     }
   }
+  enhanceNumbers(document);
+  document.addEventListener("workspace:before", function () { if (odoObserver) odoObserver.disconnect(); });
 
   // ---- Neon Reveal: end the ignition, re-light on click, card spotlight ----------
   // The ignition ends when the darkness has lifted; the timer is only a fallback.
@@ -221,14 +232,16 @@
     });
     tl.classList.toggle("has-above", used);
   }
-  var tls = document.querySelectorAll("[data-tl]");
-  if (tls.length) {
-    var layoutAll = function () { tls.forEach(layoutTimeline); };
+  function layoutAll() { document.querySelectorAll("[data-tl]").forEach(layoutTimeline); }
+  layoutAll();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutAll);
+  var tlTimer = 0;
+  window.addEventListener("resize", function () { clearTimeout(tlTimer); tlTimer = setTimeout(layoutAll, 120); });
+  document.addEventListener("workspace:content", function (event) {
+    enhanceRows(event.detail);
+    enhanceNumbers(event.detail);
     layoutAll();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutAll);
-    var tlTimer = 0;
-    window.addEventListener("resize", function () { clearTimeout(tlTimer); tlTimer = setTimeout(layoutAll, 120); });
-  }
+  });
 
   // ---- Money inputs: digits and one decimal point only, grouped as 1,000,000.00 ----
   function formatMoney(raw, negative, decimals) {

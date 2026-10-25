@@ -53,7 +53,7 @@ def sync_reminders(deadline, now=None):
         return []
     _cancel(
         pending.exclude(target_revision=deadline.revision),
-        f"Superseded: deadline revised to {deadline.current_date:%b %-d, %Y} (revision {deadline.revision})",
+        f"Superseded: deadline revised to {deadline.current_date:%b %d, %Y} (revision {deadline.revision})",
     )
     tz = ZoneInfo(deadline.time_zone)
     created = []
@@ -112,7 +112,7 @@ def _message(reminder):
     if reminder.deadline_id:
         d = reminder.deadline
         when = "today" if reminder.lead_days == 0 else f"in {reminder.lead_days} day{'s' if reminder.lead_days != 1 else ''}"
-        title = f"{d.name} — due {when} ({d.current_date:%a %b %-d})"
+        title = f"{d.name} — due {when} ({d.current_date:%a %b %d})"
         body = f"{d.deal}\n{d.computation_note}"
         url = d.get_absolute_url()
     else:

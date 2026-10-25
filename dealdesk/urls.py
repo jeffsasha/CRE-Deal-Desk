@@ -4,7 +4,6 @@ from django.urls import include, path
 from checklists import views as checklists
 from commissions import views as commissions
 from core import views as core
-from crm import views as crm
 from deadlines import views as deadlines
 from deals import views as deals
 from imports import views as imports
@@ -73,6 +72,7 @@ urlpatterns = [
     path("deals/<int:pk>/commission/receipt/<int:entry>/reverse/", deals.deal_receipt_reverse, name="deal_receipt_reverse"),
     path("deals/<int:pk>/deadlines/generate/", deals.deal_generate_deadlines, name="deal_generate_deadlines"),
     path("deals/<int:pk>/checklist/apply/", deals.deal_apply_checklist, name="deal_apply_checklist"),
+    path("deals/<int:pk>/workflow/<slug:key>/", checklists.workflow_update, name="workflow_checklist_update"),
     path("deals/<int:deal_pk>/checklist/new/", checklists.item_form, name="checklist_item_create"),
     path("deals/<int:pk>/draft/", deals.deal_draft, name="deal_draft"),
     path("deals/<int:pk>/calendar.ics", deadlines.deal_ics, name="deal_ics"),
@@ -87,10 +87,8 @@ urlpatterns = [
 
     # Deadlines
     path("deadlines/", deadlines.deadline_list, name="deadline_list"),
-    path("deadlines/new/", deadlines.deadline_form, name="deadline_create"),
     path("deadlines/export.ics", deadlines.deadline_ics, name="deadline_ics"),
     path("deadlines/<int:pk>/", deadlines.deadline_detail, name="deadline_detail"),
-    path("deadlines/<int:pk>/edit/", deadlines.deadline_form, name="deadline_edit"),
     path("deadlines/<int:pk>/state/", deadlines.deadline_state, name="deadline_state"),
     path("deadlines/<int:pk>/recompute/", deadlines.deadline_recompute, name="deadline_recompute"),
     path("calendar/feed/<str:token>.ics", deadlines.calendar_feed, name="calendar_feed"),
@@ -100,14 +98,6 @@ urlpatterns = [
     path("tasks/<int:pk>/", checklists.item_form, name="checklist_item_edit"),
 
     # Contacts
-    path("contacts/", crm.contact_list, name="contact_list"),
-    path("contacts/new/", crm.contact_form, name="contact_create"),
-    path("contacts/<int:pk>/", crm.contact_detail, name="contact_detail"),
-    path("contacts/<int:pk>/edit/", crm.contact_form, name="contact_edit"),
-    path("companies/new/", crm.organization_form, name="organization_create"),
-    path("companies/<int:pk>/", crm.organization_detail, name="organization_detail"),
-    path("companies/<int:pk>/edit/", crm.organization_form, name="organization_edit"),
-    path("contacts/archive/<str:kind>/<int:pk>/", crm.archive_party, name="archive_party"),
 
     # Commissions
     path("commissions/", commissions.commission_list, name="commission_list"),

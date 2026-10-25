@@ -501,7 +501,7 @@ class DealTerm(models.Model):
         if self.value_type == "cents":
             return format_cents(self.value_cents)
         if self.value_type == "date":
-            return self.value_date.strftime("%b %-d, %Y") if self.value_date else "—"
+            return self.value_date.strftime("%b %d, %Y") if self.value_date else "—"
         if self.value_type == "days":
             return f"{self.value_int} days" if self.value_int is not None else "—"
         if self.value_type == "int":

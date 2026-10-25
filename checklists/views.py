@@ -1,16 +1,18 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.http import JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
+from django.views.decorators.http import require_POST
 
 from core.dashboard import TOPICS
 from core.listing import Column, Filter, Listing
 from core.models import User
-from core.permissions import require, require_edit_on_post, require_perm
+from core.permissions import has_perm, require, require_edit_on_post, require_perm
 from deals.models import Deal
 
 from .forms import ChecklistItemForm, TemplateItemForm
@@ -18,10 +20,33 @@ from .models import OPEN_STATUSES, STATUSES, ChecklistItem, ChecklistTemplate, T
 from .services import update_item
 
 
+@require_POST
+@require_perm("edit")
+def workflow_update(request, pk, key):
+    from .workflow import build, catalog, save_task
+
+    deal = get_object_or_404(Deal, pk=pk)
+    state = request.POST.get("state")
+    if state not in {"done", "todo", "na"}:
+        return JsonResponse({"error": "Invalid state"}, status=400)
+    definition = next((row for row in catalog(deal)[1] if row["key"] == key), None)
+    if not definition or (definition["financial"] and not has_perm(request.user, "commission.edit")):
+        raise Http404
+    if state == "na" and not definition["optional"]:
+        return JsonResponse({"error": "This task is required"}, status=400)
+    item = save_task(deal, definition, state, request.user)
+    panel = build(deal, request.user)
+    return JsonResponse({"key": key, "done": item.status in {"approved", "waived"}, "na": item.status == "not_applicable",
+                         "completed": panel["done"], "total": panel["total"],
+                         "stages": [{"key": stage["key"], "done": stage["done"], "total": stage["total"]} for stage in panel["stages"]]})
+
+
 @require_perm("view")
 def checklist_list(request):
     today = timezone.localdate()
     qs = ChecklistItem.objects.filter(deal__archived_at__isnull=True).select_related("deal", "owner", "outside_party", "deadline")
+    if not has_perm(request.user, "commission.view"):
+        qs = qs.filter(workflow_financial=False)
     listing = Listing(
         request, qs, area="tasks",
         columns=[
@@ -31,10 +56,10 @@ def checklist_list(request):
             Column("status", gettext_lazy("Status"), lambda i: i.get_status_display(), sort="status"),
             Column("owner", gettext_lazy("Owner"), lambda i: i.owner or "—"),
             Column("party", gettext_lazy("Outside party"), lambda i: i.outside_party or i.outside_party_note or "—", default=False),
-            Column("due", gettext_lazy("Due"), lambda i: i.due_date.strftime("%b %-d") if i.due_date else "—", sort="due_date"),
-            Column("follow", gettext_lazy("Follow-up"), lambda i: i.follow_up_on.strftime("%b %-d") if i.follow_up_on else "—", sort="follow_up_on"),
-            Column("received", gettext_lazy("Received"), lambda i: i.received_on.strftime("%b %-d") if i.received_on else "", default=False),
-            Column("approved", gettext_lazy("Approved"), lambda i: i.approved_on.strftime("%b %-d") if i.approved_on else "", default=False),
+            Column("due", gettext_lazy("Due"), lambda i: i.due_date.strftime("%b %d") if i.due_date else "—", sort="due_date"),
+            Column("follow", gettext_lazy("Follow-up"), lambda i: i.follow_up_on.strftime("%b %d") if i.follow_up_on else "—", sort="follow_up_on"),
+            Column("received", gettext_lazy("Received"), lambda i: i.received_on.strftime("%b %d") if i.received_on else "", default=False),
+            Column("approved", gettext_lazy("Approved"), lambda i: i.approved_on.strftime("%b %d") if i.approved_on else "", default=False),
             Column("issues", gettext_lazy("Unresolved"), lambda i: i.unresolved_issues[:80], default=False),
         ],
         search_fields=["title", "category", "deal__name", "notes", "unresolved_issues"],
@@ -62,11 +87,13 @@ def checklist_list(request):
 @require_edit_on_post
 def item_form(request, pk=None, deal_pk=None):
     item = get_object_or_404(ChecklistItem, pk=pk) if pk else None
+    if item and item.workflow_financial:
+        require(request.user, "commission.view" if request.method == "GET" else "commission.edit")
     deal = item.deal if item else get_object_or_404(Deal, pk=deal_pk)
     if request.method == "GET" and item is None:
         require(request.user, "edit")
     old_status = item.status if item else "not_started"
-    form = ChecklistItemForm(request.POST or None, instance=item, deal=deal)
+    form = ChecklistItemForm(request.POST or None, instance=item, deal=deal, user=request.user)
     back = f"{deal.get_absolute_url()}?tab=checklist"
     if request.method == "POST" and form.is_valid():
         obj = form.save(commit=False)

@@ -1,0 +1,21 @@
+<div id="workflow-checklist" class="workflow-panel" role="region" aria-label="{{ workflow.text.title }}" data-workflow-panel data-deal="{{ deal.pk }}" data-editable="{{ can.edit|yesno:'true,false' }}" data-saving="{{ workflow.text.saving }}" data-saved="{{ workflow.text.saved }}" data-error="{{ workflow.text.error }}" data-open="false" inert{% if workflow_open %} data-start-open{% endif %}>
+  <div class="workflow-clip">
+  <div class="workflow-content">
+    <div class="workflow-meta"><span>{{ deal.get_transaction_type_display }} · {{ workflow.role_label }}</span><small class="workflow-hint">{% if can.edit %}{{ workflow.text.help }}{% else %}{{ workflow.text.read_only }}{% endif %}</small><button type="button" class="workflow-close" data-workflow-close aria-label="{{ workflow.text.close }}">×</button></div>
+    <div class="workflow-stages">
+    {% for stage in workflow.stages %}
+      <section class="workflow-stage" data-stage="{{ stage.key }}" aria-labelledby="workflow-stage-{{ stage.key }}">
+        <h3 id="workflow-stage-{{ stage.key }}"><span>{{ forloop.counter }}. {{ stage.title }}</span><span data-stage-count>{{ stage.done }}/{{ stage.total }}</span></h3>
+        {% for item in stage.items %}
+        <div class="workflow-item{% if item.done %} is-done{% endif %}" data-workflow-item data-key="{{ item.key }}" data-done="{{ item.done|yesno:'true,false' }}" data-url="{% url 'workflow_checklist_update' deal.pk item.key %}">
+          <label title="{{ item.description }}"><input type="checkbox"{% if item.done %} checked{% endif %} disabled><span>{{ item.title }}</span></label>
+          <button type="button" class="workflow-retry" data-workflow-retry hidden>{{ workflow.text.retry }}</button>
+        </div>
+        {% endfor %}
+      </section>
+    {% endfor %}
+    </div>
+    <p class="workflow-save-status" role="status" aria-live="polite" data-workflow-status></p>
+  </div>
+  </div>
+</div>

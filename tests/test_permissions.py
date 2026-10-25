@@ -73,16 +73,15 @@ class ReadOnlyTests(DeskTestCase):
             "financing_status": "unknown"})
         self.assertEqual(resp.status_code, 302)
 
-    def test_client_contact_details_masked(self):
+    def test_removed_contact_pages_do_not_expose_client_details(self):
         org = Organization.objects.create(name="Client Co", is_client=True, phone="555-0000")
-        c = Contact.objects.create(first_name="Pat", last_name="Client", organization=org, email="pat@client.invalid", phone="555-1111")
-        resp = self.client.get(reverse("contact_detail", args=[c.pk]))
-        self.assertNotContains(resp, "pat@client.invalid")
-        resp = self.client.get(reverse("contact_list"))
-        self.assertNotContains(resp, "pat@client.invalid")
-        self.assertEqual(self.client.get(reverse("contact_list") + "?export=csv").status_code, 403)
-        self.client.force_login(self.broker)
-        self.assertContains(self.client.get(reverse("contact_detail", args=[c.pk])), "pat@client.invalid")
+        c = Contact.objects.create(first_name="Pat", last_name="Client", organization=org, email="pat@client.invalid")
+        for user in [self.viewer, self.broker]:
+            self.client.force_login(user)
+            for url in [f"/contacts/{c.pk}/", "/contacts/", "/contacts/?export=csv"]:
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 404)
+                self.assertNotContains(response, "pat@client.invalid", status_code=404)
 
     def test_anonymous_redirected(self):
         self.client.logout()

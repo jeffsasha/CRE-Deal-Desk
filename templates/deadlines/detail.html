@@ -5,7 +5,7 @@
 <div class="crumbs"><a href="{{ dl.deal.get_absolute_url }}?tab=contract">{{ dl.deal }}</a> {% translate "/ Deadline" %}</div>
 <div class="page-head"><div><h1>{{ display_name }}</h1>
   <div class="meta" style="margin-top:6px">{% if dl.state == 'open' %}{% pill dl.computation dl.get_computation_display %}{% else %}{% pill dl.state dl.get_state_display %}{% endif %} <span class="tag">{% if dl.is_contractual %}{% translate "Contractual" %}{% else %}{% translate "Internal target" %}{% endif %}</span> <span class="muted">{{ dl.get_category_display }}</span></div></div>
-  {% if can.edit %}<div class="actions"><form method="post" action="{% url 'deadline_recompute' dl.pk %}">{% csrf_token %}<button class="btn">{% translate "Recompute" %}</button></form><a class="btn btn-primary" href="{% url 'deadline_edit' dl.pk %}">{% translate "Edit rule" %}</a></div>{% endif %}</div>
+</div>
 
 <div class="facts">
   <div><div class="k">{% translate "Current date" %}</div><div class="v">{% if dl.current_date %}{{ dl.current_date|d }}{% else %}—{% endif %}</div></div>

@@ -11,6 +11,6 @@
 {% empty %}<tr><td colspan="6"><div class="empty">{% translate "No imports yet." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
 <div class="card"><div class="card-head"><h2>{% translate "New import" %}</h2></div><div class="card-body">
 <form method="post" enctype="multipart/form-data">{% csrf_token %}{% include "partials/form_fields.html" %}<div class="form-actions"><button class="btn btn-primary">{% translate "Upload and map" %}</button></div></form>
-<hr><p class="muted"><small>{% translate "Column templates" %}: <a href="{% url 'import_template' 'deals' %}">{% translate "deals" %}</a> · <a href="{% url 'import_template' 'properties' %}">{% translate "properties" %}</a> · <a href="{% url 'import_template' 'contacts' %}">{% translate "contacts" %}</a>.<br>{% translate "Blank amounts are imported as unknown, never as $0. A row is imported as closed only if its status says closed and it has an actual closing date in the past." %}</small></p>
+<hr><p class="muted"><small>{% translate "Column templates" %}: <a href="{% url 'import_template' 'deals' %}">{% translate "deals" %}</a> · <a href="{% url 'import_template' 'properties' %}">{% translate "properties" %}</a>.<br>{% translate "Blank amounts are imported as unknown, never as $0. A row is imported as closed only if its status says closed and it has an actual closing date in the past." %}</small></p>
 </div></div></div>
 {% endblock %}

@@ -252,7 +252,7 @@ def close_deal(deal, actor, *, actual_closing_date, total_cents, allocations=Non
         "actual_closing_date": (old["actual_closing_date"], actual_closing_date),
         "total consideration": (old["actual_closing_price_cents"], total_cents),
     }, note=note)
-    log_activity(deal, f"Deal closed on {actual_closing_date:%b %-d, %Y}", actor=actor, kind="decision", body=note)
+    log_activity(deal, f"Deal closed on {actual_closing_date:%b %d, %Y}", actor=actor, kind="decision", body=note)
     return deal
 
 

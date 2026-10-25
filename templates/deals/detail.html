@@ -17,7 +17,7 @@
   <div class="actions">
     {% if can.edit %}
     {% if deal.status_key == "active" %}
-    <a class="btn btn-primary" href="{% url 'deal_close' deal.pk %}">{% translate "Mark closed" %}</a>
+    <a data-editor class="btn btn-primary" href="{% url 'deal_close' deal.pk %}">{% translate "Mark closed" %}</a>
     <details class="pop"><summary class="btn">{% translate "Terminate" %}</summary>
       <form method="post" action="{% url 'deal_status' deal.pk %}" class="pop-body">{% csrf_token %}<input type="hidden" name="action" value="terminate">
         <label for="term-reason">{% translate "Reason" %}</label><input id="term-reason" name="reason" required>
@@ -26,7 +26,7 @@
     <form method="post" action="{% url 'deal_status' deal.pk %}" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="reopen">
       <button class="btn">{% translate "Reopen" %}</button></form>
     {% endif %}
-    <a class="btn" href="{% url 'deal_edit' deal.pk %}">{% translate "Edit" %}</a>
+    <a data-editor class="btn" href="{% url 'deal_edit' deal.pk %}">{% translate "Edit" %}</a>
     {% endif %}
   </div>
 </div>
@@ -51,7 +51,7 @@
 </section>
 {% endif %}
 <div class="facts">
-  <a class="fact-link" href="{% if can.edit %}{% url 'deal_edit' deal.pk %}{% else %}#{% endif %}" title="{% translate "Edit" %}"><div class="k">{% if deal.is_lease %}{% translate "Rent" %}{% elif deal.is_closed %}{% translate "Closing price" %}{% else %}{% translate "Sale price" %}{% endif %}</div><div class="v">{{ price_text|default:"—" }}</div></a>
+  <a data-editor class="fact-link" href="{% if can.edit %}{% url 'deal_edit' deal.pk %}{% else %}#{% endif %}" title="{% translate "Edit" %}"><div class="k">{% if deal.is_lease %}{% translate "Rent" %}{% elif deal.is_closed %}{% translate "Closing price" %}{% else %}{% translate "Sale price" %}{% endif %}</div><div class="v">{{ price_text|default:"—" }}</div></a>
   <div><div class="k">{% translate "Effective Date" %}</div><div class="v">{{ deal.effective_date|d|default:"—" }}</div></div>
   <div><div class="k">{% if deal.is_closed %}{% translate "Actual closing" %}{% elif deal.is_lease %}{% translate "Commencement Date" %}{% else %}{% translate "Closing Date" %}{% endif %}</div><div class="v">{% if deal.is_closed %}{{ deal.actual_closing_date|d }}{% elif tl.points %}{% with last=tl.points|last %}{{ last.date|d|default:"—" }}{% endwith %}{% else %}—{% endif %}</div></div>
   {% if skw %}<div><div class="k">{% translate "SKW commission" %}</div><div class="v">{{ skw.expected|money0:"—" }}</div></div>{% endif %}
@@ -60,6 +60,21 @@
 
 {% if deal.is_blocked %}<div class="notice notice-error">{% icon "alert" %}<div><strong>{% translate "Blocked by" %} {{ deal.blocked_by }}.</strong> {{ deal.blocker_description }}</div></div>{% endif %}
 
-<nav class="tabs">{% for key, label in tabs %}<a class="{% if tab == key %}on{% endif %}" href="?tab={{ key }}">{% if tab == key %}<span class="tab-ind"></span>{% endif %}{{ label }}{% if key == 'checklist' and open_item_count %}<span class="count">{{ open_item_count }}</span>{% endif %}</a>{% endfor %}</nav>
-{% include "deals/tabs/"|add:tab|add:".html" %}
+<div data-deal-tabs>
+  <nav class="tabs deal-tabs" role="tablist" aria-label="{% translate 'Deal' %}">
+    {% for key, label in tabs %}<a id="deal-tab-{{ key }}" role="tab" aria-controls="deal-panel-{{ key }}" aria-selected="{% if tab == key %}true{% else %}false{% endif %}" tabindex="{% if tab == key %}0{% else %}-1{% endif %}" class="{% if tab == key %}on{% endif %}" href="?tab={{ key }}" data-deal-tab="{{ key }}">{{ label }}{% if key == 'checklist' and open_item_count %}<span class="count">{{ open_item_count }}</span>{% endif %}</a>{% endfor %}
+    <span class="deal-tabs-indicator" aria-hidden="true" hidden></span>
+  </nav>
+  <div class="deal-tab-panels">
+    {% for key, label in tabs %}
+    <section id="deal-panel-{{ key }}" class="deal-tab-panel" role="tabpanel" aria-labelledby="deal-tab-{{ key }}" tabindex="0" data-deal-panel="{{ key }}"{% if tab != key %} hidden{% endif %}>
+      {% include "deals/tabs/"|add:key|add:".html" %}
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% asset 'js/deal-tabs.js' %}"></script>
+<script src="{% asset 'js/workflow-checklist.js' %}"></script>
 {% endblock %}

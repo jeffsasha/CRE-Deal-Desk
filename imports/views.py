@@ -2,7 +2,7 @@ import csv
 
 from django import forms
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -16,7 +16,7 @@ from .models import ImportBatch, ImportRow
 
 
 class NewImportForm(LocalizedForm):
-    kind = forms.ChoiceField(choices=ImportBatch.KINDS)
+    kind = forms.ChoiceField(choices=[(kind, label) for kind, label in ImportBatch.KINDS if kind != "contacts"])
     file = forms.FileField(help_text="CSV or Excel (.xlsx). The first row must contain column headers.")
 
     def clean_file(self):
@@ -38,12 +38,12 @@ def import_list(request):
             form.add_error("file", _("Could not read the file: %(error)s") % {"error": exc})
         else:
             return redirect("import_detail", batch.pk)
-    return render(request, "imports/list.html", {"form": form, "batches": ImportBatch.objects.select_related("created_by")[:100]})
+    return render(request, "imports/list.html", {"form": form, "batches": ImportBatch.objects.exclude(kind="contacts").select_related("created_by")[:100]})
 
 
 @require_perm("import")
 def import_detail(request, pk):
-    batch = get_object_or_404(ImportBatch, pk=pk)
+    batch = get_object_or_404(ImportBatch.objects.exclude(kind="contacts"), pk=pk)
     fields = services.FIELDS[batch.kind]
     if request.method == "POST" and batch.status in {"uploaded", "validated"}:
         mapping = {key: request.POST.get(f"map_{key}", "") for key, *_ in fields}
@@ -64,7 +64,7 @@ def import_detail(request, pk):
 @require_POST
 @require_perm("import")
 def import_row_action(request, pk, row_pk):
-    row = get_object_or_404(ImportRow, pk=row_pk, batch_id=pk)
+    row = get_object_or_404(ImportRow.objects.exclude(batch__kind="contacts"), pk=row_pk, batch_id=pk)
     if row.batch.status == "validated" and row.status == "valid":
         row.action = request.POST.get("action", "create") if request.POST.get("action") in {"create", "skip"} else "create"
         row.save(update_fields=["action"])
@@ -74,7 +74,7 @@ def import_row_action(request, pk, row_pk):
 @require_POST
 @require_perm("import")
 def import_commit(request, pk):
-    batch = get_object_or_404(ImportBatch, pk=pk)
+    batch = get_object_or_404(ImportBatch.objects.exclude(kind="contacts"), pk=pk)
     try:
         committed, skipped = services.commit_batch(batch, request.user)
         messages.success(request, _("Committed %(committed)s row(s); %(skipped)s skipped. Every record created carries this batch as its source.") % {"committed": committed, "skipped": skipped})
@@ -86,7 +86,7 @@ def import_commit(request, pk):
 @require_POST
 @require_perm("import.revert")
 def import_revert(request, pk):
-    batch = get_object_or_404(ImportBatch, pk=pk)
+    batch = get_object_or_404(ImportBatch.objects.exclude(kind="contacts"), pk=pk)
     try:
         reverted, blocked = services.revert_batch(batch, request.user)
         if blocked:
@@ -100,7 +100,7 @@ def import_revert(request, pk):
 
 @require_perm("import")
 def import_errors(request, pk):
-    batch = get_object_or_404(ImportBatch, pk=pk)
+    batch = get_object_or_404(ImportBatch.objects.exclude(kind="contacts"), pk=pk)
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="import-{batch.pk}-report.csv"'
     w = csv.writer(response)
@@ -113,6 +113,8 @@ def import_errors(request, pk):
 
 @require_perm("import")
 def import_template(request, kind):
+    if kind == "contacts":
+        raise Http404
     if kind not in services.FIELDS:
         kind = "deals"
     response = HttpResponse(content_type="text/csv")

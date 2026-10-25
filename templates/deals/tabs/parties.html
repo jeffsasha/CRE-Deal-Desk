@@ -1,17 +1,17 @@
 {% load i18n %}<div class="split">
-  <div class="card"><div class="card-head"><h2>{% translate "Participating parties" %}</h2>{% if can.edit %}<a class="btn btn-sm btn-primary" href="{% url 'deal_sub' deal.pk 'party' %}">{% translate "Add party" %}</a>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>{% translate "Participating parties" %}</h2>{% if can.edit %}<a data-editor class="btn btn-sm btn-primary" href="{% url 'deal_sub' deal.pk 'party' %}">{% translate "Add party" %}</a>{% endif %}</div>
   <div class="card-body flush table-wrap"><table class="t">
     <thead><tr><th>{% translate "Role" %}</th><th>{% translate "Name or company name" %}</th><th>{% translate "Notes" %}</th><th></th></tr></thead>
     <tbody>{% for p in parties %}<tr>
       <td><strong>{{ p.get_role_display }}</strong></td>
       <td>{{ p.display_name }}</td>
       <td>{{ p.notes|default:"—"|linebreaksbr }}</td>
-      <td>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'party' p.pk %}">{% translate "Edit" %}</a>{% endif %}</td>
+      <td>{% if can.edit %}<a data-editor class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'party' p.pk %}">{% translate "Edit" %}</a>{% endif %}</td>
     </tr>{% empty %}<tr><td colspan="4"><div class="empty">{% translate "No parties yet. Add a role and type the person's or company's name." %}</div></td></tr>{% endfor %}</tbody></table></div></div>
-  <div class="card"><div class="card-head"><h2>{% translate "Representation" %}</h2>{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'representation' %}">{% translate "Add" %}</a>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>{% translate "Representation" %}</h2>{% if can.edit %}<a data-editor class="btn btn-sm" href="{% url 'deal_sub' deal.pk 'representation' %}">{% translate "Add" %}</a>{% endif %}</div>
   <div class="card-body flush"><table class="t"><tbody>
     {% for r in representations %}<tr><td><strong>{{ r.get_side_display }}</strong><br><small class="muted">{% if r.is_skw %}{% translate "SKW Realty LLC" %}{% if r.broker_user %} — {{ r.broker_user }}{% endif %}{% else %}{{ r.brokerage|default:r.broker_name|default:_("Other / unrepresented") }}{% endif %}</small>{% if r.agreement_document %}<br><a href="{{ r.agreement_document.get_absolute_url }}"><small>{{ r.agreement_document }}</small></a>{% endif %}</td>
-    <td class="num">{% if can.edit %}<a class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'representation' r.pk %}">{% translate "Edit" %}</a>{% endif %}</td></tr>
+    <td class="num">{% if can.edit %}<a data-editor class="btn btn-sm" href="{% url 'deal_sub_edit' deal.pk 'representation' r.pk %}">{% translate "Edit" %}</a>{% endif %}</td></tr>
     {% empty %}<tr><td><div class="empty">{% translate "Not recorded. Representation is never assumed." %}</div></td></tr>{% endfor %}
   </tbody></table></div></div>
 </div>

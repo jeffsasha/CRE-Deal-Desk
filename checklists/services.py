@@ -70,7 +70,8 @@ def update_item(item, actor, old_status, note=""):
     if old_status != item.status:
         ChecklistItemHistory.objects.create(item=item, from_status=old_status, to_status=item.status, note=note[:255],
                                             changed_by=actor)
-        log_activity(item.deal, f"Checklist: {item.title} — {item.get_status_display()}", actor=actor)
+        summary = "Checklist updated" if item.workflow_financial else f"Checklist: {item.title} — {item.get_status_display()}"
+        log_activity(item.deal, summary, actor=actor)
         audit(actor, "checklist.status", item.deal, {item.title: (old_status, item.status)}, note=note)
     from deadlines.reminders import sync_follow_up_reminder
 

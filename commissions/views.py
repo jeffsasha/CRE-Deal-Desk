@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy, gettext as _
+from django.views.decorators.vary import vary_on_headers
 
 from core.audit import audit, diff, snapshot
 from core.listing import Column, Filter, Listing
@@ -19,6 +20,7 @@ AGREEMENT_TRACKED = ["status", "basis_type", "basis_amount_cents", "rate_percent
                      "represented_side", "payer_name", "legal_payee"]
 
 
+@vary_on_headers("X-Workspace-Navigation")
 @require_perm("commission.view")
 def commission_list(request):
     """SKW's commission per deal: expected, received, outstanding. No broker splits."""

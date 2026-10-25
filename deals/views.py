@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
+from django.views.decorators.vary import vary_on_headers
 
 from checklists.models import CONDITIONS, ChecklistTemplate
 from checklists.services import apply_template, template_for
@@ -54,6 +55,7 @@ TRACKED = ["name", "transaction_type", "client", "lease_total_consideration_cent
 CLOSED_LAST = {"closed": 1, "terminated": 2, "lost": 2, "archived": 3}
 
 
+@vary_on_headers("X-Workspace-Navigation")
 @require_perm("view")
 def deal_list(request):
     """One table: open deals first (furthest along first), then closed, then
@@ -111,7 +113,7 @@ def deposit_list(request):
             Column("kind", gettext_lazy("Deposit"), lambda d: d.get_kind_display(), sort="kind"),
             Column("amount", gettext_lazy("Amount"), lambda d: format_cents(d.amount_cents), cls="num", sort="amount_cents"),
             Column("holder", gettext_lazy("Held by"), lambda d: d.holder or "—"),
-            Column("due", gettext_lazy("Due"), lambda d: (d.due_deadline.current_date.strftime("%b %-d, %Y") if d.due_deadline and d.due_deadline.current_date
+            Column("due", gettext_lazy("Due"), lambda d: (d.due_deadline.current_date.strftime("%b %d, %Y") if d.due_deadline and d.due_deadline.current_date
                                              else (d.due_deadline.get_computation_display() if d.due_deadline else "No deadline linked"))),
             Column("status", gettext_lazy("Status"), lambda d: _(d.status)),
             Column("refund", gettext_lazy("Refundability"), lambda d: d.get_refundability_display(), default=False),
@@ -172,12 +174,14 @@ def deal_edit(request, pk):
     return render(request, "deals/edit.html", {"form": form, "deal": deal})
 
 
-TABS = [("overview", gettext_lazy("Overview")), ("parties", gettext_lazy("Parties")), ("checklist", gettext_lazy("Checklist")),
+TABS = [("overview", gettext_lazy("Overview")), ("parties", gettext_lazy("Parties")),
         ("activity", gettext_lazy("Activity")), ("closing", gettext_lazy("Closing"))]
 
 
 @require_perm("view")
 def deal_detail(request, pk):
+    from checklists.workflow import build
+
     deal = get_object_or_404(Deal.objects.select_related("stage", "client", "responsible_broker"), pk=pk)
     tab = request.GET.get("tab", "overview")
     tabs = TABS
@@ -203,30 +207,24 @@ def deal_detail(request, pk):
         "open_item_count": open_items.count(),
         "blocked_items": open_items.filter(status="blocked"),
     }
-    if tab == "parties":
-        ctx["parties"] = deal.parties.select_related("organization", "contact")
-        ctx["representations"] = deal.representations.select_related("brokerage", "broker_user", "agreement_document")
-        ctx["show_client_details"] = has_perm(request.user, "client.details")
-    elif tab == "checklist":
-        items = deal.checklist_items.select_related("owner", "outside_party", "deadline").prefetch_related("evidence")
-        groups = {}
-        for it in items:
-            groups.setdefault(it.category, []).append(it)
-        ctx["checklist_groups"] = groups
-        ctx["template"] = template_for(deal)
-        ctx["templates"] = ChecklistTemplate.objects.filter(enabled=True)
-        ctx["conditions"] = CONDITIONS
-        ctx["status_filter"] = request.GET.get("status", "")
-    elif tab == "activity":
-        ctx["activities"] = deal.activities.select_related("created_by", "document")[:300]
-        ctx["drafts"] = deal.drafts.all()
-        ctx["draft_templates"] = [(k, v[0]) for k, v in draft_templates.TEMPLATES.items()]
-    elif tab == "closing":
-        ctx["close_form"] = CloseDealForm(deal=deal, initial={
-            "actual_closing_date": deal.actual_closing_date,
-            "total": deal.actual_closing_price_cents if not deal.is_lease else deal.lease_total_consideration_cents})
-        ctx["closing_items"] = deal.checklist_items.filter(category__in=["Closing", "Post-closing"])
-        ctx["open_deadlines"] = deadlines.filter(state="open")
+    ctx["workflow"] = build(deal, request.user)
+    ctx["workflow_open"] = request.GET.get("tab") == "checklist" or request.GET.get("checklist") == "1"
+    ctx["open_item_count"] = ctx["workflow"]["total"] - ctx["workflow"]["done"]
+    # Render once so tabs can switch locally and keep unsaved form input.
+    ctx["parties"] = deal.parties.select_related("organization", "contact")
+    ctx["representations"] = deal.representations.select_related("brokerage", "broker_user", "agreement_document")
+    ctx["show_client_details"] = has_perm(request.user, "client.details")
+    activities = deal.activities.select_related("created_by", "document")
+    if not has_perm(request.user, "commission.view"):
+        activities = activities.exclude(Q(kind="system") & (
+            Q(summary__startswith="SKW commission set to ") | Q(summary__startswith="Commission ledger: ")))
+    ctx["activities"] = activities[:300]
+    ctx["drafts"] = deal.drafts.all()
+    ctx["draft_templates"] = [(k, v[0]) for k, v in draft_templates.TEMPLATES.items()]
+    ctx["close_form"] = CloseDealForm(deal=deal, initial={
+        "actual_closing_date": deal.actual_closing_date,
+        "total": deal.actual_closing_price_cents if not deal.is_lease else deal.lease_total_consideration_cents})
+    ctx["open_deadlines"] = [d for d in deadlines if d.state == "open"]
     return render(request, "deals/detail.html", ctx)
 
 

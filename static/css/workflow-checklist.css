@@ -1,0 +1,38 @@
+/* The checklist unfolds inside Key dates; it never resizes the deal workspace. */
+.key-dates-card .card-head { flex-wrap: wrap; }
+.key-dates-card .card-head > .actions { margin-left: auto; }
+.workflow-toggle { gap: 6px; }
+.workflow-count { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-3); }
+.workflow-chevron { color: var(--text-3); transition: transform 240ms var(--ease); }
+.workflow-toggle[aria-expanded="true"] .workflow-chevron { transform: rotate(180deg); }
+.workflow-toggle[aria-expanded="true"] { border-color: var(--accent); }
+.workflow-panel { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 280ms cubic-bezier(.22, 1, .36, 1), opacity 200ms ease; }
+.workflow-panel[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+.workflow-clip { min-height: 0; overflow: hidden; }
+.workflow-content { padding: 0 12px 4px; border-top: 1px solid var(--border); }
+.workflow-meta { display: flex; align-items: center; gap: 8px; padding-top: 6px; color: var(--text-3); font-size: 11px; }
+.workflow-close { margin-left: auto; padding: 0 4px; background: transparent; border: 0; color: var(--text-3); cursor: pointer; font-size: 18px; line-height: 20px; }
+.workflow-hint { font-size: 10px; color: var(--text-4); }
+.workflow-stages { max-height: min(320px, 42dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-right: 3px; }
+.workflow-stage + .workflow-stage { margin-top: 6px; }
+.workflow-stage h3 { display: flex; justify-content: space-between; gap: 8px; position: sticky; top: 0; z-index: 1; margin: 0; padding: 4px 0; background: var(--surface); font-size: 11px; font-weight: 600; }
+.workflow-stage h3 > :last-child { color: var(--text-3); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 400; }
+.workflow-item { display: flex; align-items: flex-start; gap: 5px; padding: 4px 0; border-bottom: 1px solid var(--border); transition: opacity 140ms ease; }
+.workflow-item label { display: flex; align-items: flex-start; flex: 1; min-width: 0; gap: 7px; margin: 0; color: var(--text-2); font-size: 12px; font-weight: 400; line-height: 1.35; cursor: pointer; }
+.workflow-item input[type=checkbox] { appearance: none; flex: 0 0 16px; width: 16px; height: 16px; margin: 1px 0 0; padding: 0; border: 1.5px solid var(--text-4); border-radius: 50%; background: transparent; cursor: pointer; display: grid; place-content: center; transition: border-color 140ms ease, background 140ms ease, transform 140ms ease; }
+.workflow-item input:checked { background: var(--green-fg); border-color: var(--green-fg); }
+.workflow-item input:checked::after { content: ""; width: 4px; height: 8px; border: solid var(--surface); border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.workflow-item input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.workflow-item input:active { transform: scale(.9); }
+.workflow-item.is-done label > span { color: var(--text-3); text-decoration: line-through; }
+.workflow-item.is-saving { opacity: .55; }
+.workflow-item input:disabled { cursor: default; }
+.workflow-save-status { min-height: 14px; margin: 4px 0 0; color: var(--text-3); font-size: 10px; }
+.workflow-save-status:empty { display: none; }
+.workflow-save-status.is-error { color: var(--red-fg); }
+.workflow-item.is-error { border-bottom-color: var(--red-fg); }
+.workflow-retry { padding: 2px 0 2px 3px; background: transparent; border: 0; color: var(--red-fg); font-size: 10px; cursor: pointer; }
+.workflow-inline-open { padding: 0; border: 0; background: transparent; color: var(--accent-text); cursor: pointer; }
+@media (prefers-reduced-motion: reduce) {
+  .workflow-panel, .workflow-chevron, .workflow-item, .workflow-item input { transition: none; }
+}

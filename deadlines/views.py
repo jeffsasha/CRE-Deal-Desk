@@ -7,17 +7,16 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
 
-from core.audit import audit
 from core.listing import Column, Filter, Listing
 from core.models import User
-from core.permissions import require, require_edit_on_post, require_perm
+from core.permissions import has_perm, require, require_edit_on_post, require_perm
 from core.templatetags.desk import d as display_date
 from deals.catalog import term_label
 from deals.models import Deal
 
 from . import services
 from .presentation import current_note, deadline_name, trigger_rows
-from .forms import DeadlineForm, StateForm
+from .forms import StateForm
 from .models import CATEGORIES, COMPUTATION, Deadline
 
 
@@ -55,7 +54,7 @@ def deadline_list(request):
             Column("name", gettext_lazy("Deadline"), lambda d: deadline_name(d), sort="name"),
             Column("deal", gettext_lazy("Deal"), lambda d: format_html('<a href="{}">{}</a>', d.deal.get_absolute_url(), d.deal.name), sort="deal__name"),
             Column("date", gettext_lazy("Date"), lambda d: display_date(d.current_date) if d.current_date else d.get_computation_display(), sort="current_date"),
-            Column("time", gettext_lazy("Time"), lambda d: f"{d.due_time:%-I:%M %p} {d.time_zone}" if d.due_time else "", default=False),
+            Column("time", gettext_lazy("Time"), lambda d: f"{d.due_time:%I:%M %p} {d.time_zone}" if d.due_time else "", default=False),
             Column("category", gettext_lazy("Category"), lambda d: d.get_category_display(), sort="category"),
             Column("kind", gettext_lazy("Kind"), lambda d: gettext_lazy("Contractual") if d.is_contractual else gettext_lazy("Internal target")),
             Column("rule", gettext_lazy("Rule"), lambda d: current_note(d)[:120], default=False),
@@ -89,6 +88,9 @@ def deadline_list(request):
 @require_perm("view")
 def deadline_detail(request, pk):
     dl = get_object_or_404(Deadline.objects.select_related("deal", "holiday_calendar", "source_version__document"), pk=pk)
+    checklist_items = dl.checklistitem_set.all()
+    if not has_perm(request.user, "commission.view"):
+        checklist_items = checklist_items.filter(workflow_financial=False)
     return render(request, "deadlines/detail.html", {
         "dl": dl, "display_name": deadline_name(dl), "current_note": current_note(dl),
         "fixed_date_term_label": gettext_lazy(term_label(dl.fixed_date_term_key)),
@@ -97,37 +99,8 @@ def deadline_detail(request, pk):
         "state_form": StateForm(initial={"state": dl.state}),
         "triggers": trigger_rows(dl),
         "dependents": [{"url": d.get_absolute_url(), "name": deadline_name(d)} for d in dl.deal.deadlines.all() if f"deadline:{dl.pk}" in (d.trigger_keys or [])],
-        "checklist_items": dl.checklistitem_set.all(),
+        "checklist_items": checklist_items,
     })
-
-
-@require_edit_on_post
-def deadline_form(request, pk=None):
-    require(request.user, "edit")
-    dl = get_object_or_404(Deadline, pk=pk) if pk else None
-    deal = dl.deal if dl else get_object_or_404(Deal, pk=request.GET.get("deal") or request.POST.get("deal_id"))
-    before = dl.rule_snapshot() if dl else None
-    form = DeadlineForm(request.POST or None, instance=dl, deal=deal,
-                        initial=None if dl else {"time_zone": deal.time_zone, "responsible_user": deal.responsible_broker})
-    if request.method == "POST" and form.is_valid():
-        obj = form.save(commit=False)
-        if dl is None:
-            obj.created_by = request.user
-            obj.save()
-            audit(request.user, "deadline.created", obj, {"rule": obj.rule_snapshot()})
-            services.recompute(obj, actor=request.user, reason="Deadline created")
-        else:
-            obj.save()
-            after = obj.rule_snapshot()
-            if after != before:
-                audit(request.user, "deadline.rule_changed", obj, {k: (before[k], after[k]) for k in after if before.get(k) != after[k]})
-            services.recompute(obj, actor=request.user, reason="Rule edited")
-            from .reminders import sync_reminders
-
-            sync_reminders(obj)
-        messages.success(request, gettext_lazy("Deadline saved and recomputed."))
-        return redirect(obj)
-    return render(request, "deadlines/form.html", {"form": form, "dl": dl, "deal": deal})
 
 
 @require_edit_on_post

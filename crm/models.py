@@ -1,5 +1,4 @@
 from django.db import models
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from core.models import Archivable, Imported, TimeStamped
@@ -45,9 +44,6 @@ class Organization(TimeStamped, Archivable, Imported):
     def __str__(self):
         return f"{self.name} — {self.branch_name}" if self.branch_name else self.name
 
-    def get_absolute_url(self):
-        return reverse("organization_detail", args=[self.pk])
-
 
 class Contact(TimeStamped, Archivable, Imported):
     first_name = models.CharField(max_length=120, blank=True)
@@ -80,9 +76,6 @@ class Contact(TimeStamped, Archivable, Imported):
         if self.organization_id:
             return f"{self.full_name} ({self.organization.name})"
         return self.full_name
-
-    def get_absolute_url(self):
-        return reverse("contact_detail", args=[self.pk])
 
     @property
     def is_confidential_client(self):

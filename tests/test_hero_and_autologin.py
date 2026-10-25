@@ -2,6 +2,7 @@
 (served from var/brand, never from static files)."""
 import shutil
 import tempfile
+from contextlib import closing
 from pathlib import Path
 
 from django.test import override_settings
@@ -48,8 +49,8 @@ class HeroTests(DeskTestCase):
             with override_settings(BRAND_DIR=folder):
                 self.assertEqual(self.client.get(reverse("brand_photo")).status_code, 404)
                 (folder / "photo.webp").write_bytes(b"RIFF0000WEBPVP8 ")
-                resp = self.client.get(reverse("brand_photo"))
-                self.assertEqual(resp.status_code, 200)
+                with closing(self.client.get(reverse("brand_photo"))) as resp:
+                    self.assertEqual(resp.status_code, 200)
                 html = self.client.get(reverse("hero")).content.decode()
                 self.assertIn('data-photo="/brand/photo/?v=cutout"', html)
                 self.assertIn('data-cutout=""', html)  # only the original exists

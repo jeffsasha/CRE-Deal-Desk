@@ -106,7 +106,7 @@ class AcceptanceFlows(DeskTestCase):
         d = self.gessner
         p = Property.objects.get(name="SAMPLE 1200 Example Industrial Pkwy")
         urls = [reverse(n) for n in ["dashboard", "property_list", "deal_list", "deposit_list", "deadline_list",
-                                     "checklist_list", "contact_list", "commission_list", "ledger_list",
+                                     "checklist_list", "commission_list", "ledger_list",
                                      "report_index", "settings_index", "notifications", "issue_list", "reminder_log",
                                      "audit_log", "archived", "requirements", "template_list", "holiday_list", "stage_list",
                                      "import_list", "deal_create"]]
@@ -116,7 +116,7 @@ class AcceptanceFlows(DeskTestCase):
                  reverse("deal_key_dates", args=[Deal.objects.get(name="SAMPLE Kirby dental suite lease").pk]),
                  d.deadlines.first().get_absolute_url(),
                  reverse("commission_detail", args=[d.commission_agreements.first().pk]),
-                 reverse("search") + "?q=Sample", reverse("contact_list") + "?tab=companies"]
+                 reverse("search") + "?q=Sample"]
         for m in ["sales", "leases", "business", "pipeline", "unknown_commission", "expected", "earned", "receipts",
                   "designated", "distributions", "outstanding"]:
             urls.append(reverse("report_detail", args=[m]))

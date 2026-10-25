@@ -12,7 +12,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.forms.utils import pretty_name
 
-FORM_MODULES = ["core.forms", "crm.forms", "properties.forms", "deals.forms", "deadlines.forms",
+FORM_MODULES = ["core.forms", "properties.forms", "deals.forms", "deadlines.forms",
                 "checklists.forms", "commissions.forms", "imports.views"]
 APPS = ["core", "crm", "properties", "deals", "documents", "deadlines", "checklists", "commissions", "imports"]
 
