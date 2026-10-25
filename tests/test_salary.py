@@ -68,9 +68,12 @@ class SalaryTests(DeskTestCase):
     def test_private_records_are_isolated_even_from_other_administrators(self):
         other = self.user("admin")
         hidden = self.record(owner=other, check_number="PRIVATE-CHECK")
-        self.record(check_number="OWN-CHECK")
+        visible = self.record(check_number="OWN-CHECK")
         response = self.client.get(reverse("salary_list"), {"year": "2025"})
-        self.assertContains(response, "OWN-CHECK")
+        self.assertEqual(list(response.context["records"]), [visible])
+        for removed in ("Pay date", "Hours worked", "Check number", "Employer"):
+            self.assertNotContains(response, f"<th>{removed}</th>")
+        self.assertNotContains(response, "OWN-CHECK")
         self.assertNotContains(response, "PRIVATE-CHECK")
         self.assertEqual(response.context["all_total"], 123456)
         for name in ("salary_edit", "salary_archive"):
