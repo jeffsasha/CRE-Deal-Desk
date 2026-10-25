@@ -64,9 +64,10 @@ class DealHeaderMetricsTests(DeskTestCase):
         self.assertIn("SKW commission received", hero)
         self.assertIn('data-odo="123400"', hero)
         self.assertNotIn('data-odo="9000000"', hero)
-        self.assertIn("By actual closing year", hero)
-        self.assertIn("By signed year", hero)
-        self.assertIn("By receipt year, net of refunds and reversals", hero)
+        self.assertNotIn("By actual closing year", hero)
+        self.assertNotIn("By signed year", hero)
+        self.assertNotIn("By receipt year, net of refunds and reversals", hero)
+        self.assertNotIn('class="hero-sub"', hero)
 
     def test_permission_hides_cash_and_receipt_only_years(self):
         self.receipt(123_400, 2023)
