@@ -1,9 +1,40 @@
 """Commission arithmetic and derived status. Integer cents throughout; unknown values
 stay unknown (None) and are reported as such, never as zero."""
 from dataclasses import dataclass, field
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+
+from django.core.exceptions import ValidationError
 
 from core.money import Total, percent_of
+
+
+def _validated_tiers(tiers):
+    """Validate tier shapes and return [(upper_cents|None, rate)] sorted by
+    threshold (open-ended tiers last), preserving the original order among
+    equal thresholds. Raises ValidationError for any malformed tier."""
+    parsed = []
+    for tier in tiers:
+        if not isinstance(tier, dict):
+            raise ValidationError(f"Invalid commission tier: {tier!r}")
+        upper = tier.get("up_to_cents")
+        if upper in (None, ""):
+            upper = None
+        else:
+            try:
+                upper = int(upper)
+            except (TypeError, ValueError):
+                raise ValidationError(f"Invalid commission tier threshold: {tier!r}") from None
+        if "rate_percent" not in tier:
+            raise ValidationError(f"Invalid commission tier (missing rate_percent): {tier!r}")
+        try:
+            rate = Decimal(str(tier["rate_percent"]))
+        except (InvalidOperation, TypeError, ValueError):
+            raise ValidationError(f"Invalid commission tier rate: {tier!r}") from None
+        if not rate.is_finite():
+            raise ValidationError(f"Invalid commission tier rate: {tier!r}")
+        parsed.append((upper, rate))
+    parsed.sort(key=lambda p: float("inf") if p[0] is None else p[0])
+    return parsed
 
 
 def tiered_amount(basis_cents, tiers):
@@ -13,10 +44,7 @@ def tiered_amount(basis_cents, tiers):
         return None
     total = Decimal(0)
     lower = 0
-    for tier in sorted(tiers, key=lambda t: float("inf") if t.get("up_to_cents") in (None, "") else int(t["up_to_cents"])):
-        upper = tier.get("up_to_cents")
-        upper = None if upper in (None, "") else int(upper)
-        rate = Decimal(str(tier["rate_percent"]))
+    for upper, rate in _validated_tiers(tiers):
         top = basis_cents if upper is None else min(basis_cents, upper)
         if top > lower:
             total += Decimal(top - lower) * rate / Decimal(100)

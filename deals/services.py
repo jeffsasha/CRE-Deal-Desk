@@ -39,6 +39,8 @@ def parse_days(text):
     if isinstance(text, int):
         return text
     text = (text or "").strip().lower()
+    if text.startswith("-"):
+        raise ValueError(f"Not a number of days: {text!r}")
     m = re.search(r"\((\d+)\)", text) or re.search(r"\b(\d+)\b", text)
     if m:
         return int(m.group(1))
@@ -185,6 +187,8 @@ TERMINAL_REASON_CATEGORIES = {Stage.CATEGORY_TERMINATED, Stage.CATEGORY_LOST}
 
 @transaction.atomic
 def change_stage(deal, stage, actor, reason=""):
+    if not getattr(stage, "enabled", False):
+        raise ValidationError(gettext_lazy("This stage is disabled."))
     if stage.category == Stage.CATEGORY_CLOSED:
         raise ValidationError(gettext_lazy("Use the Closing tab to close a deal: it records the actual closing date and consideration."))
     if stage.category in TERMINAL_REASON_CATEGORIES and not (reason or deal.termination_reason):

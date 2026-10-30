@@ -12,7 +12,7 @@
     <div class="card"><div class="card-head"><h2>{% translate "Statements by each party" %}</h2></div><div class="card-body flush table-wrap"><table class="t">
       <thead><tr><th>{% translate "Party" %}</th><th>{% translate "Statement" %}</th><th>{% translate "Source" %}</th><th>{% translate "Document date" %}</th><th>{% translate "Delivered" %}</th></tr></thead>
       <tbody>{% for s in statements %}<tr><td><strong>{{ s.party }}</strong><br><small class="muted">{{ s.statement_date|d }}</small></td><td style="white-space:pre-wrap">{{ s.statement }}</td>
-      <td>{% if s.document %}<a href="{{ s.document.get_absolute_url }}">{{ s.document }}</a>{% if s.page %}{% translate ", p." %} {{ s.page }}{% endif %}{% else %}—{% endif %}</td>
+      <td>{% if s.document %}{{ s.document }}{% if s.page %}{% translate ", p." %} {{ s.page }}{% endif %}{% else %}—{% endif %}</td>
       <td>{{ s.document_date|d }}</td><td>{% if s.delivered_on %}{{ s.delivered_on|d }}{% if s.receipt_evidence %}<br><small class="muted">{{ s.receipt_evidence }}</small>{% endif %}{% else %}<span class="muted">{% translate "Not established" %}</span>{% endif %}</td></tr>
       {% empty %}<tr><td colspan="5"><div class="empty">{% translate "No statements recorded." %}</div></td></tr>{% endfor %}</tbody></table>
       <div style="padding:8px 12px"><small class="muted">{% translate "A document's own date does not prove when it was delivered. Delivery is shown only where evidence is recorded." %}</small></div></div></div>
@@ -24,7 +24,7 @@
       <tr><th>{% translate "Requested credit" %}</th><td>{{ issue.requested_credit_cents|money:"—" }}</td></tr>
       <tr><th>{% translate "Estimated impact" %}</th><td>{{ issue.estimated_cost_cents|money:"—" }}</td></tr>
       <tr><th>{% translate "Counterparty response" %}</th><td>{{ issue.counterparty_response|default:"—" }}</td></tr>
-      <tr><th>{% translate "Resolution" %}</th><td>{% pill issue.resolution_status issue.get_resolution_status_display tone="amber" %}{% if issue.resolution_document %}<br><a href="{{ issue.resolution_document.get_absolute_url }}">{{ issue.resolution_document }}</a>{% endif %}</td></tr>
+      <tr><th>{% translate "Resolution" %}</th><td>{% pill issue.resolution_status issue.get_resolution_status_display tone="amber" %}{% if issue.resolution_document %}<br>{{ issue.resolution_document }}{% endif %}</td></tr>
       <tr><th>{% translate "Notes" %}</th><td>{{ issue.resolution_notes|default:"—" }}</td></tr>
       <tr><th>{% translate "Responsible" %}</th><td>{{ issue.responsible|default:"—" }}</td></tr>
     </table></div></div>

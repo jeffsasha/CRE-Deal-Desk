@@ -235,7 +235,7 @@ def deal_detail(request, pk):
 def deal_stage(request, pk):
     deal = get_object_or_404(Deal, pk=pk)
     form = StageChangeForm(request.POST)
-    stage = Stage.objects.filter(key=request.POST.get("stage")).first() or (
+    stage = Stage.objects.filter(key=request.POST.get("stage"), enabled=True).first() or (
         form.cleaned_data["stage"] if form.is_valid() else None)
     if stage is None:
         return HttpResponseBadRequest("Unknown stage.")

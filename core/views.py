@@ -210,7 +210,10 @@ def stage_edit(request, pk=None):
 @require_perm("view")
 def holiday_list(request):
     calendars = HolidayCalendar.objects.prefetch_related("holidays")
-    year = int(request.GET.get("year", timezone.localdate().year))
+    try:
+        year = int(request.GET.get("year", timezone.localdate().year))
+    except (TypeError, ValueError):
+        year = timezone.localdate().year
     return render(request, "core/holidays.html", {"calendars": calendars, "year": year})
 
 

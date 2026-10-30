@@ -403,13 +403,24 @@ def validate_batch(batch, mapping=None):
             if prop:
                 cand += list(existing.filter(deal_properties__property=prop, actual_closing_date=out["actual_closing_date"])
                              ) if out["actual_closing_date"] else []
+            possible = None
             for d in cand:
-                if (out["actual_closing_date"] and str(d.actual_closing_date) == out["actual_closing_date"]) or \
-                        _norm(d.name) == _norm(out["deal_name"]):
+                same_name = _norm(d.name) == _norm(out["deal_name"])
+                same_date = bool(out["actual_closing_date"] and str(d.actual_closing_date) == out["actual_closing_date"])
+                same_property = prop is not None and d.deal_properties.filter(property=prop).exists()
+                if same_name and (same_date or same_property):
                     dup = f"Possible duplicate of existing deal {d.internal_id} '{d.name}'."
                     matches["duplicate_deal"] = [d.pk, str(d)]
                     action = "skip"
                     break
+                if possible is None:
+                    possible = d
+            if action != "skip" and possible is not None:
+                warnings.append(
+                    f"Possible duplicate of existing deal {possible.internal_id} '{possible.name}' "
+                    "(kept for review; not skipped)."
+                )
+                matches["duplicate_deal"] = [possible.pk, str(possible)]
         elif batch.kind == "properties" and not errors:
             prop = _find_property(out["name"], out["street"], out["city"])
             sig = norm_address(out["street"], out["city"])

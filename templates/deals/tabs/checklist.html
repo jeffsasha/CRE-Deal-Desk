@@ -27,7 +27,7 @@
     {% if it.status == 'not_applicable' %}<br><small class="muted">{{ it.not_applicable_reason }}</small>{% endif %}
     {% if it.status == 'blocked' %}<br><small style="color:var(--red-fg)">{{ it.blocked_reason }}</small>{% endif %}
     {% if it.unresolved_issues %}<br><small style="color:var(--amber-fg)">{% translate "Unresolved" %}: {{ it.unresolved_issues|truncatechars:90 }}</small>{% endif %}
-    {% for e in it.evidence.all %}<br><a href="{{ e.get_absolute_url }}"><small>📎 {{ e }}</small></a>{% endfor %}</td>
+    {% for e in it.evidence.all %}<br><small>📎 {{ e }}</small>{% endfor %}</td>
   <td>{% pill it.status it.get_status_display %}</td>
   <td>{{ it.owner|default:"—" }}{% if it.outside_party or it.outside_party_note %}<br><small class="muted">{{ it.outside_party|default:it.outside_party_note }}</small>{% endif %}</td>
   <td class="hide-sm nowrap">{{ it.requested_on|dshort }}</td><td class="hide-sm nowrap">{{ it.received_on|dshort }}</td><td class="hide-sm nowrap">{{ it.reviewed_on|dshort }}</td><td class="hide-sm nowrap">{{ it.approved_on|dshort }}</td>

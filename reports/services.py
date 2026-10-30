@@ -294,7 +294,7 @@ def pipeline_commissions(f=None):
 def closed_without_commission(f):
     deals = _closed(SALE_TYPES | LEASE_TYPES | BUSINESS_TYPES, f)
     with_agreement = CommissionAgreement.objects.exclude(status="void").values_list("deal_id", flat=True)
-    rows = list(deals.exclude(pk__in=with_agreement))
+    rows = list(deals.filter(archived_at__isnull=True).exclude(pk__in=with_agreement))
     return {"label": gettext_lazy("Closed deals with unknown commission (no agreement recorded)"), "deals": rows}
 
 

@@ -24,6 +24,7 @@ class ClosedTotals:
     lease_unknown: int = 0
     business: int = 0
     business_count: int = 0
+    business_unknown: int = 0
     commission: int = 0
     commission_unknown: int = 0
     received: int = 0
@@ -60,7 +61,10 @@ def totals(year=None, with_commission=True):
                 t.leases += deal.lease_total_consideration_cents
         elif deal.transaction_type in BUSINESS_TYPES:
             t.business_count += 1
-            t.business += deal.actual_closing_price_cents or 0
+            if deal.actual_closing_price_cents is None:
+                t.business_unknown += 1
+            else:
+                t.business += deal.actual_closing_price_cents
         else:
             t.sales_count += 1
             if deal.actual_closing_price_cents is None:

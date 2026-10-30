@@ -3,7 +3,7 @@
 {% block title %}{{ a.title }}{% endblock %}
 {% block content %}
 <div class="crumbs"><a href="{% url 'commission_list' %}">{% translate "Commissions" %}</a> / <a href="{{ a.deal.get_absolute_url }}?tab=commissions">{{ a.deal }}</a></div>
-<div class="page-head"><div><h1>{{ a.title }}</h1><div class="sub">{{ a.get_status_display }} · {{ a.get_represented_side_display }} {% translate "side · payer" %} {{ a.payer|default:a.payer_name|default:_("not recorded") }} · {% translate "legal payee" %} {{ a.legal_payee }}{% if a.document %} · <a href="{{ a.document.get_absolute_url }}">{{ a.document }}</a>{% endif %}</div></div>
+<div class="page-head"><div><h1>{{ a.title }}</h1><div class="sub">{{ a.get_status_display }} · {{ a.get_represented_side_display }} {% translate "side · payer" %} {{ a.payer|default:a.payer_name|default:_("not recorded") }} · {% translate "legal payee" %} {{ a.legal_payee }}{% if a.document %} · {{ a.document }}{% endif %}</div></div>
 {% if can.commission_edit %}<div class="actions"><a class="btn" href="{% url 'commission_edit' a.pk %}">{% translate "Edit agreement" %}</a><a class="btn btn-primary" href="{% url 'ledger_entry_create' a.pk %}">{% translate "Record receipt / payment" %}</a></div>{% endif %}</div>
 
 <div class="grid grid-4" style="margin-bottom:12px">
@@ -26,7 +26,7 @@
   <div class="card-body flush table-wrap"><table class="t">
     <thead><tr><th>#</th><th>{% translate "Date" %}</th><th>{% translate "Type" %}</th><th>{% translate "Recipient / installment" %}</th><th>{% translate "Reference" %}</th><th class="num">{% translate "Amount" %}</th><th></th></tr></thead>
     <tbody>{% for e in entries %}<tr class="{% if e.is_reversed or e.entry_type == 'reversal' %}row-muted{% endif %}"><td>{{ e.pk }}</td><td class="nowrap">{{ e.entry_date|d }}</td><td>{{ e.get_entry_type_display|cut:"" }}{% if e.reverses %}<br><small>{% translate "reverses #" %}{{ e.reverses.pk }} — {{ e.notes }}</small>{% endif %}</td>
-      <td>{{ e.allocation.recipient_name|default:"" }}{% if e.installment %}<br><small class="muted">{{ e.installment.label }}</small>{% endif %}</td><td><small>{{ e.reference }}</small>{% if e.proof_document %}<br><a href="{{ e.proof_document.get_absolute_url }}"><small>{% translate "proof" %}</small></a>{% endif %}</td>
+      <td>{{ e.allocation.recipient_name|default:"" }}{% if e.installment %}<br><small class="muted">{{ e.installment.label }}</small>{% endif %}</td><td><small>{{ e.reference }}</small>{% if e.proof_document %}<br><small>{% translate "proof" %}: {{ e.proof_document }}</small>{% endif %}</td>
       <td class="num">{% if e.entry_type == 'refund' or e.entry_type == 'reversal' %}−{% endif %}{{ e.amount_cents|money }}</td>
       <td>{% if can.commission_edit and e.entry_type != 'reversal' and not e.is_reversed %}<a class="btn btn-sm btn-ghost" href="{% url 'ledger_entry_reverse' e.pk %}">{% translate "Reverse" %}</a>{% endif %}</td></tr>
     {% empty %}<tr><td colspan="7"><div class="empty">{% translate "No cash recorded yet." %}</div></td></tr>{% endfor %}</tbody></table></div></div>

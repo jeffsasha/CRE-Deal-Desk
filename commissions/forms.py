@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.utils.translation import gettext_lazy
@@ -44,9 +45,17 @@ class AgreementForm(MoneyModelFormMixin, StyledModelForm):
         if bt == "tiered":
             try:
                 tiers = json.loads(data.get("tiers_text") or "[]")
-                assert isinstance(tiers, list) and tiers and all("rate_percent" in t for t in tiers)
+                if not isinstance(tiers, list) or not tiers:
+                    raise ValueError("Tiers must be a non-empty JSON list.")
+                for t in tiers:
+                    if not isinstance(t, dict) or "rate_percent" not in t:
+                        raise ValueError("Each tier must be an object with rate_percent.")
+                    up_to = t.get("up_to_cents")
+                    if up_to not in (None, ""):
+                        int(up_to)
+                    Decimal(str(t["rate_percent"]))
                 data["tiers"] = tiers
-            except (ValueError, AssertionError):
+            except (ValueError, TypeError, InvalidOperation):
                 self.add_error("tiers_text", gettext_lazy("Enter tiers as a JSON list with rate_percent on each tier."))
         return data
 
