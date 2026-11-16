@@ -152,6 +152,36 @@ class SimpleCommissionTests(DeskTestCase):
         self.assertEqual(simple.for_deal(self.d).expected, 9_500_050)
         self.assertEqual(self.d.commission_agreements.count(), 1)
 
+    def test_edit_receipt_corrects_the_original_reporting_period(self):
+        from commissions import simple
+
+        original = simple.record_receipt(self.d, 1_500_000, date(2025, 12, 31), self.broker, reference="Check")
+        url = self.reverse("deal_receipt_edit", args=[self.d.pk, original.pk])
+        self.assertContains(self.client.get(url + "?editor=1"), "15,000.00")
+        self.assertContains(self.client.get(self.d.get_absolute_url()), url)
+        payload = {"amount": "1,500.25", "entry_date": "2026-01-02", "reference": "Check 2"}
+        self.assertEqual(self.client.post(url, {**payload, "amount": "0"}).status_code, 200)
+        self.assertEqual(original.agreement.ledger_entries.count(), 1)
+        self.assertRedirects(self.client.post(url, payload), self.d.get_absolute_url())
+        original.refresh_from_db()
+        self.assertEqual(original.amount_cents, 1_500_000)
+        self.assertEqual(original.reversed_by.entry_date, original.entry_date)
+        self.assertEqual(simple.for_deal(self.d).received, 150_025)
+        self.assertEqual(self.client.post(url, payload).status_code, 404)
+
+    def test_commissions_year_tabs_use_net_cash_dates(self):
+        from commissions import simple
+
+        receipt = simple.record_receipt(self.d, 200_000, date(2025, 12, 31), self.broker)
+        simple.record_receipt(self.d, 350_000, date(2026, 1, 2), self.broker)
+        simple.reverse_receipt(self.d, receipt, date(2026, 1, 3), "Test correction", self.broker)
+        url = self.reverse("commission_list")
+        for year, expected in (("2025", 200_000), ("2026", 150_000), ("all", 350_000)):
+            with self.subTest(year=year):
+                response = self.client.get(url, {"year": year, "show": "closed"})
+                self.assertEqual(response.context["period_received"], expected)
+                self.assertContains(response, f'year={year}" class="on" aria-current="true"')
+
     def test_blank_expected_is_unknown_not_zero(self):
         from commissions import simple
 

@@ -25,6 +25,7 @@ AGREEMENT_TRACKED = ["status", "basis_type", "basis_amount_cents", "rate_percent
 def commission_list(request):
     """SKW's commission per deal: expected, received, outstanding. No broker splits."""
     from deals.models import Deal
+    from reports.services import cash_receipts, filters_from_params
 
     from . import simple
 
@@ -41,7 +42,21 @@ def commission_list(request):
         "received": sum(c.received for _d, c in rows),
         "outstanding": sum(c.outstanding for _d, c in rows if c.outstanding is not None),
     }
-    return render(request, "commissions/list.html", {"rows": rows, "totals": totals, "show": show})
+    current_year = timezone.localdate().year
+    receipts = cash_receipts(filters_from_params({}))
+    yearly_received = {current_year: 0, current_year - 1: 0}
+    for row in receipts["rows"]:
+        year = row["entry"].entry_date.year
+        yearly_received[year] = yearly_received.get(year, 0) + row["cents"]
+    year_options = {str(year): amount for year, amount in sorted(yearly_received.items(), reverse=True)}
+    selected_year = request.GET.get("year", str(current_year))
+    if selected_year != "all" and selected_year not in year_options:
+        selected_year = str(current_year)
+    return render(request, "commissions/list.html", {
+        "rows": rows, "totals": totals, "show": show,
+        "receipt_years": year_options, "receipt_year": selected_year,
+        "period_received": year_options.get(selected_year, receipts["total"]),
+    })
 
 
 @require_perm("commission.view")

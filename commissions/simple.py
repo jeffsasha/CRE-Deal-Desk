@@ -16,7 +16,7 @@ from core.audit import audit
 from deals.models import log_activity
 
 from .ledger import summarize
-from .models import CommissionAgreement, CommissionAllocation
+from .models import CommissionAgreement, CommissionAllocation, LedgerEntry
 from .services import record_entry, reverse_entry
 
 SIMPLE_TITLE = "SKW commission"
@@ -150,6 +150,20 @@ def record_receipt(deal, cents, entry_date, actor, reference="", notes=""):
         a = set_expected(deal, None, actor)
     return record_entry(a, actor, entry_type="receipt", amount_cents=cents, entry_date=entry_date,
                         reference=reference, notes=notes)
+
+
+@transaction.atomic
+def correct_receipt(entry, cents, entry_date, reference, actor):
+    # Offset the original in its receipt period so date-filtered totals reconcile.
+    entry = LedgerEntry.objects.select_for_update().get(pk=entry.pk)
+    if entry.is_reversed:
+        raise ValidationError(_("This entry has already been reversed."))
+    if (cents, entry_date, reference) == (entry.amount_cents, entry.entry_date, entry.reference):
+        return
+    reverse_entry(entry, actor, entry.entry_date, "Corrected payment receipt")
+    record_entry(entry.agreement, actor, entry_type="receipt", amount_cents=cents,
+                 entry_date=entry_date, reference=reference, installment=entry.installment,
+                 allocation=entry.allocation, proof_document=entry.proof_document, notes=entry.notes)
 
 
 def reverse_receipt(deal, entry, entry_date, reason, actor):

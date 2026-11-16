@@ -3,7 +3,20 @@
 {% block title %}{% translate "Commissions" %}{% endblock %}
 {% block content %}
 <div class="page-head"><div><h1>{% translate "Commissions" %}</h1><div class="sub">{% translate "What SKW Realty expects and has received on each deal. Enter amounts on the deal page." %}</div></div>
-  <div class="segmented"><a class="{% if show == 'open' %}on{% endif %}" href="?show=open">{% translate "Open deals" %}</a><a class="{% if show == 'closed' %}on{% endif %}" href="?show=closed">{% translate "Closed" %}</a><a class="{% if show == 'all' %}on{% endif %}" href="?show=all">{% translate "All" %}</a></div></div>
+  <div class="segmented"><a class="{% if show == 'open' %}on{% endif %}" href="?show=open&amp;year={{ receipt_year }}">{% translate "Open deals" %}</a><a class="{% if show == 'closed' %}on{% endif %}" href="?show=closed&amp;year={{ receipt_year }}">{% translate "Closed" %}</a><a class="{% if show == 'all' %}on{% endif %}" href="?show=all&amp;year={{ receipt_year }}">{% translate "All" %}</a></div></div>
+
+<section class="card" style="margin-bottom:16px">
+  <div class="card-head" style="flex-wrap:wrap">
+    <h2>{% translate "SKW commission received by year" %}</h2>
+    <nav class="segmented" aria-label="{% translate 'Year' %}">
+      {% for year in receipt_years %}
+      <a href="?show={{ show|urlencode }}&amp;year={{ year }}" {% if year == receipt_year %}class="on" aria-current="true"{% endif %}>{{ year }}</a>
+      {% endfor %}
+      <a href="?show={{ show|urlencode }}&amp;year=all" {% if receipt_year == 'all' %}class="on" aria-current="true"{% endif %}>{% translate "All" %}</a>
+    </nav>
+  </div>
+  <div class="card-body hero-stat"><div class="v">{{ period_received|money }}</div></div>
+</section>
 
 <div class="summary-row">
   <div class="metric"><div class="label">{% translate "Expected" %}</div><div class="value">{{ totals.expected|money0 }}</div>{% if totals.unknown %}<div class="note">{% blocktranslate count n=totals.unknown %}+ {{ n }} deal not entered{% plural %}+ {{ n }} deals not entered{% endblocktranslate %}</div>{% endif %}</div>

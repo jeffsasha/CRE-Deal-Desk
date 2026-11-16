@@ -43,7 +43,7 @@
       </div>
       {% if skw.receipts %}<div class="card-body flush"><table class="t"><tbody>
         {% for r in skw.receipts %}<tr class="{% if r.reversed %}row-muted{% endif %}"><td class="nowrap">{{ r.entry.entry_date|dshort }}</td><td>{% if r.reversed %}<s>{{ r.signed|money }}</s> <small class="muted">{% translate "reversed" %}</small>{% else %}{{ r.signed|money }}{% endif %}{% if r.entry.reference %}<br><small class="muted">{{ r.entry.reference }}</small>{% endif %}</td>
-          <td class="num">{% if can.commission_edit and not r.reversed %}<form method="post" action="{% url 'deal_receipt_reverse' deal.pk r.entry.pk %}" data-confirm="{% translate "Reverse this payment? The original stays in the ledger and a reversal offsets it." %}">{% csrf_token %}<button class="btn btn-sm btn-ghost">{% translate "Reverse" %}</button></form>{% endif %}</td></tr>{% endfor %}
+          <td class="num">{% if can.commission_edit and not r.reversed %}<div class="actions" style="justify-content:end">{% if r.entry.entry_type == "receipt" %}<a class="btn btn-sm" data-editor href="{% url 'deal_receipt_edit' deal.pk r.entry.pk %}">{% translate "Edit" %}</a>{% endif %}<form method="post" action="{% url 'deal_receipt_reverse' deal.pk r.entry.pk %}" data-confirm="{% translate "Reverse this payment? The original stays in the ledger and a reversal offsets it." %}">{% csrf_token %}<button class="btn btn-sm btn-ghost">{% translate "Reverse" %}</button></form></div>{% endif %}</td></tr>{% endfor %}
       </tbody></table></div>{% endif %}
     </div>
     {% endif %}

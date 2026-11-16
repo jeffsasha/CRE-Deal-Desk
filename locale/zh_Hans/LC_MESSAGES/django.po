@@ -6936,3 +6936,12 @@ msgstr "每月税后工资，空缺表示尚未录入。"
 #: payroll/forms.py
 msgid "Select the year and month the salary belongs to."
 msgstr "选择这笔工资所属的年份和月份。"
+
+msgid "Edit received payment"
+msgstr "编辑已收佣金"
+
+msgid "Payment updated."
+msgstr "已更新收款记录。"
+
+msgid "SKW commission received by year"
+msgstr "SKW 年度已收佣金"

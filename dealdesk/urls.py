@@ -76,6 +76,7 @@ urlpatterns = [
     path("deals/<int:pk>/extend/", deals.deal_extend, name="deal_extend"),
     path("deals/<int:pk>/commission/", deals.deal_commission, name="deal_commission"),
     path("deals/<int:pk>/commission/receipt/", deals.deal_receipt, name="deal_receipt"),
+    path("deals/<int:pk>/commission/receipt/<int:entry>/edit/", deals.deal_receipt_edit, name="deal_receipt_edit"),
     path("deals/<int:pk>/commission/receipt/<int:entry>/reverse/", deals.deal_receipt_reverse, name="deal_receipt_reverse"),
     path("deals/<int:pk>/deadlines/generate/", deals.deal_generate_deadlines, name="deal_generate_deadlines"),
     path("deals/<int:pk>/checklist/apply/", deals.deal_apply_checklist, name="deal_apply_checklist"),

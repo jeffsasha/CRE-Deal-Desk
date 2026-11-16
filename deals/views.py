@@ -630,6 +630,33 @@ def deal_receipt(request, pk):
     return redirect(deal)
 
 
+@require_perm("commission.edit")
+def deal_receipt_edit(request, pk, entry):
+    from commissions import simple
+    from commissions.models import LedgerEntry
+
+    from .forms import ReceiptForm
+
+    deal = get_object_or_404(Deal, pk=pk)
+    receipt = get_object_or_404(LedgerEntry, pk=entry, agreement__deal=deal,
+                                agreement__archived_at__isnull=True, entry_type="receipt",
+                                reversed_by__isnull=True)
+    form = ReceiptForm(request.POST if request.method == "POST" else None, initial={
+        "amount": receipt.amount_cents, "entry_date": receipt.entry_date, "reference": receipt.reference,
+    })
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        try:
+            simple.correct_receipt(receipt, data["amount"], data["entry_date"], data["reference"], request.user)
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            messages.success(request, gettext_lazy("Payment updated."))
+            return redirect(deal)
+    return render(request, "form.html", {"form": form, "title": gettext_lazy("Edit received payment"),
+                                         "back_url": deal.get_absolute_url()})
+
+
 @require_POST
 @require_perm("commission.edit")
 def deal_receipt_reverse(request, pk, entry):
